@@ -1,0 +1,41 @@
+project_id = "tiktok-saas"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+# Plano Free do Supabase: 50 MiB por arquivo.
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+# --- Edge Functions -------------------------------------------------------
+# Nenhuma usa a verificação de JWT do gateway: cada uma se autentica do jeito certo.
+
+[functions.publication-worker]
+verify_jwt = false # autenticada pelo segredo no header x-worker-secret (pg_cron)
+
+[functions.tiktok-oauth-callback]
+verify_jwt = false # o navegador chega vindo do TikTok, sem JWT; protegida pelo state de uso único
+
+[functions.tiktok-channel]
+verify_jwt = false # o JWT do usuário é repassado às RPCs; o banco aplica o papel (assert_channel_access)
