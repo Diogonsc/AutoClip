@@ -1,0 +1,22 @@
+{
+  "name": "AutoClip",
+  "short_name": "AutoClip",
+  "description": "Gerencie e agende publicações para seus canais TikTok.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#050711",
+  "background_color": "#050711",
+  "display": "standalone"
+}

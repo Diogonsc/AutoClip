@@ -1,29 +1,29 @@
-export type Role = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+export type Role = "OWNER" | "ADMIN" | "EDITOR" | "VIEWER";
 
 export type ChannelStatus =
-  | 'PENDING_AUTH'
-  | 'CONNECTED'
-  | 'REAUTH_REQUIRED'
-  | 'PERMISSION_BLOCKED'
-  | 'REVOKED'
-  | 'ERROR';
+  | "PENDING_AUTH"
+  | "CONNECTED"
+  | "REAUTH_REQUIRED"
+  | "PERMISSION_BLOCKED"
+  | "REVOKED"
+  | "ERROR";
 
 export type PublicationStatus =
-  | 'DRAFT'
-  | 'SCHEDULED'
-  | 'READY'
-  | 'PROCESSING'
-  | 'PUBLISHED'
-  | 'SENT_TO_INBOX'
-  | 'FAILED'
-  | 'RETRY_WAIT'
-  | 'BLOCKED_APPROVAL'
-  | 'BLOCKED_PERMISSION'
-  | 'BLOCKED_REAUTH'
-  | 'UNKNOWN'
-  | 'CANCELLED';
+  | "DRAFT"
+  | "SCHEDULED"
+  | "READY"
+  | "PROCESSING"
+  | "PUBLISHED"
+  | "SENT_TO_INBOX"
+  | "FAILED"
+  | "RETRY_WAIT"
+  | "BLOCKED_APPROVAL"
+  | "BLOCKED_PERMISSION"
+  | "BLOCKED_REAUTH"
+  | "UNKNOWN"
+  | "CANCELLED";
 
-export type MediaStatus = 'UPLOADING' | 'READY' | 'FAILED' | 'DELETED';
+export type MediaStatus = "UPLOADING" | "READY" | "FAILED" | "DELETED";
 
 export interface Workspace {
   id: string;
@@ -35,7 +35,7 @@ export interface WorkspaceWithRole extends Workspace {
   role: Role;
 }
 
-export type PublishMode = 'INBOX' | 'DIRECT';
+export type PublishMode = "INBOX" | "DIRECT";
 
 export interface CreatorInfo {
   creator_username?: string;
@@ -80,6 +80,10 @@ export interface Channel {
   granted_scopes: string[];
   creator_info: CreatorInfo | null;
   creator_info_at: string | null;
+  language: string | null;
+  country: string | null;
+  default_caption: string;
+  default_hashtags: string;
   created_at: string;
 }
 
