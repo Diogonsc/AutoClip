@@ -1,42 +1,42 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../auth/AuthProvider';
-import { useCurrentWorkspace, useWorkspace } from '../auth/WorkspaceProvider';
-import { Empty, ErrorBox, PageHeader, Spinner } from '../components/ui';
-import { toError, unwrap } from '../lib/api';
-import { formatDateTime, roleLabel } from '../lib/format';
-import { useProfiles } from '../lib/hooks';
-import { supabase } from '../lib/supabase';
-import type { Member, Role } from '../lib/types';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../auth/AuthProvider";
+import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
+import { Empty, ErrorBox, PageHeader, Spinner } from "../components/ui";
+import { toError, unwrap } from "../lib/api";
+import { formatDateTime, roleLabel } from "../lib/format";
+import { useProfiles } from "../lib/hooks";
+import { supabase } from "../lib/supabase";
+import type { Member, Role } from "../lib/types";
 
-const ROLES: Role[] = ['OWNER', 'ADMIN', 'EDITOR', 'VIEWER'];
+const ROLES: Role[] = ["OWNER", "ADMIN", "EDITOR", "VIEWER"];
 
 export default function MembersPage() {
   const ws = useCurrentWorkspace();
   const { user } = useAuth();
   const { canAdmin, isOwner, refresh } = useWorkspace();
   const qc = useQueryClient();
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<Role>('EDITOR');
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<Role>("EDITOR");
 
   const members = useQuery({
-    queryKey: ['members', ws.id],
+    queryKey: ["members", ws.id],
     queryFn: async () =>
       unwrap(
         await supabase
-          .from('workspace_members')
-          .select('*')
-          .eq('workspace_id', ws.id)
-          .order('created_at', { ascending: true }),
+          .from("workspace_members")
+          .select("*")
+          .eq("workspace_id", ws.id)
+          .order("created_at", { ascending: true }),
       ) as unknown as Member[],
   });
   const profiles = useProfiles((members.data ?? []).map((m) => m.user_id));
 
-  const reload = () => qc.invalidateQueries({ queryKey: ['members', ws.id] });
+  const reload = () => qc.invalidateQueries({ queryKey: ["members", ws.id] });
 
   const add = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('add_member_by_email', {
+      const { error } = await supabase.rpc("add_member_by_email", {
         p_workspace: ws.id,
         p_email: email.trim(),
         p_role: role,
@@ -44,20 +44,32 @@ export default function MembersPage() {
       if (error) throw toError(error);
     },
     onSuccess: () => {
-      setEmail('');
+      setEmail("");
       return reload();
     },
   });
 
   const changeRole = useMutation({
     mutationFn: async ({ user_id, role }: { user_id: string; role: Role }) =>
-      unwrap(await supabase.from('workspace_members').update({ role }).eq('workspace_id', ws.id).eq('user_id', user_id)),
+      unwrap(
+        await supabase
+          .from("workspace_members")
+          .update({ role })
+          .eq("workspace_id", ws.id)
+          .eq("user_id", user_id),
+      ),
     onSuccess: reload,
   });
 
   const removeMember = useMutation({
     mutationFn: async (user_id: string) =>
-      unwrap(await supabase.from('workspace_members').delete().eq('workspace_id', ws.id).eq('user_id', user_id)),
+      unwrap(
+        await supabase
+          .from("workspace_members")
+          .delete()
+          .eq("workspace_id", ws.id)
+          .eq("user_id", user_id),
+      ),
     onSuccess: async (_d, user_id) => {
       await reload();
       if (user_id === user?.id) await refresh();
@@ -65,12 +77,15 @@ export default function MembersPage() {
   });
 
   // ADMIN não mexe em OWNER (a RLS também impede).
-  const canManage = (m: Member) => isOwner || (canAdmin && m.role !== 'OWNER');
-  const assignable = isOwner ? ROLES : ROLES.filter((r) => r !== 'OWNER');
+  const canManage = (m: Member) => isOwner || (canAdmin && m.role !== "OWNER");
+  const assignable = isOwner ? ROLES : ROLES.filter((r) => r !== "OWNER");
 
   return (
     <>
-      <PageHeader title="Membros" subtitle="Quem tem acesso a este workspace." />
+      <PageHeader
+        title="Membros"
+        subtitle="Quem tem acesso a este workspace."
+      />
 
       {canAdmin && (
         <form
@@ -87,9 +102,13 @@ export default function MembersPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             aria-label="E-mail"
-            style={{ minWidth: 280 }}
+            style={{ minWidth: "min(280px, 100%)" }}
           />
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)} aria-label="Papel">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            aria-label="Papel"
+          >
             {assignable.map((r) => (
               <option key={r} value={r}>
                 {roleLabel[r]}
@@ -102,7 +121,11 @@ export default function MembersPage() {
         </form>
       )}
 
-      <ErrorBox error={members.error ?? add.error ?? changeRole.error ?? removeMember.error} />
+      <ErrorBox
+        error={
+          members.error ?? add.error ?? changeRole.error ?? removeMember.error
+        }
+      />
 
       {members.isLoading ? (
         <Spinner />
@@ -125,17 +148,26 @@ export default function MembersPage() {
                 return (
                   <tr key={m.user_id}>
                     <td>
-                      {profiles.data?.[m.user_id] ?? '—'} {isMe && <span className="muted">(você)</span>}
+                      {profiles.data?.[m.user_id] ?? "—"}{" "}
+                      {isMe && <span className="muted">(você)</span>}
                     </td>
                     <td>
                       {canManage(m) ? (
                         <select
                           value={m.role}
-                          style={{ width: 'auto' }}
-                          onChange={(e) => changeRole.mutate({ user_id: m.user_id, role: e.target.value as Role })}
-                          aria-label={`Papel de ${profiles.data?.[m.user_id] ?? 'membro'}`}
+                          style={{ width: "auto" }}
+                          onChange={(e) =>
+                            changeRole.mutate({
+                              user_id: m.user_id,
+                              role: e.target.value as Role,
+                            })
+                          }
+                          aria-label={`Papel de ${profiles.data?.[m.user_id] ?? "membro"}`}
                         >
-                          {(isOwner ? ROLES : ROLES.filter((r) => r !== 'OWNER')).map((r) => (
+                          {(isOwner
+                            ? ROLES
+                            : ROLES.filter((r) => r !== "OWNER")
+                          ).map((r) => (
                             <option key={r} value={r}>
                               {roleLabel[r]}
                             </option>
@@ -151,11 +183,14 @@ export default function MembersPage() {
                         <button
                           className="btn small danger"
                           onClick={() => {
-                            const msg = isMe ? 'Sair deste workspace?' : 'Remover este membro?';
-                            if (window.confirm(msg)) removeMember.mutate(m.user_id);
+                            const msg = isMe
+                              ? "Sair deste workspace?"
+                              : "Remover este membro?";
+                            if (window.confirm(msg))
+                              removeMember.mutate(m.user_id);
                           }}
                         >
-                          {isMe ? 'Sair' : 'Remover'}
+                          {isMe ? "Sair" : "Remover"}
                         </button>
                       )}
                     </td>
