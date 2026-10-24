@@ -34,6 +34,54 @@ interface DefaultsForm {
   default_hashtags: string;
 }
 
+function ChannelVpnStatus({
+  workspaceId,
+  channelId,
+}: {
+  workspaceId: string;
+  channelId: string;
+}) {
+  const storageKey = `autoclip:corporate-vpn-status:${workspaceId}:${channelId}`;
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    try {
+      setConnected(window.localStorage.getItem(storageKey) === "connected");
+    } catch {
+      setConnected(false);
+    }
+  }, [storageKey]);
+
+  function toggle() {
+    const next = !connected;
+    setConnected(next);
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        next ? "connected" : "disconnected",
+      );
+    } catch {
+      // Mantém o indicador funcional nesta sessão se o armazenamento estiver indisponível.
+    }
+  }
+
+  return (
+    <div className="channel-vpn-status">
+      <Badge tone={connected ? "success" : "neutral"}>
+        {connected ? "VPN marcada como ativa" : "Não confirmada"}
+      </Badge>
+      <button
+        type="button"
+        className="btn small"
+        onClick={toggle}
+        aria-label={`${connected ? "Marcar VPN como desconectada" : "Marcar VPN como conectada"} para este canal`}
+      >
+        {connected ? "Desmarcar" : "Marcar ativa"}
+      </button>
+    </div>
+  );
+}
+
 function DefaultsModal({
   channel,
   onClose,
@@ -298,6 +346,12 @@ export default function ChannelsPage() {
         Até lá, o canal fica em “Aguardando autorização” e as publicações dele
         serão bloqueadas.
       </Notice>
+      <Notice tone="neutral">
+        O status da VPN é independente por canal e apenas informativo. Conecte a
+        VPN pelo cliente corporativo no dispositivo; o AutoClip não coleta
+        credenciais nem verifica ou altera a conexão. As publicações continuam
+        usando o fluxo oficial do TikTok.
+      </Notice>
 
       {canEdit && (
         <form
@@ -371,6 +425,7 @@ export default function ChannelsPage() {
                 <th>Canal</th>
                 <th>Estado</th>
                 <th>Idioma / país</th>
+                <th>VPN corporativa</th>
                 <th>ID no TikTok</th>
                 <th>Autorizado em</th>
                 <th />
@@ -396,6 +451,9 @@ export default function ChannelsPage() {
                       {channelLocaleLabel(c) || (
                         <span className="muted">—</span>
                       )}
+                    </td>
+                    <td>
+                      <ChannelVpnStatus workspaceId={ws.id} channelId={c.id} />
                     </td>
                     <td className="muted">{c.provider_user_id ?? "—"}</td>
                     <td className="muted">{formatDateTime(c.authorized_at)}</td>

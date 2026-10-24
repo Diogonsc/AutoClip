@@ -17,19 +17,6 @@ export default function SettingsPage() {
 
   const [name, setName] = useState(ws.name);
   const [tz, setTz] = useState("America/Sao_Paulo");
-  const [corporateVpnConnected, setCorporateVpnConnected] = useState(false);
-
-  const vpnStorageKey = `autoclip:corporate-vpn-status:${ws.id}`;
-
-  useEffect(() => {
-    try {
-      setCorporateVpnConnected(
-        window.localStorage.getItem(vpnStorageKey) === "connected",
-      );
-    } catch {
-      setCorporateVpnConnected(false);
-    }
-  }, [vpnStorageKey]);
 
   useEffect(() => {
     if (settings.data) setTz(settings.data.default_timezone);
@@ -198,47 +185,6 @@ export default function SettingsPage() {
           {auto
             ? "Desligar publicação automática"
             : "Ligar publicação automática"}
-        </button>
-      </section>
-
-      <section className="card" style={{ marginTop: "1rem", maxWidth: 560 }}>
-        <h2>VPN corporativa</h2>
-        <Notice tone={corporateVpnConnected ? "success" : "neutral"}>
-          {corporateVpnConnected
-            ? "Você marcou a VPN corporativa como conectada neste dispositivo."
-            : "O status da VPN corporativa ainda não foi confirmado neste dispositivo."}
-        </Notice>
-        <p className="muted">
-          Conecte-se usando o cliente VPN aprovado pela sua empresa, fora do
-          AutoClip. Este indicador é apenas informativo e não verifica a
-          conexão. O AutoClip não solicita nem armazena endereço de proxy,
-          usuário, senha, chave ou certificado, e não configura túneis de rede.
-        </p>
-        <p className="muted">
-          A conexão VPN do dispositivo não altera a rota dos envios: as chamadas
-          de publicação são feitas pelo backend do AutoClip aos serviços
-          oficiais do TikTok. Este status fica salvo somente neste navegador e
-          neste workspace.
-        </p>
-        <button
-          type="button"
-          className={corporateVpnConnected ? "btn" : "btn primary"}
-          onClick={() => {
-            const next = !corporateVpnConnected;
-            setCorporateVpnConnected(next);
-            try {
-              window.localStorage.setItem(
-                vpnStorageKey,
-                next ? "connected" : "disconnected",
-              );
-            } catch {
-              // O indicador continua funcionando nesta sessão se o armazenamento local estiver indisponível.
-            }
-          }}
-        >
-          {corporateVpnConnected
-            ? "Marcar como desconectada"
-            : "Marcar VPN como conectada"}
         </button>
       </section>
     </>
