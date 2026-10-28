@@ -2,13 +2,20 @@ import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthProvider';
 import { useCurrentWorkspace, useWorkspace } from '../auth/WorkspaceProvider';
-import { Badge, Empty, ErrorBox, Field, Modal, Notice, PageHeader, Spinner } from '../components/ui';
+import { Library, Upload } from 'lucide-react';
+import { useConfirm } from '../components/confirm-provider';
+import { SelectField } from '../components/select-field';
+import { Badge, Empty, ErrorBox, Field, Modal, Notice, PageHeader, Spinner, TableCard, Toolbar } from '../components/ui';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { ApiError, toError, unwrap } from '../lib/api';
 import { formatBytes, formatDateTime, formatDuration, mediaStatusLabel, mediaTone } from '../lib/format';
 import { useMedia } from '../lib/hooks';
 import { supabase } from '../lib/supabase';
 import type { MediaAsset } from '../lib/types';
 
+const ALL = '__all__';
 const MAX_BYTES = 50 * 1024 * 1024; // limite do plano Free do Supabase
 const EXT_BY_MIME: Record<string, string> = {
   'video/mp4': 'mp4',
@@ -49,6 +56,7 @@ export default function MediaPage() {
   const { user } = useAuth();
   const { canEdit, canAdmin } = useWorkspace();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const media = useMedia(ws.id);
   const fileInput = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
@@ -166,98 +174,123 @@ export default function MediaPage() {
                   if (f) upload.mutate(f);
                 }}
               />
-              <button className="btn primary" disabled={upload.isPending} onClick={() => fileInput.current?.click()}>
+              <Button disabled={upload.isPending} onClick={() => fileInput.current?.click()}>
+                <Upload aria-hidden="true" />
                 {upload.isPending ? 'Enviando…' : 'Enviar vídeo'}
-              </button>
+              </Button>
             </>
           )
         }
       />
 
       <Notice tone="neutral">Formatos: MP4, MOV e WebM, até {formatBytes(MAX_BYTES)} por arquivo.</Notice>
-      {uploadError && <div className="alert danger">{uploadError}</div>}
+      <ErrorBox error={uploadError} />
       <ErrorBox error={media.error ?? remove.error} />
 
-      <div className="toolbar">
-        <input placeholder="Buscar por nome…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar" />
-        <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} aria-label="Filtrar por tag">
-          <option value="">Todas as tags</option>
-          {allTags.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Toolbar>
+        <Input
+          placeholder="Buscar por nome…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Buscar"
+          className="w-full sm:w-72"
+        />
+        <SelectField
+          aria-label="Filtrar por tag"
+          className="w-full sm:w-48"
+          value={tagFilter || ALL}
+          onValueChange={(v) => setTagFilter(v === ALL ? '' : v)}
+          options={[{ value: ALL, label: 'Todas as tags' }, ...allTags.map((t) => ({ value: t, label: t }))]}
+        />
+      </Toolbar>
 
       {media.isLoading ? (
         <Spinner />
       ) : visible.length === 0 ? (
-        <Empty title={all.length === 0 ? 'Biblioteca vazia' : 'Nenhum resultado'}>
+        <Empty title={all.length === 0 ? 'Biblioteca vazia' : 'Nenhum resultado'} icon={Library}>
           {all.length === 0 && canEdit ? 'Envie o primeiro vídeo.' : undefined}
         </Empty>
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Arquivo</th>
-                <th>Estado</th>
-                <th>Duração</th>
-                <th>Resolução</th>
-                <th>Tamanho</th>
-                <th>Tags</th>
-                <th>Enviado em</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <TableCard>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Arquivo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Duração</TableHead>
+                <TableHead>Resolução</TableHead>
+                <TableHead>Tamanho</TableHead>
+                <TableHead>Tags</TableHead>
+                <TableHead>Enviado em</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {visible.map((m) => (
-                <tr key={m.id}>
-                  <td>
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">
                     {m.original_filename}
-                    {m.category && <div className="muted">{m.category}</div>}
-                  </td>
-                  <td>
+                    {m.category && <div className="text-xs font-normal text-muted-foreground">{m.category}</div>}
+                  </TableCell>
+                  <TableCell>
                     <Badge tone={mediaTone(m.status)}>{mediaStatusLabel[m.status]}</Badge>
-                  </td>
-                  <td>{formatDuration(m.duration_seconds)}</td>
-                  <td>{m.width && m.height ? `${m.width}×${m.height}` : '—'}</td>
-                  <td>{formatBytes(m.file_size_bytes)}</td>
-                  <td>{m.tags.map((t) => <Badge key={t} tone="neutral">{t}</Badge>)}</td>
-                  <td className="muted">{formatDateTime(m.created_at)}</td>
-                  <td className="row-actions">
-                    {m.status === 'READY' && (
-                      <button className="btn small" onClick={() => void openPreview(m)}>
-                        Ver
-                      </button>
-                    )}{' '}
-                    {canEdit && (
-                      <button className="btn small" onClick={() => setEditing(m)}>
-                        Editar
-                      </button>
-                    )}{' '}
-                    {(canAdmin || (canEdit && m.status !== 'READY')) && (
-                      <button
-                        className="btn small danger"
-                        onClick={() => {
-                          if (window.confirm(`Excluir "${m.original_filename}"?`)) remove.mutate(m);
-                        }}
-                      >
-                        Excluir
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{formatDuration(m.duration_seconds)}</TableCell>
+                  <TableCell>{m.width && m.height ? `${m.width}×${m.height}` : '—'}</TableCell>
+                  <TableCell>{formatBytes(m.file_size_bytes)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {m.tags.map((t) => (
+                        <Badge key={t} tone="neutral">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{formatDateTime(m.created_at)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {m.status === 'READY' && (
+                        <Button variant="outline" size="sm" onClick={() => void openPreview(m)}>
+                          Ver
+                        </Button>
+                      )}
+                      {canEdit && (
+                        <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
+                          Editar
+                        </Button>
+                      )}
+                      {(canAdmin || (canEdit && m.status !== 'READY')) && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={async () => {
+                            if (
+                              await confirm({
+                                title: `Excluir "${m.original_filename}"?`,
+                                description: 'O vídeo será removido da biblioteca e do armazenamento.',
+                                confirmLabel: 'Excluir',
+                                destructive: true,
+                              })
+                            )
+                              remove.mutate(m);
+                          }}
+                        >
+                          Excluir
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableCard>
       )}
 
       {preview && (
         <Modal title={preview.asset.original_filename} onClose={() => setPreview(null)} wide>
-          <video className="preview" src={preview.url} controls autoPlay />
+          <video className="max-h-[70vh] w-full rounded-lg bg-black" src={preview.url} controls autoPlay />
         </Modal>
       )}
 
@@ -294,7 +327,7 @@ function EditMedia({
   return (
     <Modal title="Editar vídeo" onClose={onClose}>
       <form
-        className="form"
+        className="grid gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           onSave({
@@ -305,22 +338,22 @@ function EditMedia({
         }}
       >
         <Field label="Nome">
-          <input value={filename} onChange={(e) => setFilename(e.target.value)} required />
+          <Input value={filename} onChange={(e) => setFilename(e.target.value)} required />
         </Field>
         <Field label="Categoria">
-          <input value={category} onChange={(e) => setCategory(e.target.value)} />
+          <Input value={category} onChange={(e) => setCategory(e.target.value)} />
         </Field>
         <Field label="Tags" hint="Separadas por vírgula.">
-          <input value={tags} onChange={(e) => setTags(e.target.value)} />
+          <Input value={tags} onChange={(e) => setTags(e.target.value)} />
         </Field>
         <ErrorBox error={error} />
-        <div className="actions end">
-          <button type="button" className="btn" onClick={onClose}>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button className="btn primary" disabled={busy}>
+          </Button>
+          <Button type="submit" disabled={busy}>
             Salvar
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -2,7 +2,20 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
-import { Empty, ErrorBox, PageHeader, Spinner } from "../components/ui";
+import { Users } from "lucide-react";
+import { useConfirm } from "../components/confirm-provider";
+import { SelectField } from "../components/select-field";
+import { Empty, ErrorBox, PageHeader, Spinner, TableCard } from "../components/ui";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 import { toError, unwrap } from "../lib/api";
 import { formatDateTime, roleLabel } from "../lib/format";
 import { useProfiles } from "../lib/hooks";
@@ -16,6 +29,7 @@ export default function MembersPage() {
   const { user } = useAuth();
   const { canAdmin, isOwner, refresh } = useWorkspace();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("EDITOR");
 
@@ -89,35 +103,31 @@ export default function MembersPage() {
 
       {canAdmin && (
         <form
-          className="toolbar"
+          className="flex flex-wrap items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             add.mutate();
           }}
         >
-          <input
+          <Input
             type="email"
             placeholder="E-mail de um usuário já cadastrado"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             aria-label="E-mail"
-            style={{ minWidth: "min(280px, 100%)" }}
+            className="w-full sm:w-80"
           />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as Role)}
+          <SelectField
             aria-label="Papel"
-          >
-            {assignable.map((r) => (
-              <option key={r} value={r}>
-                {roleLabel[r]}
-              </option>
-            ))}
-          </select>
-          <button className="btn primary" disabled={add.isPending}>
+            className="w-full sm:w-48"
+            value={role}
+            onValueChange={(v) => setRole(v as Role)}
+            options={assignable.map((r) => ({ value: r, label: roleLabel[r] }))}
+          />
+          <Button type="submit" disabled={add.isPending}>
             Adicionar
-          </button>
+          </Button>
         </form>
       )}
 
@@ -130,76 +140,87 @@ export default function MembersPage() {
       {members.isLoading ? (
         <Spinner />
       ) : (members.data ?? []).length === 0 ? (
-        <Empty title="Sem membros" />
+        <Empty title="Sem membros" icon={Users} />
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Papel</th>
-                <th>Desde</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <TableCard>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Papel</TableHead>
+                <TableHead>Desde</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {members.data!.map((m) => {
                 const isMe = m.user_id === user?.id;
+                const name = profiles.data?.[m.user_id] ?? "—";
                 return (
-                  <tr key={m.user_id}>
-                    <td>
-                      {profiles.data?.[m.user_id] ?? "—"}{" "}
-                      {isMe && <span className="muted">(você)</span>}
-                    </td>
-                    <td>
+                  <TableRow key={m.user_id}>
+                    <TableCell className="font-medium">
+                      {name}{" "}
+                      {isMe && (
+                        <span className="font-normal text-muted-foreground">
+                          (você)
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {canManage(m) ? (
-                        <select
+                        <SelectField
+                          aria-label={`Papel de ${profiles.data?.[m.user_id] ?? "membro"}`}
+                          className="w-44"
                           value={m.role}
-                          style={{ width: "auto" }}
-                          onChange={(e) =>
+                          onValueChange={(next) =>
                             changeRole.mutate({
                               user_id: m.user_id,
-                              role: e.target.value as Role,
+                              role: next as Role,
                             })
                           }
-                          aria-label={`Papel de ${profiles.data?.[m.user_id] ?? "membro"}`}
-                        >
-                          {(isOwner
-                            ? ROLES
-                            : ROLES.filter((r) => r !== "OWNER")
-                          ).map((r) => (
-                            <option key={r} value={r}>
-                              {roleLabel[r]}
-                            </option>
-                          ))}
-                        </select>
+                          options={assignable.map((r) => ({
+                            value: r,
+                            label: roleLabel[r],
+                          }))}
+                        />
                       ) : (
                         roleLabel[m.role]
                       )}
-                    </td>
-                    <td className="muted">{formatDateTime(m.created_at)}</td>
-                    <td className="row-actions">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDateTime(m.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
                       {(canManage(m) || isMe) && (
-                        <button
-                          className="btn small danger"
-                          onClick={() => {
-                            const msg = isMe
-                              ? "Sair deste workspace?"
-                              : "Remover este membro?";
-                            if (window.confirm(msg))
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={async () => {
+                            if (
+                              await confirm({
+                                title: isMe
+                                  ? "Sair deste workspace?"
+                                  : "Remover este membro?",
+                                description: isMe
+                                  ? "Você perderá o acesso a este workspace."
+                                  : `${name} perderá o acesso a este workspace.`,
+                                confirmLabel: isMe ? "Sair" : "Remover",
+                                destructive: true,
+                              })
+                            )
                               removeMember.mutate(m.user_id);
                           }}
                         >
                           {isMe ? "Sair" : "Remover"}
-                        </button>
+                        </Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableCard>
       )}
     </>
   );

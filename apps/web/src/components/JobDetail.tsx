@@ -14,7 +14,10 @@ import type {
   PublicationEvent,
   PublicationJob,
 } from '../lib/types';
-import { Badge, ErrorBox, Modal, Spinner } from './ui';
+import { useConfirm } from './confirm-provider';
+import { Badge, ErrorBox, Modal, Notice, Spinner } from './ui';
+import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 
 export default function JobDetail({
   job,
@@ -30,6 +33,7 @@ export default function JobDetail({
   const ws = useCurrentWorkspace();
   const { canEdit } = useWorkspace();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const resolve = useMutation({
     mutationFn: async (outcome: 'PUBLISHED' | 'NOT_PUBLISHED') =>
       unwrap(await supabase.rpc('resolve_unknown_job', { p_job: job.id, p_outcome: outcome })),
@@ -65,31 +69,31 @@ export default function JobDetail({
 
   return (
     <Modal title="Detalhes da publicação" onClose={onClose} wide>
-      <dl className="kv">
-        <dt>Estado</dt>
-        <dd>
+      <dl className="m-0 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
+        <dt className="text-muted-foreground">Estado</dt>
+        <dd className="m-0">
           <Badge tone={publicationTone(job.status)}>{publicationStatusLabel[job.status]}</Badge>
         </dd>
-        <dt>Canal</dt>
-        <dd>{channel?.display_name ?? '—'}</dd>
-        <dt>Vídeo</dt>
-        <dd>{media?.original_filename ?? '—'}</dd>
-        <dt>Legenda</dt>
-        <dd>{job.caption || '—'}</dd>
-        <dt>Agendada para</dt>
-        <dd>
+        <dt className="text-muted-foreground">Canal</dt>
+        <dd className="m-0">{channel?.display_name ?? '—'}</dd>
+        <dt className="text-muted-foreground">Vídeo</dt>
+        <dd className="m-0">{media?.original_filename ?? '—'}</dd>
+        <dt className="text-muted-foreground">Legenda</dt>
+        <dd className="m-0 break-words whitespace-pre-wrap">{job.caption || '—'}</dd>
+        <dt className="text-muted-foreground">Agendada para</dt>
+        <dd className="m-0">
           {formatDateTime(job.scheduled_at, job.timezone)} ({job.timezone})
         </dd>
-        <dt>Tentativas</dt>
-        <dd>
+        <dt className="text-muted-foreground">Tentativas</dt>
+        <dd className="m-0">
           {job.attempt_count} de {job.max_attempts}
         </dd>
-        <dt>ID remoto</dt>
-        <dd>{job.remote_publish_id ?? '—'}</dd>
+        <dt className="text-muted-foreground">ID remoto</dt>
+        <dd className="m-0 break-all">{job.remote_publish_id ?? '—'}</dd>
         {job.last_error_code && (
           <>
-            <dt>Último erro</dt>
-            <dd>
+            <dt className="text-muted-foreground">Último erro</dt>
+            <dd className="m-0">
               <code>{job.last_error_code}</code> {job.last_error_message}
             </dd>
           </>
@@ -97,80 +101,105 @@ export default function JobDetail({
       </dl>
 
       {job.status === 'UNKNOWN' && (
-        <div className="alert warning">
-          O resultado desta publicação não pôde ser confirmado. Ela não será reenviada automaticamente, para evitar
-          duplicidade; é preciso conferir o estado no TikTok antes de agir.
+        <Notice tone="warning">
+          <p className="m-0">
+            O resultado desta publicação não pôde ser confirmado. Ela não será reenviada automaticamente, para evitar
+            duplicidade; é preciso conferir o estado no TikTok antes de agir.
+          </p>
           {canEdit && (
             <>
-              <p style={{ margin: '0.5rem 0' }}>Depois de conferir no TikTok, informe o que aconteceu:</p>
-              <div className="actions">
-                <button
-                  className="btn"
+              <p className="mt-2 mb-2">Depois de conferir no TikTok, informe o que aconteceu:</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
                   disabled={resolve.isPending}
-                  onClick={() => {
-                    if (window.confirm('Confirmar que o vídeo JÁ FOI publicado/enviado ao TikTok?')) resolve.mutate('PUBLISHED');
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: 'O vídeo já foi publicado?',
+                        description: 'Confirme que o vídeo JÁ FOI publicado/enviado ao TikTok.',
+                        confirmLabel: 'Sim, foi publicado',
+                      })
+                    )
+                      resolve.mutate('PUBLISHED');
                   }}
                 >
                   O vídeo foi publicado
-                </button>
-                <button
-                  className="btn"
+                </Button>
+                <Button
+                  variant="outline"
                   disabled={resolve.isPending}
-                  onClick={() => {
-                    if (window.confirm('Confirmar que o vídeo NÃO está no TikTok? A publicação será reagendada para agora e enviada de novo.'))
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: 'Reenviar o vídeo?',
+                        description:
+                          'Confirme que o vídeo NÃO está no TikTok. A publicação será reagendada para agora e enviada de novo.',
+                        confirmLabel: 'Reenviar',
+                        destructive: true,
+                      })
+                    )
                       resolve.mutate('NOT_PUBLISHED');
                   }}
                 >
                   Não foi publicado — reenviar
-                </button>
+                </Button>
               </div>
-              <ErrorBox error={resolve.error} />
+              <div className="mt-2">
+                <ErrorBox error={resolve.error} />
+              </div>
             </>
           )}
-        </div>
+        </Notice>
       )}
 
-      <h2>Tentativas</h2>
-      {attempts.isLoading ? (
-        <Spinner />
-      ) : (attempts.data ?? []).length === 0 ? (
-        <p className="muted">Nenhuma tentativa registrada.</p>
-      ) : (
-        <ul className="timeline">
-          {attempts.data!.map((a) => (
-            <li key={a.id}>
-              <time>{formatDateTime(a.started_at)}</time>
-              <span>
-                #{a.attempt_number} — {a.result ?? 'em andamento'}
-                {a.error_code ? ` (${a.error_code})` : ''}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Separator />
 
-      <h2 style={{ marginTop: '1rem' }}>Eventos</h2>
-      {events.isLoading ? (
-        <Spinner />
-      ) : (events.data ?? []).length === 0 ? (
-        <p className="muted">Sem eventos.</p>
-      ) : (
-        <ul className="timeline">
-          {events.data!.map((ev) => {
-            const p = ev.event_payload as { from?: string | null; to?: string };
-            const text =
-              ev.event_type === 'STATUS_CHANGED'
-                ? `${p.from ? statusText(p.from) + ' → ' : 'Criada como '}${statusText(p.to)}`
-                : ev.event_type;
-            return (
-              <li key={ev.id}>
-                <time>{formatDateTime(ev.created_at)}</time>
-                <span>{text}</span>
+      <section className="grid gap-2">
+        <h2 className="m-0 font-heading text-base font-medium">Tentativas</h2>
+        {attempts.isLoading ? (
+          <Spinner />
+        ) : (attempts.data ?? []).length === 0 ? (
+          <p className="m-0 text-sm text-muted-foreground">Nenhuma tentativa registrada.</p>
+        ) : (
+          <ul className="m-0 grid list-none gap-0 p-0">
+            {attempts.data!.map((a) => (
+              <li key={a.id} className="grid gap-0.5 border-b py-2 text-sm last:border-b-0 sm:grid-cols-[11rem_1fr] sm:gap-3">
+                <time className="text-xs text-muted-foreground sm:pt-0.5">{formatDateTime(a.started_at)}</time>
+                <span>
+                  #{a.attempt_number} — {a.result ?? 'em andamento'}
+                  {a.error_code ? ` (${a.error_code})` : ''}
+                </span>
               </li>
-            );
-          })}
-        </ul>
-      )}
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="grid gap-2">
+        <h2 className="m-0 font-heading text-base font-medium">Eventos</h2>
+        {events.isLoading ? (
+          <Spinner />
+        ) : (events.data ?? []).length === 0 ? (
+          <p className="m-0 text-sm text-muted-foreground">Sem eventos.</p>
+        ) : (
+          <ul className="m-0 grid list-none gap-0 p-0">
+            {events.data!.map((ev) => {
+              const p = ev.event_payload as { from?: string | null; to?: string };
+              const text =
+                ev.event_type === 'STATUS_CHANGED'
+                  ? `${p.from ? statusText(p.from) + ' → ' : 'Criada como '}${statusText(p.to)}`
+                  : ev.event_type;
+              return (
+                <li key={ev.id} className="grid gap-0.5 border-b py-2 text-sm last:border-b-0 sm:grid-cols-[11rem_1fr] sm:gap-3">
+                  <time className="text-xs text-muted-foreground sm:pt-0.5">{formatDateTime(ev.created_at)}</time>
+                  <span>{text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </Modal>
   );
 }

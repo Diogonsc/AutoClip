@@ -3,6 +3,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import JobDetail from "../components/JobDetail";
 import PublicationForm from "../components/PublicationForm";
+import { Send } from "lucide-react";
+import { useConfirm } from "../components/confirm-provider";
+import { SelectField } from "../components/select-field";
 import {
   Badge,
   Empty,
@@ -10,6 +13,8 @@ import {
   Notice,
   PageHeader,
   Spinner,
+  TableCard,
+  Toolbar,
 } from "../components/ui";
 import { unwrap } from "../lib/api";
 import {
@@ -23,13 +28,6 @@ import { supabase } from "../lib/supabase";
 import type { PublicationJob, PublicationStatus } from "../lib/types";
 import { Button } from "../components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -42,6 +40,7 @@ export default function PublicationsPage() {
   const ws = useCurrentWorkspace();
   const { canEdit } = useWorkspace();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const jobs = useJobs(ws.id);
   const channels = useChannels(ws.id);
   const media = useMedia(ws.id);
@@ -95,42 +94,31 @@ export default function PublicationsPage() {
       )}
       <ErrorBox error={jobs.error ?? cancel.error ?? remove.error} />
 
-      <div className="toolbar">
-        <Select
+      <Toolbar>
+        <SelectField
+          aria-label="Filtrar por estado"
+          className="w-full sm:w-64"
           value={filter || "all"}
           onValueChange={(value) =>
-            setFilter(
-              value === "all" ? "" : ((value ?? "") as "" | PublicationStatus),
-            )
+            setFilter(value === "all" ? "" : (value as PublicationStatus))
           }
-        >
-          <SelectTrigger
-            aria-label="Filtrar por estado"
-            className="w-full sm:w-56"
-          >
-            <SelectValue placeholder="Todos os estados" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os estados</SelectItem>
-            {(Object.keys(publicationStatusLabel) as PublicationStatus[]).map(
-              (s) => (
-                <SelectItem key={s} value={s}>
-                  {publicationStatusLabel[s]}
-                </SelectItem>
-              ),
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+          options={[
+            { value: "all", label: "Todos os estados" },
+            ...(Object.keys(publicationStatusLabel) as PublicationStatus[]).map(
+              (st) => ({ value: st, label: publicationStatusLabel[st] }),
+            ),
+          ]}
+        />
+      </Toolbar>
 
       {jobs.isLoading ? (
         <Spinner />
       ) : list.length === 0 ? (
-        <Empty title="Nenhuma publicação">
+        <Empty title="Nenhuma publicação" icon={Send}>
           {canEdit ? "Clique em “Nova publicação” para começar." : undefined}
         </Empty>
       ) : (
-        <div className="table-wrap">
+        <TableCard>
           <Table>
             <TableHeader>
               <TableRow>
@@ -165,14 +153,15 @@ export default function PublicationsPage() {
                         {publicationStatusLabel[j.status]}
                       </Badge>
                     </TableCell>
-                    <TableCell className="row-actions">
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-1.5">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setDetail(j)}
                       >
                         Detalhes
-                      </Button>{" "}
+                      </Button>
                       {editable && (
                         <Button
                           variant="outline"
@@ -181,39 +170,56 @@ export default function PublicationsPage() {
                         >
                           Editar
                         </Button>
-                      )}{" "}
+                      )}
                       {editable && j.status !== "DRAFT" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            if (window.confirm("Cancelar esta publicação?"))
+                          onClick={async () => {
+                            if (
+                              await confirm({
+                                title: "Cancelar esta publicação?",
+                                description:
+                                  "Ela deixa de ser enviada ao TikTok no horário agendado.",
+                                confirmLabel: "Cancelar publicação",
+                                cancelLabel: "Voltar",
+                                destructive: true,
+                              })
+                            )
                               cancel.mutate(j.id);
                           }}
                         >
                           Cancelar
                         </Button>
-                      )}{" "}
+                      )}
                       {canEdit &&
                         (j.status === "DRAFT" || j.status === "CANCELLED") && (
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => {
-                              if (window.confirm("Excluir definitivamente?"))
+                            onClick={async () => {
+                              if (
+                                await confirm({
+                                  title: "Excluir definitivamente?",
+                                  description: "Esta ação não pode ser desfeita.",
+                                  confirmLabel: "Excluir",
+                                  destructive: true,
+                                })
+                              )
                                 remove.mutate(j.id);
                             }}
                           >
                             Excluir
                           </Button>
                         )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
-        </div>
+        </TableCard>
       )}
 
       {formJob && (

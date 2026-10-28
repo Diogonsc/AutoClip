@@ -18,18 +18,13 @@ import {
   utcToZonedInput,
   zonedToUtc,
 } from "../lib/time";
+import { SelectField } from "./select-field";
 import { ErrorBox, Field, Modal, Notice } from "./ui";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 
 const PRIVACY_LABEL: Record<string, string> = {
   PUBLIC_TO_EVERYONE: "Todos",
@@ -178,19 +173,22 @@ export default function PublicationForm({
       wide
     >
       <form
-        className="form"
+        className="grid gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           submit("SCHEDULED");
         }}
       >
-        <div className="row">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Canal">
-            <Select
+            <SelectField
               value={channelId}
-              onValueChange={(selectedId) => {
-                if (!selectedId) return;
-                const nextId = selectedId;
+              required
+              options={(channels.data ?? []).map((c) => ({
+                value: c.id,
+                label: `${c.display_name} — ${channelStatusLabel[c.connection_status]}`,
+              }))}
+              onValueChange={(nextId) => {
                 const prev = (channels.data ?? []).find(
                   (c) => c.id === channelId,
                 );
@@ -203,36 +201,17 @@ export default function PublicationForm({
                   setCaption(buildDefaultCaption(next));
                 setChannelId(nextId);
               }}
-              required
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(channels.data ?? []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.display_name} — {channelStatusLabel[c.connection_status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </Field>
           <Field label="Vídeo" hint="Somente vídeos prontos aparecem aqui.">
-            <Select
+            <SelectField
               value={mediaId}
-              onValueChange={(value) => value && setMediaId(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione…" />
-              </SelectTrigger>
-              <SelectContent>
-                {readyMedia.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.original_filename}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onValueChange={setMediaId}
+              options={readyMedia.map((m) => ({
+                value: m.id,
+                label: m.original_filename,
+              }))}
+            />
           </Field>
         </div>
 
@@ -252,10 +231,12 @@ export default function PublicationForm({
             placeholder="Escreva a legenda…"
             maxLength={2200}
           />
-          <span className="muted">{caption.length}/2200</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            {caption.length}/2200
+          </span>
         </Field>
 
-        <div className="row">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Data e hora">
             <Input
               type="datetime-local"
@@ -264,18 +245,13 @@ export default function PublicationForm({
             />
           </Field>
           <Field label="Fuso horário">
-            <Select value={tz} onValueChange={(value) => value && setTz(value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(tzList.includes(tz) ? tzList : [tz, ...tzList]).map((z) => (
-                  <SelectItem key={z} value={z}>
-                    {z}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectField
+              value={tz}
+              onValueChange={setTz}
+              options={(tzList.includes(tz) ? tzList : [tz, ...tzList]).map(
+                (z) => ({ value: z, label: z }),
+              )}
+            />
           </Field>
         </div>
 
@@ -291,13 +267,14 @@ export default function PublicationForm({
             Selecione um canal conectado para carregar as opções de privacidade.
           </Notice>
         ) : !info ? (
-          <div>
+          <div className="grid gap-3">
             <Notice tone="warning">
               As opções do criador ainda não foram carregadas para este canal.
             </Notice>
             <Button
               type="button"
               variant="outline"
+              className="w-fit"
               disabled={loadInfo.isPending}
               onClick={() => loadInfo.mutate()}
             >
@@ -306,28 +283,21 @@ export default function PublicationForm({
             <ErrorBox error={loadInfo.error} />
           </div>
         ) : (
-          <fieldset className="form">
-            <legend>
+          <fieldset className="grid gap-4 rounded-lg border p-4">
+            <legend className="px-1 text-sm font-medium">
               Privacidade e interações (opções reais do seu TikTok)
             </legend>
             <Field label="Quem pode ver">
-              <Select
-                value={privacy || null}
-                onValueChange={(value) => setPrivacy(value ?? "")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {info.privacy_level_options.map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {PRIVACY_LABEL[o] ?? o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectField
+                value={privacy}
+                onValueChange={setPrivacy}
+                options={info.privacy_level_options.map((o) => ({
+                  value: o,
+                  label: PRIVACY_LABEL[o] ?? o,
+                }))}
+              />
             </Field>
-            <label className="actions">
+            <Label className="font-normal">
               <Checkbox
                 checked={allowComment}
                 disabled={info.comment_disabled}
@@ -337,8 +307,8 @@ export default function PublicationForm({
                 Permitir comentários
                 {info.comment_disabled ? " (desativado na sua conta)" : ""}
               </span>
-            </label>
-            <label className="actions">
+            </Label>
+            <Label className="font-normal">
               <Checkbox
                 checked={allowDuet}
                 disabled={info.duet_disabled}
@@ -348,8 +318,8 @@ export default function PublicationForm({
                 Permitir dueto
                 {info.duet_disabled ? " (desativado na sua conta)" : ""}
               </span>
-            </label>
-            <label className="actions">
+            </Label>
+            <Label className="font-normal">
               <Checkbox
                 checked={allowStitch}
                 disabled={info.stitch_disabled}
@@ -359,25 +329,26 @@ export default function PublicationForm({
                 Permitir stitch
                 {info.stitch_disabled ? " (desativado na sua conta)" : ""}
               </span>
-            </label>
-            <label className="actions">
+            </Label>
+            <Label className="font-normal">
               <Checkbox
                 checked={brandOrganic}
                 onCheckedChange={(checked) => setBrandOrganic(checked === true)}
               />
               <span>Promove a minha própria marca</span>
-            </label>
-            <label className="actions">
+            </Label>
+            <Label className="font-normal">
               <Checkbox
                 checked={brandContent}
                 onCheckedChange={(checked) => setBrandContent(checked === true)}
               />
               <span>Conteúdo de marca (parceria paga)</span>
-            </label>
+            </Label>
             <Button
               type="button"
               variant="outline"
               size="sm"
+              className="w-fit"
               disabled={loadInfo.isPending}
               onClick={() => loadInfo.mutate()}
             >
@@ -386,19 +357,19 @@ export default function PublicationForm({
           </fieldset>
         )}
 
-        <label className="actions">
+        <Label className="font-normal">
           <Checkbox
             checked={confirmed}
             onCheckedChange={(checked) => setConfirmed(checked === true)}
           />
           <span>Revisei canal, vídeo, legenda e horário desta publicação.</span>
-        </label>
+        </Label>
 
         {(localError || save.error) && (
           <ErrorBox error={localError ? new Error(localError) : save.error} />
         )}
 
-        <div className="actions end">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
@@ -410,7 +381,9 @@ export default function PublicationForm({
           >
             Salvar rascunho
           </Button>
-          <Button disabled={save.isPending}>Agendar</Button>
+          <Button type="submit" disabled={save.isPending}>
+            Agendar
+          </Button>
         </div>
       </form>
     </Modal>

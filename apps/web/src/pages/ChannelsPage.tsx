@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
+import { Radio } from "lucide-react";
+import { useConfirm } from "../components/confirm-provider";
+import { SelectField } from "../components/select-field";
 import {
   Badge,
   Empty,
@@ -11,7 +14,20 @@ import {
   Notice,
   PageHeader,
   Spinner,
+  TableCard,
+  Toolbar,
 } from "../components/ui";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { Textarea } from "../components/ui/textarea";
 import { invokeFunction, unwrap } from "../lib/api";
 import {
   CAPTION_MAX,
@@ -26,6 +42,10 @@ import { channelStatusLabel, channelTone, formatDateTime } from "../lib/format";
 import { useChannels } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { Channel } from "../lib/types";
+
+/** Valor-sentinela para "Não definido" (o Select não aceita string vazia como opção). */
+const UNSET = "__unset__";
+const ALL = "__all__";
 
 interface DefaultsForm {
   language: string;
@@ -66,18 +86,19 @@ function ChannelVpnStatus({
   }
 
   return (
-    <div className="channel-vpn-status">
+    <div className="flex flex-wrap items-center gap-2">
       <Badge tone={connected ? "success" : "neutral"}>
         {connected ? "VPN marcada como ativa" : "Não confirmada"}
       </Badge>
-      <button
+      <Button
         type="button"
-        className="btn small"
+        variant="outline"
+        size="xs"
         onClick={toggle}
         aria-label={`${connected ? "Marcar VPN como desconectada" : "Marcar VPN como conectada"} para este canal`}
       >
         {connected ? "Desmarcar" : "Marcar ativa"}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -139,49 +160,50 @@ function DefaultsModal({
       wide
     >
       <form
-        className="form"
+        className="grid gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           setLocalError(null);
           save.mutate();
         }}
       >
-        <div className="row">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Idioma" hint="Só para organizar a lista.">
-            <select
-              value={form.language}
-              onChange={(e) => setForm({ ...form, language: e.target.value })}
-            >
-              <option value="">Não definido</option>
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.name} ({l.code})
-                </option>
-              ))}
-            </select>
+            <SelectField
+              value={form.language || UNSET}
+              onValueChange={(v) =>
+                setForm({ ...form, language: v === UNSET ? "" : v })
+              }
+              options={[
+                { value: UNSET, label: "Não definido" },
+                ...LANGUAGES.map((l) => ({
+                  value: l.code,
+                  label: `${l.name} (${l.code})`,
+                })),
+              ]}
+            />
           </Field>
           <Field
             label="País"
             hint="Só para organizar a lista; não muda como a publicação é feita."
           >
-            <select
-              value={form.country}
-              onChange={(e) => setForm({ ...form, country: e.target.value })}
-            >
-              <option value="">Não definido</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <SelectField
+              value={form.country || UNSET}
+              onValueChange={(v) =>
+                setForm({ ...form, country: v === UNSET ? "" : v })
+              }
+              options={[
+                { value: UNSET, label: "Não definido" },
+                ...COUNTRIES.map((c) => ({ value: c.code, label: c.name })),
+              ]}
+            />
           </Field>
         </div>
         <Field
           label="Legenda padrão"
           hint="Pré-preenchida em novas publicações deste canal; você pode editar antes de agendar."
         >
-          <textarea
+          <Textarea
             value={form.default_caption}
             onChange={(e) =>
               setForm({ ...form, default_caption: e.target.value })
@@ -189,7 +211,7 @@ function DefaultsModal({
             maxLength={CAPTION_MAX}
             placeholder="Ex.: Boa noite."
           />
-          <span className="muted">
+          <span className="text-xs font-normal text-muted-foreground">
             {form.default_caption.length}/{CAPTION_MAX}
           </span>
         </Field>
@@ -197,7 +219,7 @@ function DefaultsModal({
           label="Hashtags padrão"
           hint="Separe por espaço ou vírgula. O # é opcional: ajustamos o formato ao salvar."
         >
-          <input
+          <Input
             value={form.default_hashtags}
             onChange={(e) =>
               setForm({ ...form, default_hashtags: e.target.value })
@@ -207,13 +229,59 @@ function DefaultsModal({
           />
         </Field>
         {localError && <ErrorBox error={new Error(localError)} />}
-        <div className="actions end">
-          <button type="button" className="btn" onClick={onClose}>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button className="btn primary" disabled={save.isPending}>
+          </Button>
+          <Button type="submit" disabled={save.isPending}>
             Salvar
-          </button>
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function RenameModal({
+  channel,
+  busy,
+  onClose,
+  onSave,
+}: {
+  channel: Channel;
+  busy: boolean;
+  onClose: () => void;
+  onSave: (name: string) => void;
+}) {
+  const [value, setValue] = useState(channel.display_name);
+
+  return (
+    <Modal title="Renomear canal" onClose={onClose}>
+      <form
+        className="grid gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const next = value.trim();
+          if (next && next !== channel.display_name) onSave(next);
+          else onClose();
+        }}
+      >
+        <Field label="Novo nome do canal">
+          <Input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            maxLength={120}
+            required
+            autoFocus
+          />
+        </Field>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={busy || !value.trim()}>
+            Salvar
+          </Button>
         </div>
       </form>
     </Modal>
@@ -255,9 +323,11 @@ export default function ChannelsPage() {
   const ws = useCurrentWorkspace();
   const { canEdit, canAdmin } = useWorkspace();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const channels = useChannels(ws.id);
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<Channel | null>(null);
+  const [renaming, setRenaming] = useState<Channel | null>(null);
   const [countryFilter, setCountryFilter] = useState("");
   const [params, setParams] = useSearchParams();
   const result = params.get("tiktok");
@@ -293,7 +363,10 @@ export default function ChannelsPage() {
       unwrap(
         await supabase.from("channels").update({ display_name }).eq("id", id),
       ),
-    onSuccess: refresh,
+    onSuccess: () => {
+      setRenaming(null);
+      return refresh();
+    },
   });
 
   const connect = useMutation({
@@ -332,12 +405,15 @@ export default function ChannelsPage() {
       {result && RESULT_MESSAGE[result] && (
         <Notice tone={RESULT_MESSAGE[result].tone}>
           {RESULT_MESSAGE[result].text}{" "}
-          <button
-            className="btn small"
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            className="ml-1 align-middle"
             onClick={() => setParams({}, { replace: true })}
           >
             Fechar
-          </button>
+          </Button>
         </Notice>
       )}
       <Notice tone="info">
@@ -355,49 +431,45 @@ export default function ChannelsPage() {
 
       {canEdit && (
         <form
-          className="toolbar"
+          className="flex flex-wrap items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             if (name.trim()) add.mutate(name.trim());
           }}
         >
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nome do canal (ex.: @meucanal)"
             maxLength={120}
             aria-label="Nome do canal"
+            className="w-full sm:w-80"
           />
-          <button
-            className="btn primary"
-            disabled={add.isPending || !name.trim()}
-          >
+          <Button type="submit" disabled={add.isPending || !name.trim()}>
             Adicionar canal
-          </button>
+          </Button>
         </form>
       )}
 
       {(channels.data ?? []).some((c) => c.country) && (
-        <div className="toolbar">
-          <select
-            value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
+        <Toolbar>
+          <SelectField
             aria-label="Filtrar por país"
-          >
-            <option value="">Todos os países</option>
-            {[
-              ...new Set(
-                (channels.data ?? [])
-                  .map((c) => c.country)
-                  .filter((c): c is string => !!c),
-              ),
-            ].map((code) => (
-              <option key={code} value={code}>
-                {countryName(code)}
-              </option>
-            ))}
-          </select>
-        </div>
+            className="w-full sm:w-56"
+            value={countryFilter || ALL}
+            onValueChange={(v) => setCountryFilter(v === ALL ? "" : v)}
+            options={[
+              { value: ALL, label: "Todos os países" },
+              ...[
+                ...new Set(
+                  (channels.data ?? [])
+                    .map((c) => c.country)
+                    .filter((c): c is string => !!c),
+                ),
+              ].map((code) => ({ value: code, label: countryName(code) })),
+            ]}
+          />
+        </Toolbar>
       )}
 
       <ErrorBox
@@ -414,122 +486,137 @@ export default function ChannelsPage() {
       {channels.isLoading ? (
         <Spinner />
       ) : (channels.data ?? []).length === 0 ? (
-        <Empty title="Nenhum canal cadastrado">
+        <Empty title="Nenhum canal cadastrado" icon={Radio}>
           Adicione o primeiro canal acima.
         </Empty>
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Canal</th>
-                <th>Estado</th>
-                <th>Idioma / país</th>
-                <th>VPN corporativa</th>
-                <th>ID no TikTok</th>
-                <th>Autorizado em</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <TableCard>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Canal</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Idioma / país</TableHead>
+                <TableHead>VPN corporativa</TableHead>
+                <TableHead>ID no TikTok</TableHead>
+                <TableHead>Autorizado em</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {channels
                 .data!.filter(
                   (c) => !countryFilter || c.country === countryFilter,
                 )
                 .map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.display_name}</td>
-                    <td>
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium">
+                      {c.display_name}
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
                       <Badge tone={channelTone(c.connection_status)}>
                         {channelStatusLabel[c.connection_status]}
                       </Badge>
                       {c.last_error_message && (
-                        <div className="muted">{c.last_error_message}</div>
+                        <div className="mt-1 max-w-xs text-xs text-muted-foreground">
+                          {c.last_error_message}
+                        </div>
                       )}
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       {channelLocaleLabel(c) || (
-                        <span className="muted">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <ChannelVpnStatus workspaceId={ws.id} channelId={c.id} />
-                    </td>
-                    <td className="muted">{c.provider_user_id ?? "—"}</td>
-                    <td className="muted">{formatDateTime(c.authorized_at)}</td>
-                    <td className="row-actions">
-                      {canEdit && (
-                        <button
-                          className="btn small primary"
-                          disabled={connect.isPending}
-                          onClick={() => connect.mutate(c.id)}
-                        >
-                          {c.connection_status === "CONNECTED"
-                            ? "Reconectar"
-                            : "Conectar"}
-                        </button>
-                      )}{" "}
-                      {canAdmin &&
-                        c.connection_status !== "PENDING_AUTH" &&
-                        c.connection_status !== "REVOKED" && (
-                          <button
-                            className="btn small"
-                            disabled={disconnect.isPending}
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Desconectar "${c.display_name}" do TikTok? Publicações pendentes deste canal serão bloqueadas.`,
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {c.provider_user_id ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDateTime(c.authorized_at)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            disabled={connect.isPending}
+                            onClick={() => connect.mutate(c.id)}
+                          >
+                            {c.connection_status === "CONNECTED"
+                              ? "Reconectar"
+                              : "Conectar"}
+                          </Button>
+                        )}
+                        {canAdmin &&
+                          c.connection_status !== "PENDING_AUTH" &&
+                          c.connection_status !== "REVOKED" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={disconnect.isPending}
+                              onClick={async () => {
+                                if (
+                                  await confirm({
+                                    title: `Desconectar "${c.display_name}"?`,
+                                    description:
+                                      "Publicações pendentes deste canal serão bloqueadas.",
+                                    confirmLabel: "Desconectar",
+                                    destructive: true,
+                                  })
                                 )
+                                  disconnect.mutate(c.id);
+                              }}
+                            >
+                              Desconectar
+                            </Button>
+                          )}
+                        {canEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditing(c)}
+                          >
+                            Padrões
+                          </Button>
+                        )}
+                        {canEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRenaming(c)}
+                          >
+                            Renomear
+                          </Button>
+                        )}
+                        {canAdmin && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={async () => {
+                              if (
+                                await confirm({
+                                  title: `Excluir o canal "${c.display_name}"?`,
+                                  description: "Esta ação não pode ser desfeita.",
+                                  confirmLabel: "Excluir",
+                                  destructive: true,
+                                })
                               )
-                                disconnect.mutate(c.id);
+                                remove.mutate(c.id);
                             }}
                           >
-                            Desconectar
-                          </button>
-                        )}{" "}
-                      {canEdit && (
-                        <button
-                          className="btn small"
-                          onClick={() => setEditing(c)}
-                        >
-                          Padrões
-                        </button>
-                      )}{" "}
-                      {canEdit && (
-                        <button
-                          className="btn small"
-                          onClick={() => {
-                            const next = window
-                              .prompt("Novo nome do canal", c.display_name)
-                              ?.trim();
-                            if (next && next !== c.display_name)
-                              rename.mutate({ id: c.id, display_name: next });
-                          }}
-                        >
-                          Renomear
-                        </button>
-                      )}{" "}
-                      {canAdmin && (
-                        <button
-                          className="btn small danger"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Excluir o canal "${c.display_name}"?`,
-                              )
-                            )
-                              remove.mutate(c.id);
-                          }}
-                        >
-                          Excluir
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                            Excluir
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableCard>
       )}
 
       {editing && (
@@ -537,6 +624,16 @@ export default function ChannelsPage() {
           channel={editing}
           onClose={() => setEditing(null)}
           onSaved={refresh}
+        />
+      )}
+      {renaming && (
+        <RenameModal
+          channel={renaming}
+          busy={rename.isPending}
+          onClose={() => setRenaming(null)}
+          onSave={(display_name) =>
+            rename.mutate({ id: renaming.id, display_name })
+          }
         />
       )}
     </>

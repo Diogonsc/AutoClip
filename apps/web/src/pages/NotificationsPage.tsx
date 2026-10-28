@@ -8,6 +8,8 @@ import type { AppNotification } from "../lib/types";
 import { Bell, Check } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { Card, CardContent } from "../components/ui/card";
+import { cn } from "@/lib/utils";
 
 export default function NotificationsPage() {
   const ws = useCurrentWorkspace();
@@ -64,38 +66,55 @@ export default function NotificationsPage() {
       {list.isLoading ? (
         <Spinner />
       ) : (list.data ?? []).length === 0 ? (
-        <Empty title="Sem notificações" />
+        <Empty title="Sem notificações" icon={Bell} />
       ) : (
-        <div className="grid">
+        <div className="grid gap-3">
           {list.data!.map((n) => (
-            <article
+            <Card
               key={n.id}
-              className={`card notification-card${n.read_at ? " is-read" : ""}`}
+              size="sm"
+              className={cn(n.read_at && "opacity-70")}
             >
-              <span className="notification-icon" aria-hidden="true">
-                <Bell />
-              </span>
-              <div className="notification-content">
-                <div className="notification-heading">
-                  <strong>{n.title}</strong>
-                  {!n.read_at ? <Badge>Nova</Badge> : null}
-                </div>
-                {n.body && <p>{n.body}</p>}
-                <time dateTime={n.created_at}>
-                  {formatDateTime(n.created_at)}
-                </time>
-              </div>
-              {!n.read_at && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => markRead.mutate(n.id)}
+              <CardContent className="flex items-start gap-3">
+                <span
+                  className={cn(
+                    "grid size-9 shrink-0 place-items-center rounded-lg",
+                    n.read_at
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-accent text-accent-foreground",
+                  )}
+                  aria-hidden="true"
                 >
-                  <Check aria-hidden="true" />
-                  Marcar como lida
-                </Button>
-              )}
-            </article>
+                  <Bell className="size-4" />
+                </span>
+                <div className="grid min-w-0 flex-1 gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <strong className="font-medium">{n.title}</strong>
+                    {!n.read_at ? <Badge>Nova</Badge> : null}
+                  </div>
+                  {n.body && (
+                    <p className="m-0 text-sm text-muted-foreground">{n.body}</p>
+                  )}
+                  <time
+                    className="text-xs text-muted-foreground"
+                    dateTime={n.created_at}
+                  >
+                    {formatDateTime(n.created_at)}
+                  </time>
+                </div>
+                {!n.read_at && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={markRead.isPending}
+                    onClick={() => markRead.mutate(n.id)}
+                  >
+                    <Check aria-hidden="true" />
+                    Marcar como lida
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

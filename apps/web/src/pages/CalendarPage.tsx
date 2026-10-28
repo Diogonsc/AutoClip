@@ -2,7 +2,10 @@ import { useMemo, useState } from "react";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import JobDetail from "../components/JobDetail";
 import PublicationForm from "../components/PublicationForm";
-import { ErrorBox, PageHeader, Spinner } from "../components/ui";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ErrorBox, PageHeader, Spinner, Toolbar, toneClasses } from "../components/ui";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { publicationTone } from "../lib/format";
 import { useChannels, useJobs, useMedia } from "../lib/hooks";
 import type { PublicationJob } from "../lib/types";
@@ -100,92 +103,117 @@ export default function CalendarPage() {
         title="Calendário"
         subtitle="Horários exibidos no fuso do seu navegador."
         actions={
-          <>
-            {(["month", "week", "day"] as View[]).map((v) => (
-              <Button
-                key={v}
-                variant={v === view ? "default" : "outline"}
-                onClick={() => setView(v)}
-              >
-                {v === "month" ? "Mês" : v === "week" ? "Semana" : "Dia"}
-              </Button>
-            ))}
-          </>
+          <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+            <TabsList aria-label="Modo de visualização">
+              <TabsTrigger value="month">Mês</TabsTrigger>
+              <TabsTrigger value="week">Semana</TabsTrigger>
+              <TabsTrigger value="day">Dia</TabsTrigger>
+            </TabsList>
+          </Tabs>
         }
       />
       <ErrorBox error={jobs.error} />
 
-      <div className="toolbar">
+      <Toolbar>
         <Button
           variant="outline"
+          size="icon"
           onClick={() => move(-1)}
           aria-label="Anterior"
         >
-          ←
+          <ChevronLeft />
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => setCursor(startOfDay(new Date()))}
-        >
+        <Button variant="outline" onClick={() => setCursor(startOfDay(new Date()))}>
           Hoje
         </Button>
-        <Button variant="outline" onClick={() => move(1)} aria-label="Próximo">
-          →
+        <Button variant="outline" size="icon" onClick={() => move(1)} aria-label="Próximo">
+          <ChevronRight />
         </Button>
-        <strong style={{ textTransform: "capitalize" }}>{title}</strong>
-      </div>
+        <strong className="ml-1 font-heading text-base capitalize">{title}</strong>
+      </Toolbar>
 
       {jobs.isLoading ? (
         <Spinner />
       ) : (
-        <div className={`cal ${view}`}>
-          {view !== "day" &&
-            DOW.map((d) => (
-              <div key={d} className="dow">
-                {d}
-              </div>
-            ))}
-          {Array.from({ length: leading }, (_, i) => (
-            <div key={`pad-${i}`} className="cell out" />
-          ))}
-          {days.map((d) => {
-            const k = key(d);
-            const list = byDay.get(k) ?? [];
-            return (
-              <div key={k} className={k === todayKey ? "cell today" : "cell"}>
-                <div className="d">
-                  {view === "day" ? "" : d.getDate()}
-                  {canEdit && (
-                    <Button
-                      className="px-2"
-                      variant="ghost"
-                      size="sm"
-                      style={{ padding: "0 .35rem", marginLeft: ".3rem" }}
-                      title="Agendar neste dia"
-                      aria-label={`Agendar em ${d.toLocaleDateString("pt-BR")}`}
-                      onClick={() => setNewAt(`${k}T12:00`)}
-                    >
-                      +
-                    </Button>
-                  )}
+        <div className="overflow-x-auto">
+          <div
+            className={cn(
+              "grid gap-1.5",
+              view === "day" ? "grid-cols-1" : "min-w-[42rem] grid-cols-7",
+            )}
+          >
+            {view !== "day" &&
+              DOW.map((d) => (
+                <div
+                  key={d}
+                  className="px-1 pb-0.5 text-center text-xs font-medium text-muted-foreground"
+                >
+                  {d}
                 </div>
-                {list.map((j) => (
-                  <Button
-                    key={j.id}
-                    variant="ghost"
-                    className={`chip ${publicationTone(j.status)}`}
-                    onClick={() => setDetail(j)}
-                  >
-                    {new Date(j.scheduled_at!).toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    {channelOf(j.channel_id)?.display_name ?? ""}
-                  </Button>
-                ))}
-              </div>
-            );
-          })}
+              ))}
+            {Array.from({ length: leading }, (_, i) => (
+              <div key={`pad-${i}`} aria-hidden="true" />
+            ))}
+            {days.map((d) => {
+              const k = key(d);
+              const list = byDay.get(k) ?? [];
+              const isToday = k === todayKey;
+              return (
+                <div
+                  key={k}
+                  className={cn(
+                    "flex min-h-24 min-w-0 flex-col gap-1 rounded-lg border bg-card p-1.5",
+                    view === "day" && "min-h-40",
+                    isToday && "border-primary ring-1 ring-primary/40",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span
+                      className={cn(
+                        "grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs font-medium",
+                        isToday
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {view === "day" ? "Hoje" : d.getDate()}
+                    </span>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        title="Agendar neste dia"
+                        aria-label={`Agendar em ${d.toLocaleDateString("pt-BR")}`}
+                        onClick={() => setNewAt(`${k}T12:00`)}
+                      >
+                        <Plus />
+                      </Button>
+                    )}
+                  </div>
+                  {list.map((j) => (
+                    <Button
+                      key={j.id}
+                      variant="ghost"
+                      size="xs"
+                      className={cn(
+                        "h-auto w-full justify-start overflow-hidden border px-1.5 py-1 text-left text-xs font-normal text-ellipsis",
+                        toneClasses[publicationTone(j.status)],
+                      )}
+                      onClick={() => setDetail(j)}
+                    >
+                      <span className="truncate">
+                        {new Date(j.scheduled_at!).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        {channelOf(j.channel_id)?.display_name ?? ""}
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

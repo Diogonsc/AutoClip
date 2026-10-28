@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useCurrentWorkspace } from '../auth/WorkspaceProvider';
 import JobDetail from '../components/JobDetail';
-import { Badge, Empty, ErrorBox, PageHeader, Spinner } from '../components/ui';
+import { History } from 'lucide-react';
+import { SelectField } from '../components/select-field';
+import { Badge, Empty, ErrorBox, PageHeader, Spinner, TableCard, Toolbar } from '../components/ui';
+import { Button } from '../components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { formatDateTime, publicationStatusLabel, publicationTone } from '../lib/format';
 import { useChannels, useJobs, useMedia } from '../lib/hooks';
 import type { PublicationJob, PublicationStatus } from '../lib/types';
@@ -39,58 +43,60 @@ export default function HistoryPage() {
       <PageHeader title="Histórico" subtitle="Publicações já processadas, bloqueadas, falhas e canceladas." />
       <ErrorBox error={jobs.error} />
 
-      <div className="toolbar">
-        <select value={filter} onChange={(e) => setFilter(e.target.value as '' | PublicationStatus)} aria-label="Filtrar por estado">
-          <option value="">Todos os estados</option>
-          {HISTORY_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {publicationStatusLabel[s]}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Toolbar>
+        <SelectField
+          aria-label="Filtrar por estado"
+          className="w-full sm:w-64"
+          value={filter || 'all'}
+          onValueChange={(v) => setFilter(v === 'all' ? '' : (v as PublicationStatus))}
+          options={[
+            { value: 'all', label: 'Todos os estados' },
+            ...HISTORY_STATUSES.map((st) => ({ value: st, label: publicationStatusLabel[st] })),
+          ]}
+        />
+      </Toolbar>
 
       {jobs.isLoading ? (
         <Spinner />
       ) : list.length === 0 ? (
-        <Empty title="Nada no histórico ainda" />
+        <Empty title="Nada no histórico ainda" icon={History} />
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Atualizada em</th>
-                <th>Canal</th>
-                <th>Vídeo</th>
-                <th>Estado</th>
-                <th>Tentativas</th>
-                <th>Erro</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <TableCard>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Atualizada em</TableHead>
+                <TableHead>Canal</TableHead>
+                <TableHead>Vídeo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Tentativas</TableHead>
+                <TableHead>Erro</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {list.map((j) => (
-                <tr key={j.id}>
-                  <td>{formatDateTime(j.updated_at)}</td>
-                  <td>{channelOf(j.channel_id)?.display_name ?? '—'}</td>
-                  <td>{mediaOf(j.media_asset_id)?.original_filename ?? '—'}</td>
-                  <td>
+                <TableRow key={j.id}>
+                  <TableCell>{formatDateTime(j.updated_at)}</TableCell>
+                  <TableCell>{channelOf(j.channel_id)?.display_name ?? '—'}</TableCell>
+                  <TableCell>{mediaOf(j.media_asset_id)?.original_filename ?? '—'}</TableCell>
+                  <TableCell>
                     <Badge tone={publicationTone(j.status)}>{publicationStatusLabel[j.status]}</Badge>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     {j.attempt_count}/{j.max_attempts}
-                  </td>
-                  <td className="muted">{j.last_error_code ?? '—'}</td>
-                  <td className="row-actions">
-                    <button className="btn small" onClick={() => setDetail(j)}>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{j.last_error_code ?? '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" onClick={() => setDetail(j)}>
                       Detalhes
-                    </button>
-                  </td>
-                </tr>
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableCard>
       )}
 
       {detail && (

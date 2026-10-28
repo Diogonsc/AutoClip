@@ -1,9 +1,12 @@
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
+import { Clapperboard } from "lucide-react";
+import { ModeToggle } from "../components/mode-toggle";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
@@ -14,19 +17,33 @@ import { Input } from "../components/ui/input";
 
 function AuthShell({
   title,
+  description,
   children,
 }: {
   title: string;
+  description?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="auth-wrap">
-      <Card className="auth-card w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">{children}</CardContent>
-      </Card>
+    <div className="relative grid min-h-screen place-items-center p-4">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
+      <div className="flex w-full max-w-md flex-col gap-6">
+        <div className="flex items-center justify-center gap-3">
+          <span className="grid size-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+            <Clapperboard className="size-5" aria-hidden="true" />
+          </span>
+          <strong className="font-heading text-xl">AutoClip</strong>
+        </div>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
+          </CardHeader>
+          <CardContent className="grid gap-4">{children}</CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -57,7 +74,7 @@ export function LoginPage() {
 
   return (
     <AuthShell title="Entrar">
-      <form onSubmit={submit} className="form">
+      <form onSubmit={submit} className="grid gap-4">
         <Field label="E-mail">
           <Input
             type="email"
@@ -78,9 +95,9 @@ export function LoginPage() {
           />
         </Field>
         <ErrorBox error={error} />
-        <Button disabled={busy}>{busy ? "Entrando…" : "Entrar"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Entrando…" : "Entrar"}</Button>
       </form>
-      <p className="muted center">
+      <p className="m-0 text-center text-sm text-muted-foreground">
         <Link to="/esqueci-senha">Esqueci minha senha</Link> ·{" "}
         <Link to="/cadastro">Criar conta</Link>
       </p>
@@ -129,7 +146,7 @@ export function SignupPage() {
 
   return (
     <AuthShell title="Criar conta">
-      <form onSubmit={submit} className="form">
+      <form onSubmit={submit} className="grid gap-4">
         <Field label="Nome">
           <Input
             value={name}
@@ -160,9 +177,9 @@ export function SignupPage() {
           />
         </Field>
         <ErrorBox error={error} />
-        <Button disabled={busy}>{busy ? "Criando…" : "Criar conta"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Criando…" : "Criar conta"}</Button>
       </form>
-      <p className="muted center">
+      <p className="m-0 text-center text-sm text-muted-foreground">
         Já tem conta? <Link to="/login">Entrar</Link>
       </p>
     </AuthShell>
@@ -198,7 +215,7 @@ export function ForgotPasswordPage() {
           link para redefinir a senha.
         </p>
       ) : (
-        <form onSubmit={submit} className="form">
+        <form onSubmit={submit} className="grid gap-4">
           <Field label="E-mail">
             <Input
               type="email"
@@ -209,10 +226,10 @@ export function ForgotPasswordPage() {
             />
           </Field>
           <ErrorBox error={error} />
-          <Button disabled={busy}>{busy ? "Enviando…" : "Enviar link"}</Button>
+          <Button type="submit" disabled={busy} className="w-full">{busy ? "Enviando…" : "Enviar link"}</Button>
         </form>
       )}
-      <p className="muted center">
+      <p className="m-0 text-center text-sm text-muted-foreground">
         <Link to="/login">Voltar</Link>
       </p>
     </AuthShell>
@@ -257,7 +274,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthShell title="Nova senha">
-      <form onSubmit={submit} className="form">
+      <form onSubmit={submit} className="grid gap-4">
         <Field label="Nova senha">
           <Input
             type="password"
@@ -270,7 +287,7 @@ export function ResetPasswordPage() {
           />
         </Field>
         <ErrorBox error={error} />
-        <Button disabled={busy}>{busy ? "Salvando…" : "Salvar senha"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Salvando…" : "Salvar senha"}</Button>
       </form>
     </AuthShell>
   );

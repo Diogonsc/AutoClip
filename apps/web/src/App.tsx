@@ -37,13 +37,13 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 function MissingConfig() {
   return (
-    <div className="auth-wrap">
+    <div className="grid min-h-screen place-items-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Configuração pendente</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="m-0 text-muted-foreground">
+          <p className="m-0 text-sm text-muted-foreground">
             Defina <code>VITE_SUPABASE_URL</code> e{" "}
             <code>VITE_SUPABASE_ANON_KEY</code> (arquivo <code>.env.local</code>{" "}
             ou variáveis de ambiente na Vercel) e reinicie.
