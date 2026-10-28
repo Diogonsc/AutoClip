@@ -4,18 +4,58 @@ import { useAuth } from "../auth/AuthProvider";
 import { useWorkspace } from "../auth/WorkspaceProvider";
 import { errorMessage } from "../lib/api";
 import { roleLabel } from "../lib/format";
-import { Modal, Spinner } from "./ui";
+import { ErrorBox, Field, Modal, Spinner } from "./ui";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
+  Bell,
+  CalendarDays,
+  Clapperboard,
+  History,
+  LayoutDashboard,
+  Library,
+  LogOut,
+  Menu,
+  Plus,
+  Radio,
+  ScrollText,
+  Settings,
+  Send,
+  Users,
+} from "lucide-react";
 
-const NAV = [
-  { to: "/", label: "Painel", end: true },
-  { to: "/canais", label: "Canais" },
-  { to: "/biblioteca", label: "Biblioteca" },
-  { to: "/publicacoes", label: "Publicações" },
-  { to: "/calendario", label: "Calendário" },
-  { to: "/historico", label: "Histórico" },
-  { to: "/notificacoes", label: "Notificações" },
-  { to: "/membros", label: "Membros" },
-  { to: "/configuracoes", label: "Configurações" },
+const NAV_GROUPS = [
+  {
+    label: "Workspace",
+    items: [
+      { to: "/", label: "Visão geral", end: true, icon: LayoutDashboard },
+      { to: "/canais", label: "Canais", icon: Radio },
+      { to: "/biblioteca", label: "Biblioteca de vídeos", icon: Library },
+    ],
+  },
+  {
+    label: "Publicação",
+    items: [
+      { to: "/publicacoes", label: "Publicações", icon: Send },
+      { to: "/calendario", label: "Agendamentos", icon: CalendarDays },
+      { to: "/historico", label: "Histórico e logs", icon: History },
+      { to: "/notificacoes", label: "Notificações", icon: Bell },
+    ],
+  },
+  {
+    label: "Administração",
+    items: [
+      { to: "/membros", label: "Membros", icon: Users },
+      { to: "/configuracoes", label: "Configurações", icon: Settings },
+    ],
+  },
 ];
 
 export default function Layout() {
@@ -49,65 +89,93 @@ export default function Layout() {
   return (
     <div className="shell">
       <aside id="app-sidebar" className={menuOpen ? "sidebar open" : "sidebar"}>
-        <div className="brand">Painel de Publicações</div>
+        <div className="brand">
+          <span className="brand-mark">
+            <Clapperboard aria-hidden="true" />
+          </span>
+          <span className="brand-copy">
+            <strong>AutoClip</strong>
+            <small>workspace</small>
+          </span>
+        </div>
 
         <div className="ws-switch">
-          <label htmlFor="ws">Workspace</label>
-          <select
-            id="ws"
+          <span className="sidebar-section-label">Workspace ativo</span>
+          <Select
             value={current?.id ?? ""}
-            onChange={(e) => setCurrentId(e.target.value)}
+            onValueChange={(value) => value && setCurrentId(value)}
           >
-            {workspaces.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Workspace" className="w-full">
+              <SelectValue placeholder="Selecione um workspace" />
+            </SelectTrigger>
+            <SelectContent>
+              {workspaces.map((w) => (
+                <SelectItem key={w.id} value={w.id}>
+                  {w.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {role && (
             <small className="muted">Seu papel: {roleLabel[role]}</small>
           )}
-          <button
+          <Button
             type="button"
-            className="btn ghost small"
+            variant="ghost"
+            size="sm"
+            className="new-workspace-button"
             onClick={() => setCreating(true)}
           >
-            + Novo workspace
-          </button>
+            <Plus aria-hidden="true" /> Novo workspace
+          </Button>
         </div>
 
         <nav onClick={() => setMenuOpen(false)}>
-          {NAV.map((n) => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.end}
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              {n.label}
-            </NavLink>
+          {NAV_GROUPS.map((group, groupIndex) => (
+            <div className="nav-group" key={`${group.label}-${groupIndex}`}>
+              <span className="sidebar-section-label">{group.label}</span>
+              {group.items.map(({ to, label, end, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
           {canAdmin && (
             <NavLink
               to="/auditoria"
               className={({ isActive }) => (isActive ? "active" : "")}
             >
-              Auditoria
+              <ScrollText aria-hidden="true" />
+              <span>Auditoria</span>
             </NavLink>
           )}
         </nav>
 
         <div className="user-box">
-          <small className="muted" title={user?.email ?? ""}>
-            {user?.email}
-          </small>
-          <button
+          <span className="user-avatar" aria-hidden="true">
+            {(user?.email?.[0] ?? "U").toUpperCase()}
+          </span>
+          <span className="user-details">
+            <strong title={user?.email ?? ""}>{user?.email}</strong>
+            <small>{role ? roleLabel[role] : "Membro"}</small>
+          </span>
+          <Button
             type="button"
-            className="btn ghost small"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Sair"
+            title="Sair"
             onClick={() => void signOut()}
           >
-            Sair
-          </button>
+            <LogOut aria-hidden="true" />
+          </Button>
         </div>
       </aside>
 
@@ -122,17 +190,23 @@ export default function Layout() {
 
       <div className="main">
         <div className="topbar">
-          <button
+          <Button
             type="button"
-            className="btn ghost menu-toggle"
+            variant="ghost"
+            size="icon"
+            className="menu-toggle"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={menuOpen}
             aria-controls="app-sidebar"
           >
-            ☰
-          </button>
-          <strong>{current?.name}</strong>
+            <Menu />
+          </Button>
+          <div className="topbar-context">
+            <span>AutoClip</span>
+            <span className="topbar-divider">/</span>
+            <strong>{current?.name}</strong>
+          </div>
         </div>
         <main className="content">
           {loading ? (
@@ -148,32 +222,27 @@ export default function Layout() {
       {creating && (
         <Modal title="Novo workspace" onClose={() => setCreating(false)}>
           <form onSubmit={submit} className="form">
-            <label className="field">
-              <span>Nome</span>
-              <input
+            <Field label="Nome">
+              <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={80}
                 required
                 autoFocus
               />
-            </label>
-            {error && <div className="alert danger">{error}</div>}
+            </Field>
+            <ErrorBox error={error} />
             <div className="actions end">
-              <button
+              <Button
                 type="button"
-                className="btn"
+                variant="outline"
                 onClick={() => setCreating(false)}
               >
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn primary"
-                disabled={!name.trim()}
-              >
+              </Button>
+              <Button type="submit" disabled={!name.trim()}>
                 Criar
-              </button>
+              </Button>
             </div>
           </form>
         </Modal>

@@ -19,6 +19,17 @@ import {
   zonedToUtc,
 } from "../lib/time";
 import { ErrorBox, Field, Modal, Notice } from "./ui";
+import { Button } from "./ui/button";
+import { Checkbox } from "./ui/checkbox";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 const PRIVACY_LABEL: Record<string, string> = {
   PUBLIC_TO_EVERYONE: "Todos",
@@ -175,10 +186,11 @@ export default function PublicationForm({
       >
         <div className="row">
           <Field label="Canal">
-            <select
+            <Select
               value={channelId}
-              onChange={(e) => {
-                const nextId = e.target.value;
+              onValueChange={(selectedId) => {
+                if (!selectedId) return;
+                const nextId = selectedId;
                 const prev = (channels.data ?? []).find(
                   (c) => c.id === channelId,
                 );
@@ -193,27 +205,34 @@ export default function PublicationForm({
               }}
               required
             >
-              <option value="">Selecione…</option>
-              {(channels.data ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.display_name} — {channelStatusLabel[c.connection_status]}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione…" />
+              </SelectTrigger>
+              <SelectContent>
+                {(channels.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.display_name} — {channelStatusLabel[c.connection_status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <Field label="Vídeo" hint="Somente vídeos prontos aparecem aqui.">
-            <select
+            <Select
               value={mediaId}
-              onChange={(e) => setMediaId(e.target.value)}
-              required
+              onValueChange={(value) => value && setMediaId(value)}
             >
-              <option value="">Selecione…</option>
-              {readyMedia.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.original_filename}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione…" />
+              </SelectTrigger>
+              <SelectContent>
+                {readyMedia.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.original_filename}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 
@@ -227,7 +246,7 @@ export default function PublicationForm({
           )}
 
         <Field label="Legenda">
-          <textarea
+          <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Escreva a legenda…"
@@ -238,20 +257,25 @@ export default function PublicationForm({
 
         <div className="row">
           <Field label="Data e hora">
-            <input
+            <Input
               type="datetime-local"
               value={when}
               onChange={(e) => setWhen(e.target.value)}
             />
           </Field>
           <Field label="Fuso horário">
-            <select value={tz} onChange={(e) => setTz(e.target.value)}>
-              {(tzList.includes(tz) ? tzList : [tz, ...tzList]).map((z) => (
-                <option key={z} value={z}>
-                  {z}
-                </option>
-              ))}
-            </select>
+            <Select value={tz} onValueChange={(value) => value && setTz(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(tzList.includes(tz) ? tzList : [tz, ...tzList]).map((z) => (
+                  <SelectItem key={z} value={z}>
+                    {z}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 
@@ -271,14 +295,14 @@ export default function PublicationForm({
             <Notice tone="warning">
               As opções do criador ainda não foram carregadas para este canal.
             </Notice>
-            <button
+            <Button
               type="button"
-              className="btn"
+              variant="outline"
               disabled={loadInfo.isPending}
               onClick={() => loadInfo.mutate()}
             >
               Carregar opções do TikTok
-            </button>
+            </Button>
             <ErrorBox error={loadInfo.error} />
           </div>
         ) : (
@@ -287,25 +311,27 @@ export default function PublicationForm({
               Privacidade e interações (opções reais do seu TikTok)
             </legend>
             <Field label="Quem pode ver">
-              <select
-                value={privacy}
-                onChange={(e) => setPrivacy(e.target.value)}
+              <Select
+                value={privacy || null}
+                onValueChange={(value) => setPrivacy(value ?? "")}
               >
-                <option value="">Selecione…</option>
-                {info.privacy_level_options.map((o) => (
-                  <option key={o} value={o}>
-                    {PRIVACY_LABEL[o] ?? o}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {info.privacy_level_options.map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {PRIVACY_LABEL[o] ?? o}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <label className="actions">
-              <input
-                type="checkbox"
-                style={{ width: "auto" }}
+              <Checkbox
                 checked={allowComment}
                 disabled={info.comment_disabled}
-                onChange={(e) => setAllowComment(e.target.checked)}
+                onCheckedChange={(checked) => setAllowComment(checked === true)}
               />
               <span>
                 Permitir comentários
@@ -313,12 +339,10 @@ export default function PublicationForm({
               </span>
             </label>
             <label className="actions">
-              <input
-                type="checkbox"
-                style={{ width: "auto" }}
+              <Checkbox
                 checked={allowDuet}
                 disabled={info.duet_disabled}
-                onChange={(e) => setAllowDuet(e.target.checked)}
+                onCheckedChange={(checked) => setAllowDuet(checked === true)}
               />
               <span>
                 Permitir dueto
@@ -326,12 +350,10 @@ export default function PublicationForm({
               </span>
             </label>
             <label className="actions">
-              <input
-                type="checkbox"
-                style={{ width: "auto" }}
+              <Checkbox
                 checked={allowStitch}
                 disabled={info.stitch_disabled}
-                onChange={(e) => setAllowStitch(e.target.checked)}
+                onCheckedChange={(checked) => setAllowStitch(checked === true)}
               />
               <span>
                 Permitir stitch
@@ -339,40 +361,35 @@ export default function PublicationForm({
               </span>
             </label>
             <label className="actions">
-              <input
-                type="checkbox"
-                style={{ width: "auto" }}
+              <Checkbox
                 checked={brandOrganic}
-                onChange={(e) => setBrandOrganic(e.target.checked)}
+                onCheckedChange={(checked) => setBrandOrganic(checked === true)}
               />
               <span>Promove a minha própria marca</span>
             </label>
             <label className="actions">
-              <input
-                type="checkbox"
-                style={{ width: "auto" }}
+              <Checkbox
                 checked={brandContent}
-                onChange={(e) => setBrandContent(e.target.checked)}
+                onCheckedChange={(checked) => setBrandContent(checked === true)}
               />
               <span>Conteúdo de marca (parceria paga)</span>
             </label>
-            <button
+            <Button
               type="button"
-              className="btn small"
+              variant="outline"
+              size="sm"
               disabled={loadInfo.isPending}
               onClick={() => loadInfo.mutate()}
             >
               Atualizar opções
-            </button>
+            </Button>
           </fieldset>
         )}
 
         <label className="actions">
-          <input
-            type="checkbox"
-            style={{ width: "auto" }}
+          <Checkbox
             checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
+            onCheckedChange={(checked) => setConfirmed(checked === true)}
           />
           <span>Revisei canal, vídeo, legenda e horário desta publicação.</span>
         </label>
@@ -382,20 +399,18 @@ export default function PublicationForm({
         )}
 
         <div className="actions end">
-          <button type="button" className="btn" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn"
+            variant="outline"
             disabled={save.isPending}
             onClick={() => submit("DRAFT")}
           >
             Salvar rascunho
-          </button>
-          <button className="btn primary" disabled={save.isPending}>
-            Agendar
-          </button>
+          </Button>
+          <Button disabled={save.isPending}>Agendar</Button>
         </div>
       </form>
     </Modal>
