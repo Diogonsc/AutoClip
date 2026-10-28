@@ -83,7 +83,8 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         </span>
       </div>
 
-      <div className="grid gap-1.5 px-4 pb-4">
+      {/*
+        <div className="grid gap-1.5 px-4 pb-4">
         <span className="text-xs font-medium text-muted-foreground">
           Workspace ativo
         </span>
@@ -109,6 +110,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
           <Plus aria-hidden="true" /> Novo workspace
         </Button>
       </div>
+    */}
 
       <Separator className="bg-sidebar-border" />
 
