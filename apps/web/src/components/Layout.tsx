@@ -261,7 +261,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 p-4 md:p-8">
+        <main className="mx-auto flex w-full flex-1 flex-col gap-5 p-4 md:p-8">
           {loading ? (
             <Spinner />
           ) : current ? (

@@ -95,7 +95,7 @@ export default function SettingsPage() {
         }
       />
 
-      <div className="grid max-w-2xl gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Geral</CardTitle>
@@ -153,8 +153,8 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle>Modo de publicação</CardTitle>
             <CardDescription>
-              Ao trocar o modo, reconecte os canais para autorizar as
-              permissões do novo modo. Somente o proprietário pode alterar.
+              Ao trocar o modo, reconecte os canais para autorizar as permissões
+              do novo modo. Somente o proprietário pode alterar.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
