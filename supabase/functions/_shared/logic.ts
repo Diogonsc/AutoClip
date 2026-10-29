@@ -121,20 +121,20 @@ export function validateDirect(job: Job, media: Media, info: CreatorInfo): Direc
 }
 
 const FAIL_MESSAGES: Record<string, string> = {
-  file_format_check_failed: 'O TikTok rejeitou o formato do arquivo.',
-  duration_check_failed: 'O TikTok rejeitou a duração do vídeo.',
-  frame_rate_check_failed: 'O TikTok rejeitou a taxa de quadros do vídeo.',
-  picture_size_check_failed: 'O TikTok rejeitou a resolução do vídeo.',
+  file_format_check_failed: 'O TikTok rejeitou o formato do arquivo. Ação: converta para MP4 (H.264/AAC) e tente novamente.',
+  duration_check_failed: 'O TikTok rejeitou a duração do vídeo. Ação: encurte o vídeo para o limite informado pelo canal e reagende.',
+  frame_rate_check_failed: 'O TikTok rejeitou a taxa de quadros. Ação: exporte novamente em uma taxa de quadros compatível e tente de novo.',
+  picture_size_check_failed: 'O TikTok rejeitou a resolução do vídeo. Ação: exporte em resolução compatível e valide a prévia antes de reagendar.',
   internal: 'Erro interno do TikTok ao processar o vídeo.',
   video_pull_failed: 'O TikTok não conseguiu obter o vídeo.',
   publish_cancelled: 'A publicação foi cancelada no TikTok.',
-  auth_removed: 'O acesso do app foi removido no TikTok: reconecte o canal.',
-  spam_risk_too_many_posts: 'Limite diário de publicações do TikTok atingido.',
+  auth_removed: 'O acesso do app foi removido no TikTok. Ação: reconecte o canal e conceda novamente as permissões solicitadas.',
+  spam_risk_too_many_posts: 'Limite diário de publicações do TikTok atingido. Ação: aguarde até o próximo dia local ou reagende para outra data.',
   spam_risk_user_banned_from_posting: 'A conta está impedida de publicar no TikTok.',
-  spam_risk_text: 'O TikTok recusou a legenda por risco de spam.',
-  spam_risk: 'O TikTok recusou a publicação por risco de spam.',
+  spam_risk_text: 'O TikTok recusou a legenda por risco de spam. Ação: reduza repetições, links e chamadas excessivas e revise a legenda.',
+  spam_risk: 'O TikTok recusou a publicação por risco de spam. Ação: revise a frequência, o conteúdo e tente novamente mais tarde.',
 };
 
 export function failReasonMessage(reason: string | null): string {
-  return (reason && FAIL_MESSAGES[reason]) || `O TikTok informou falha no processamento${reason ? ` (${reason})` : ''}.`;
+  return (reason && FAIL_MESSAGES[reason]) || `O TikTok informou falha no processamento${reason ? ` (${reason})` : ''}. Ação: abra os detalhes do erro, revise mídia e permissões e tente novamente apenas depois de corrigir a causa.`;
 }

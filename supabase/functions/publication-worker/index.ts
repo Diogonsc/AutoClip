@@ -1,6 +1,6 @@
 // Worker de publicação. Disparado a cada minuto por pg_cron -> pg_net (ver README).
 // Autenticação: segredo compartilhado no header x-worker-secret (verify_jwt = false).
-import { env } from '../_shared/env.ts';
+import { env, envOptional } from '../_shared/env.ts';
 import { handleWorker } from '../_shared/handlers.ts';
 import { buildContext, log } from '../_shared/runtime.ts';
 
@@ -28,6 +28,12 @@ Deno.serve(async (req) => {
             const { data, error } = await c.sb.storage.from('media').download(key);
             if (error || !data) throw new Error(`storage.download: ${error?.message ?? 'arquivo vazio'}`);
             return new Uint8Array(await data.arrayBuffer());
+          },
+          verifiedHost: envOptional('TIKTOK_VERIFIED_MEDIA_HOST'),
+          async signedUrl(key, expiresInSeconds) {
+            const { data, error } = await c.sb.storage.from('media').createSignedUrl(key, expiresInSeconds);
+            if (error || !data?.signedUrl) throw new Error(`storage.signedUrl: ${error?.message ?? 'URL vazia'}`);
+            return data.signedUrl;
           },
         },
       },

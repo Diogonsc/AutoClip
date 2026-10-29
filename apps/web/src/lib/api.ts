@@ -13,6 +13,14 @@ interface RawError {
 
 function friendly(e: RawError): string {
   const m = e.message.toLowerCase();
+  if (m.includes("music_rights_consent_required"))
+    return "Confirme os direitos/consentimento do áudio antes de agendar.";
+  if (m.includes("tiktok_app_not_audited"))
+    return "O aplicativo TikTok ainda não foi auditado. No modo DIRECT, selecione “Somente eu” ou altere para INBOX.";
+  if (m.includes("client_approval_required"))
+    return "Esta publicação precisa da aprovação do cliente antes de ser enviada.";
+  if (m.includes("daily_channel_schedule_limit"))
+    return "Este canal já tem 15 publicações agendadas para essa data local. Escolha outro dia ou horário.";
   if (m.includes("not ready"))
     return "O vídeo ainda não está pronto (upload não finalizado).";
   if (m.includes("in the past")) return "A data de agendamento já passou.";

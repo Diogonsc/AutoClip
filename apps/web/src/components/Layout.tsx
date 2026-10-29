@@ -13,6 +13,7 @@ import {
   Plus,
   Radio,
   ScrollText,
+  FileText,
   Send,
   Settings,
   Users,
@@ -20,6 +21,7 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { usePlatformFlags, usePlatformOwner } from "../lib/hooks";
 import { useWorkspace } from "../auth/WorkspaceProvider";
+import { usePlatformFlags } from "../lib/hooks";
 import { errorMessage } from "../lib/api";
 import { roleLabel } from "../lib/format";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,7 @@ const USER_GROUPS: NavGroup[] = [
       { to: "/publicacoes", label: "Publicações", icon: Send },
       { to: "/calendario", label: "Agendamentos", icon: CalendarDays },
       { to: "/historico", label: "Histórico e logs", icon: History },
+      { to: "/relatorios", label: "Relatório semanal", icon: FileText },
       { to: "/notificacoes", label: "Notificações", icon: Bell },
     ],
   },
@@ -105,8 +108,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         </span>
       </div>
 
-      {/*
-        <div className="grid gap-1.5 px-4 pb-4">
+      <div className="grid gap-1.5 px-4 pb-4">
         <span className="text-xs font-medium text-muted-foreground">
           Workspace ativo
         </span>
@@ -132,7 +134,6 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
           <Plus aria-hidden="true" /> Novo workspace
         </Button>
       </div>
-    */}
 
       <Separator className="bg-sidebar-border" />
 
@@ -251,6 +252,7 @@ function TestModeBanner() {
 
 export default function Layout() {
   const { current, loading } = useWorkspace();
+  const platformFlags = usePlatformFlags();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -296,7 +298,20 @@ export default function Layout() {
         </header>
 
         <main className="mx-auto flex w-full h-full flex-1 flex-col gap-5 p-4 md:p-8">
+<<<<<<< HEAD
           <TestModeBanner />
+=======
+          {platformFlags.data?.test_mode !== false && (
+            <div role="status" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+              <strong>Modo de teste do TikTok.</strong> O aplicativo ainda não está marcado como auditado. Publicações diretas ficam restritas a “Somente eu”; use o modo rascunho/INBOX para concluir a publicação no TikTok. A cobrança está desativada neste projeto.
+            </div>
+          )}
+          {platformFlags.isError && (
+            <div role="status" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+              Não foi possível verificar o estado da auditoria do TikTok. Por segurança, considere o aplicativo em modo de teste e não publique publicamente.
+            </div>
+          )}
+>>>>>>> eed490a (novas implementações)
           {loading ? (
             <Loading />
           ) : current ? (

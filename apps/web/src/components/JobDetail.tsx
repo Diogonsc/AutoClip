@@ -84,8 +84,8 @@ export default function JobDetail({
         </dd>
         <dt className="text-muted-foreground">Canal</dt>
         <dd className="m-0">{channel?.display_name ?? "—"}</dd>
-        <dt className="text-muted-foreground">Vídeo</dt>
-        <dd className="m-0">{media?.original_filename ?? "—"}</dd>
+        <dt className="text-muted-foreground">Mídia</dt>
+        <dd className="m-0">{job.post_type === "PHOTO" ? `Fotos / carrossel (${job.media_asset_ids?.length ?? 1} imagens)` : (media?.original_filename ?? "—")}</dd>
         <dt className="text-muted-foreground">Legenda</dt>
         <dd className="m-0 break-words whitespace-pre-wrap">
           {job.caption || "—"}

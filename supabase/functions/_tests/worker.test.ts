@@ -52,6 +52,21 @@ test('DIRECT: valida opções, aplica restrições do criador e envia post_info'
   assert.ok(db.savedCreatorInfo);
 });
 
+test('DIRECT PHOTO: cria publicação de carrossel e grava publish_id antes da consulta de status', async () => {
+  const clock = mkClock();
+  const db = new FakeDb(clock, {
+    job: { ...DIRECT_JOB, post_type: 'PHOTO', media_asset_ids: ['media-1'] },
+    media: { mime_type: 'image/jpeg', storage_key: 'ws-1/media-1/original.jpg', file_size_bytes: 1024, duration_seconds: null, width: 1080, height: 1350 },
+    settings: { publish_mode: 'DIRECT' },
+  });
+  const tk = mkTikTok({ initPhotoPost: () => { tk.calls.push('photo_init'); return Promise.resolve({ publishId: 'photo-pub1' }); } });
+  await processPublish(await claim(db), mkDeps(db, tk, clock));
+  assert.ok(tk.calls.includes('photo_init'));
+  assert.equal(db.job.remote_publish_id, 'photo-pub1');
+  assert.equal(db.last().status, 'PROCESSING');
+  assert.ok(db.events.some((event) => event.type === 'PHOTO_SUBMITTED'));
+});
+
 // ------------------------------------------------------------------ bloqueios (nada vai ao TikTok)
 test('DIRECT: privacidade fora das opções do criador => BLOCKED_PERMISSION, sem init', async () => {
   const clock = mkClock();

@@ -12,6 +12,7 @@ import {
   SignupPage,
 } from "./pages/AuthPages";
 import AuditPage from "./pages/AuditPage";
+import ClientApprovalPage from "./pages/ClientApprovalPage";
 import CalendarPage from "./pages/CalendarPage";
 import ChannelsPage from "./pages/ChannelsPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -20,6 +21,7 @@ import MediaPage from "./pages/MediaPage";
 import MembersPage from "./pages/MembersPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import PublicationsPage from "./pages/PublicationsPage";
+import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import UsersAdminPage from "./pages/UsersAdminPage";
 import Loading from "./components/loading";
@@ -73,6 +75,7 @@ export default function App() {
         <Route path="/cadastro" element={<SignupPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/aprovar/:token" element={<ClientApprovalPage />} />
 
         <Route
           element={
@@ -87,6 +90,7 @@ export default function App() {
           <Route path="publicacoes" element={<PublicationsPage />} />
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="historico" element={<HistoryPage />} />
+          <Route path="relatorios" element={<ReportsPage />} />
           <Route path="notificacoes" element={<NotificationsPage />} />
           <Route
             path="membros"

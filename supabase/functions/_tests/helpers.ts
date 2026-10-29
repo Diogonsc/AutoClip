@@ -114,6 +114,10 @@ export class FakeDb implements Db {
   getMedia() {
     return Promise.resolve(this.media);
   }
+  getMediaAssets(ids: string[]) {
+    if (!this.media) return Promise.resolve([]);
+    return Promise.resolve(ids.includes(this.media.id) ? [this.media] : []);
+  }
   saveCreatorInfo(_id: string, info: CreatorInfo) {
     this.savedCreatorInfo = info;
     return Promise.resolve();
@@ -187,6 +191,7 @@ export interface FakeTikTok {
   calls: string[];
   queryCreatorInfo: () => Promise<CreatorInfo>;
   initVideoPost: (token: string, p: { mode: string; postInfo?: unknown; plan: unknown }) => Promise<{ publishId: string; uploadUrl: string }>;
+  initPhotoPost: (token: string, p: { imageUrls: string[]; postInfo: unknown; coverIndex?: number }) => Promise<{ publishId: string }>;
   uploadVideo: () => Promise<void>;
   fetchPublishStatus: (token: string, id: string) => Promise<PublishStatus>;
   lastInit?: { mode: string; postInfo?: unknown; plan: unknown };
@@ -204,6 +209,7 @@ export function mkTikTok(over: Partial<FakeTikTok> = {}): FakeTikTok {
       t.lastInit = p;
       return Promise.resolve({ publishId: 'pub1', uploadUrl: 'https://upload.example/x' });
     },
+    initPhotoPost: () => { t.calls.push('photo_init'); return Promise.resolve({ publishId: 'photo-pub1' }); },
     uploadVideo: () => {
       t.calls.push('upload');
       return Promise.resolve();
@@ -229,6 +235,8 @@ export function mkDeps(
     db,
     tiktok: tk as unknown as WorkerDeps['tiktok'],
     storage: {
+      verifiedHost: 'media.example',
+      signedUrl: (key: string) => Promise.resolve(`https://media.example/${key}`),
       download: (key: string) => {
         downloads.push(key);
         tk.calls.push('download');

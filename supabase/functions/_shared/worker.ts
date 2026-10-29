@@ -24,8 +24,8 @@ import type { ChannelStatus, Db, FinishArgs, Job, JobStatus } from './types.ts';
 
 export interface WorkerDeps {
   db: Db;
-  storage: { download(key: string): Promise<Uint8Array> };
-  tiktok: Pick<TikTokApi, 'queryCreatorInfo' | 'initVideoPost' | 'uploadVideo' | 'fetchPublishStatus'>;
+  storage: { download(key: string): Promise<Uint8Array>; signedUrl(key: string, expiresInSeconds: number): Promise<string>; verifiedHost?: string | null };
+  tiktok: Pick<TikTokApi, 'queryCreatorInfo' | 'initVideoPost' | 'initPhotoPost' | 'uploadVideo' | 'fetchPublishStatus'>;
   ensureToken(channelId: string, opts?: { force?: boolean }): Promise<string>;
   now(): Date;
   sleep(ms: number): Promise<void>;
@@ -245,13 +245,27 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
       return;
     }
 
-    const media = await d.db.getMedia(job.media_asset_id);
-    if (!media || media.status !== 'READY' || media.workspace_id !== job.workspace_id) {
-      await fin({ status: 'FAILED', errorCode: 'MEDIA_UNAVAILABLE', errorMessage: 'Vídeo indisponível.', result: 'FAILED' });
+    const postType = job.post_type ?? 'VIDEO';
+    const mediaIds = Array.isArray(job.media_asset_ids) && job.media_asset_ids.length ? job.media_asset_ids : [job.media_asset_id];
+    const assets = await d.db.getMediaAssets(mediaIds);
+    const orderedMedia = mediaIds.map((id) => assets.find((asset) => asset.id === id));
+    if (orderedMedia.some((m) => !m || m.status !== 'READY' || m.workspace_id !== job.workspace_id)) {
+      await fin({ status: 'FAILED', errorCode: 'MEDIA_UNAVAILABLE', errorMessage: 'Uma ou mais mídias estão indisponíveis.', result: 'FAILED' });
       return;
     }
-    if (!ALLOWED_MIME.includes(media.mime_type)) {
-      await fin({ status: 'FAILED', errorCode: 'UNSUPPORTED_MIME', errorMessage: `Formato ${media.mime_type} não suportado.`, result: 'FAILED' });
+    const mediaList = orderedMedia as NonNullable<typeof orderedMedia[number]>[];
+    const media = mediaList[0];
+    if (postType === 'PHOTO') {
+      if (mediaList.length > 35 || mediaList.some((m) => !['image/jpeg', 'image/png', 'image/webp'].includes(m.mime_type) || m.file_size_bytes > 20 * 1024 * 1024 || (m.width != null && (m.width < 360 || m.width > 4096)) || (m.height != null && (m.height < 360 || m.height > 4096)))) {
+        await fin({ status: 'FAILED', errorCode: 'INVALID_PHOTO_SET', errorMessage: 'O carrossel precisa ter de 1 a 35 imagens compatíveis.', result: 'FAILED' });
+        return;
+      }
+      if (mode !== 'DIRECT') {
+        await fin({ status: 'FAILED', errorCode: 'PHOTO_REQUIRES_DIRECT_POST', errorMessage: 'Fotos e carrosséis exigem o modo Publicação direta; o modo caixa de entrada só está disponível para vídeos.', result: 'FAILED' });
+        return;
+      }
+    } else if (mediaList.length !== 1 || !ALLOWED_MIME.includes(media.mime_type)) {
+      await fin({ status: 'FAILED', errorCode: 'UNSUPPORTED_MIME', errorMessage: `Formato ${media.mime_type} não suportado para vídeo.`, result: 'FAILED' });
       return;
     }
 
@@ -276,75 +290,62 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
       postInfo = v.postInfo;
     }
 
+    if (postType === 'PHOTO') {
+      // O TikTok busca as imagens por HTTPS. As URLs assinadas são criadas apenas no servidor.
+      if (!d.storage.verifiedHost) {
+        await fin({ status: 'FAILED', errorCode: 'PHOTO_MEDIA_DOMAIN_NOT_CONFIGURED', errorMessage: 'Configure um domínio HTTPS próprio e verificado no portal de desenvolvedores do TikTok para hospedar as imagens; a publicação foi bloqueada antes de enviar qualquer coisa.', result: 'FAILED' });
+        return;
+      }
+      const imageUrls: string[] = [];
+      for (const asset of mediaList) imageUrls.push(await d.storage.signedUrl(asset.storage_key, 3600));
+      if (imageUrls.some((url) => new URL(url).hostname.toLowerCase() !== d.storage.verifiedHost!.toLowerCase())) {
+        await fin({ status: 'FAILED', errorCode: 'PHOTO_MEDIA_DOMAIN_MISMATCH', errorMessage: 'O domínio das URLs das imagens não corresponde ao domínio verificado no TikTok. Configure a URL do Supabase/Storage com seu domínio próprio verificado.', result: 'FAILED' });
+        return;
+      }
+      await d.db.addEvent(job.id, 'PHOTO_INIT_REQUEST', { mode, image_count: imageUrls.length });
+      initStarted = true;
+      const init = await withToken(d, channel.id, tk, (t) => d.tiktok.initPhotoPost(t, { imageUrls, postInfo: postInfo!, coverIndex: 0 }));
+      remoteId = init.publishId;
+      let saved = false;
+      for (let i = 1; i <= 3 && !saved; i++) {
+        try { await d.db.recordRemoteId(job.id, init.publishId); saved = true; }
+        catch (e) { d.log('record_remote_id.failed', { attempt: i, error: e instanceof Error ? e.message : String(e) }); if (i < 3) await d.sleep(300 * i); }
+      }
+      if (!saved) throw new Error('Não foi possível gravar o publish_id da publicação de fotos.');
+      idSaved = true;
+      await fin({ status: 'PROCESSING', errorCode: null, errorMessage: null, nextAttemptAt: addSeconds(d.now(), 15), result: 'PHOTO_SUBMITTED', remoteStatus: 'PROCESSING', event: { type: 'PHOTO_SUBMITTED', payload: { publish_id: init.publishId, image_count: imageUrls.length, mode } } });
+      return;
+    }
+
     // Baixa o arquivo ANTES do init: falhas aqui não criam nada no TikTok.
     const bytes = await d.storage.download(media.storage_key);
     if (bytes.length !== media.file_size_bytes) {
-      await fin({
-        status: 'FAILED',
-        errorCode: 'MEDIA_SIZE_MISMATCH',
-        errorMessage: 'O arquivo no armazenamento não confere com o registrado.',
-        result: 'FAILED',
-      });
+      await fin({ status: 'FAILED', errorCode: 'MEDIA_SIZE_MISMATCH', errorMessage: 'O arquivo no armazenamento não confere com o registrado.', result: 'FAILED' });
       return;
     }
     const plan = planChunks(bytes.length);
-
-    // ---- ponto de não retorno: a partir daqui o TikTok pode ter criado um envio ----
     await d.db.addEvent(job.id, 'INIT_REQUEST', { mode });
     initStarted = true;
     const init = await withToken(d, channel.id, tk, (t) => d.tiktok.initVideoPost(t, { mode, postInfo, plan }));
     remoteId = init.publishId;
-
-    // Persiste o publish_id ANTES do upload: é o que permite reconciliar depois.
     let saved = false;
     for (let i = 1; i <= 3 && !saved; i++) {
-      try {
-        await d.db.recordRemoteId(job.id, init.publishId);
-        saved = true;
-      } catch (e) {
-        d.log('record_remote_id.failed', { attempt: i, error: e instanceof Error ? e.message : String(e) });
-        if (i < 3) await d.sleep(300 * i);
-      }
+      try { await d.db.recordRemoteId(job.id, init.publishId); saved = true; }
+      catch (e) { d.log('record_remote_id.failed', { attempt: i, error: e instanceof Error ? e.message : String(e) }); if (i < 3) await d.sleep(300 * i); }
     }
     if (!saved) throw new Error('Não foi possível gravar o publish_id.');
     idSaved = true;
-
-    try {
-      await d.tiktok.uploadVideo(init.uploadUrl, bytes, media.mime_type, plan);
-    } catch (e) {
+    try { await d.tiktok.uploadVideo(init.uploadUrl, bytes, media.mime_type, plan); }
+    catch (e) {
       if (e instanceof TikTokError && e.kind === 'INVALID') {
-        // O TikTok recusou o arquivo de forma definitiva.
-        await fin({
-          status: 'FAILED',
-          errorCode: e.code,
-          errorMessage: 'O TikTok recusou o upload do vídeo.',
-          result: 'FAILED',
-          event: { type: 'UPLOAD_REJECTED', payload: { code: e.code, publish_id: init.publishId } },
-        });
+        await fin({ status: 'FAILED', errorCode: e.code, errorMessage: 'O TikTok recusou o upload do vídeo.', result: 'FAILED', event: { type: 'UPLOAD_REJECTED', payload: { code: e.code, publish_id: init.publishId } } });
         return;
       }
-      // Rede/5xx durante o upload: o resultado é incerto. Não reenvia; confere o status.
       d.log('upload.interrupted', { job: job.id, error: e instanceof Error ? e.message : String(e) });
-      await fin({
-        status: 'PROCESSING',
-        errorCode: 'UPLOAD_INTERRUPTED',
-        errorMessage: 'Upload interrompido; aguardando conferência do TikTok.',
-        nextAttemptAt: addSeconds(d.now(), 60),
-        result: 'UPLOAD_INTERRUPTED',
-        event: { type: 'UPLOAD_INTERRUPTED', payload: { publish_id: init.publishId } },
-      });
+      await fin({ status: 'PROCESSING', errorCode: 'UPLOAD_INTERRUPTED', errorMessage: 'Upload interrompido; aguardando conferência do TikTok.', nextAttemptAt: addSeconds(d.now(), 60), result: 'UPLOAD_INTERRUPTED', event: { type: 'UPLOAD_INTERRUPTED', payload: { publish_id: init.publishId } } });
       return;
     }
-
-    await fin({
-      status: 'PROCESSING',
-      errorCode: null,
-      errorMessage: null,
-      nextAttemptAt: addSeconds(d.now(), 15),
-      result: 'UPLOADED',
-      remoteStatus: 'UPLOADED',
-      event: { type: 'UPLOAD_OK', payload: { publish_id: init.publishId, mode } },
-    });
+    await fin({ status: 'PROCESSING', errorCode: null, errorMessage: null, nextAttemptAt: addSeconds(d.now(), 15), result: 'UPLOADED', remoteStatus: 'UPLOADED', event: { type: 'UPLOAD_OK', payload: { publish_id: init.publishId, mode } } });
   } catch (e) {
     try {
       if (e instanceof TikTokError) {

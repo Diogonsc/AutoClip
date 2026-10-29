@@ -42,9 +42,8 @@ import Loading from "@/components/loading";
 const ALL = "__all__";
 const MAX_BYTES = 50 * 1024 * 1024; // limite do plano Free do Supabase
 const EXT_BY_MIME: Record<string, string> = {
-  "video/mp4": "mp4",
-  "video/quicktime": "mov",
-  "video/webm": "webm",
+  "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
+  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
 };
 
 interface VideoMeta {
@@ -79,6 +78,17 @@ function readVideoMeta(file: File): Promise<VideoMeta | null> {
   });
 }
 
+
+function readImageMeta(file: File): Promise<VideoMeta | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    const finish = (r: VideoMeta | null) => { URL.revokeObjectURL(url); resolve(r); };
+    const timer = window.setTimeout(() => finish(null), 8000);
+    img.onload = () => { window.clearTimeout(timer); finish({ duration: 0, width: img.naturalWidth, height: img.naturalHeight }); };
+    img.onerror = () => { window.clearTimeout(timer); finish(null); }; img.src = url;
+  });
+}
+
 export default function MediaPage() {
   const ws = useCurrentWorkspace();
   const { user } = useAuth();
@@ -101,16 +111,18 @@ export default function MediaPage() {
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const ext = EXT_BY_MIME[file.type];
-      if (!ext)
-        throw new ApiError("Formato não suportado. Use MP4, MOV ou WebM.");
-      if (file.size > MAX_BYTES)
+      if (!ext) throw new ApiError("Formato não suportado. Use MP4, MOV, WebM, JPEG, PNG ou WebP.");
+      const isImage = file.type.startsWith("image/");
+      if (isImage && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new ApiError("Fotos devem ser JPEG, PNG ou WebP.");
+      if (file.size > (isImage ? 20 * 1024 * 1024 : MAX_BYTES))
         throw new ApiError(
-          `Arquivo acima de ${formatBytes(MAX_BYTES)} (limite do plano atual).`,
+          `Arquivo acima do limite permitido (${formatBytes(isImage ? 20 * 1024 * 1024 : MAX_BYTES)}).`,
         );
 
       const id = crypto.randomUUID();
       const key = `${ws.id}/${id}/original.${ext}`;
-      const meta = await readVideoMeta(file);
+      const meta = isImage ? await readImageMeta(file) : await readVideoMeta(file);
+      if (isImage && (!meta || meta.width < 360 || meta.height < 360 || meta.width > 4096 || meta.height > 4096)) throw new ApiError("A imagem precisa ter dimensões entre 360 e 4096 pixels por lado.");
 
       unwrap(
         await supabase.from("media_assets").insert({
@@ -261,7 +273,7 @@ export default function MediaPage() {
   return (
     <>
       <PageHeader
-        title="Biblioteca de vídeos"
+        title="Biblioteca de mídia"
         subtitle="Arquivos privados do workspace."
         actions={
           canEdit && (
@@ -269,7 +281,7 @@ export default function MediaPage() {
               <input
                 ref={fileInput}
                 type="file"
-                accept="video/mp4,video/quicktime,video/webm"
+                accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp"
                 hidden
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -282,7 +294,7 @@ export default function MediaPage() {
                 onClick={() => fileInput.current?.click()}
               >
                 <Upload aria-hidden="true" />
-                {upload.isPending ? "Enviando…" : "Enviar vídeo"}
+                {upload.isPending ? "Enviando…" : "Enviar mídia"}
               </Button>
             </>
           )
@@ -290,7 +302,7 @@ export default function MediaPage() {
       />
 
       <Notice tone="neutral">
-        Formatos: MP4, MOV e WebM, até {formatBytes(MAX_BYTES)} por arquivo.
+        Vídeos MP4, MOV e WebM; fotos JPEG, PNG e WebP. Até {formatBytes(MAX_BYTES)} por arquivo. Para carrossel, selecione imagens ao criar a publicação.
       </Notice>
       <ErrorBox error={uploadError} />
       <ErrorBox error={media.error ?? remove.error} />
@@ -355,7 +367,7 @@ export default function MediaPage() {
                       {mediaStatusLabel[m.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDuration(m.duration_seconds)}</TableCell>
+                  <TableCell>{m.mime_type.startsWith("image/") ? "Foto" : formatDuration(m.duration_seconds)}</TableCell>
                   <TableCell>
                     {m.width && m.height ? `${m.width}×${m.height}` : "—"}
                   </TableCell>
@@ -427,12 +439,7 @@ export default function MediaPage() {
           onClose={() => setPreview(null)}
           wide
         >
-          <video
-            className="max-h-[70vh] w-full rounded-lg bg-black"
-            src={preview.url}
-            controls
-            autoPlay
-          />
+          {preview.asset.mime_type.startsWith("image/") ? <img className="max-h-[70vh] w-full rounded-lg object-contain" src={preview.url} alt={preview.asset.original_filename} /> : <video className="max-h-[70vh] w-full rounded-lg bg-black" src={preview.url} controls autoPlay />}
         </Modal>
       )}
 

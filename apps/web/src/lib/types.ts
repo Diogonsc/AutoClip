@@ -40,11 +40,19 @@ export type PublishMode = "INBOX" | "DIRECT";
 export interface CreatorInfo {
   creator_username?: string;
   creator_nickname?: string;
+  creator_avatar_url?: string;
   privacy_level_options: string[];
   comment_disabled: boolean;
   duet_disabled: boolean;
   stitch_disabled: boolean;
   max_video_post_duration_sec: number | null;
+}
+
+export interface PlatformFlags {
+  tiktok_audited: boolean;
+  test_mode: boolean;
+  demo_video_url: string | null;
+  updated_at: string | null;
 }
 
 export interface WorkspaceSettings {
@@ -108,6 +116,8 @@ export interface PublicationJob {
   workspace_id: string;
   channel_id: string;
   media_asset_id: string;
+  media_asset_ids?: string[];
+  post_type?: "VIDEO" | "PHOTO";
   caption: string;
   privacy_level: string | null;
   allow_comment: boolean | null;
@@ -115,6 +125,7 @@ export interface PublicationJob {
   allow_stitch: boolean | null;
   brand_content: boolean;
   brand_organic: boolean;
+  music_rights_confirmed: boolean;
   scheduled_at: string | null;
   timezone: string;
   status: PublicationStatus;
@@ -126,6 +137,10 @@ export interface PublicationJob {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  approval_required?: boolean;
+  approval_status?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED";
+  approved_at?: string | null;
+  approval_note?: string | null;
 }
 
 export interface PublicationEvent {

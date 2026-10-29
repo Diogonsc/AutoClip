@@ -320,6 +320,7 @@ export function createTikTokApi(fetchImpl?: typeof fetch, opts: ApiOptions = {})
       return {
         creator_username: str(d.creator_username),
         creator_nickname: str(d.creator_nickname),
+        creator_avatar_url: str(d.creator_avatar_url),
         privacy_level_options: Array.isArray(d.privacy_level_options) ? d.privacy_level_options.map(String) : [],
         comment_disabled: d.comment_disabled === true,
         duet_disabled: d.duet_disabled === true,
@@ -352,6 +353,31 @@ export function createTikTokApi(fetchImpl?: typeof fetch, opts: ApiOptions = {})
         throw new TikTokError('MALFORMED', 'init_without_upload_url', 'Resposta de init sem publish_id/upload_url.');
       }
       return { publishId, uploadUrl };
+    },
+
+    /** Publica fotos/carrossel por URL pull-from-URL. Só Direct Post; o domínio das URLs precisa ser aceito/verificado pelo TikTok. */
+    async initPhotoPost(token: string, p: { imageUrls: string[]; postInfo: PostInfo; coverIndex?: number }): Promise<{ publishId: string }> {
+      if (p.imageUrls.length < 1 || p.imageUrls.length > 35) {
+        throw new TikTokError('INVALID', 'invalid_photo_count', 'O carrossel precisa conter de 1 a 35 imagens.');
+      }
+      if (p.imageUrls.some((url) => !/^https:\/\//i.test(url))) {
+        throw new TikTokError('INVALID', 'invalid_photo_url', 'As imagens precisam ter URLs HTTPS acessíveis pelo TikTok.');
+      }
+      const d = await api('/v2/post/publish/content/init/', token, {
+        post_info: {
+          title: p.postInfo.title ?? '',
+          privacy_level: p.postInfo.privacy_level,
+          disable_comment: p.postInfo.disable_comment,
+          brand_content_toggle: p.postInfo.brand_content_toggle,
+          brand_organic_toggle: p.postInfo.brand_organic_toggle,
+        },
+        source_info: { source: 'PULL_FROM_URL', photo_images: p.imageUrls, photo_cover_index: p.coverIndex ?? 0 },
+        post_mode: 'DIRECT_POST',
+        media_type: 'PHOTO',
+      });
+      const publishId = str(d.publish_id);
+      if (!publishId) throw new TikTokError('MALFORMED', 'photo_init_without_publish_id', 'Resposta de publicação de fotos sem publish_id.');
+      return { publishId };
     },
 
     /** Envia o arquivo em partes sequenciais (206 = parte aceita; 201 = upload completo). */

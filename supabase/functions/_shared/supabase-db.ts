@@ -62,6 +62,16 @@ export function createDb(sb: SbClient): Db {
       );
     },
 
+    async getMediaAssets(mediaIds): Promise<Media[]> {
+      if (!mediaIds.length) return [];
+      return (ok(
+        await sb.from('media_assets')
+          .select('id, workspace_id, status, storage_key, mime_type, file_size_bytes, duration_seconds, width, height')
+          .in('id', mediaIds),
+        'getMediaAssets',
+      ) ?? []) as Media[];
+    },
+
     async saveCreatorInfo(channelId, info: CreatorInfo) {
       ok(
         await sb.from('channels').update({ creator_info: info, creator_info_at: new Date().toISOString() }).eq('id', channelId),

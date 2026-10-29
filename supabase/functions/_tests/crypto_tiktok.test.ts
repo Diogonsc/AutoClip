@@ -135,6 +135,21 @@ test('initVideoPost INBOX: endpoint e corpo sem post_info', async () => {
   assert.equal((calls[0].init.headers as Record<string, string>).Authorization, 'Bearer tok');
 });
 
+test('initPhotoPost: envia fotos por URL e retorna publish_id', async () => {
+  const { api: a, calls } = api(() => json({ data: { publish_id: 'photo1' }, error: { code: 'ok' } }));
+  const result = await a.initPhotoPost('tok', {
+    imageUrls: ['https://media.example/1.jpg', 'https://media.example/2.png'],
+    coverIndex: 0,
+    postInfo: { title: 'Carrossel', privacy_level: 'SELF_ONLY', disable_comment: false, disable_duet: false, disable_stitch: false, brand_content_toggle: false, brand_organic_toggle: false },
+  });
+  assert.deepEqual(result, { publishId: 'photo1' });
+  assert.equal(calls[0].url, 'https://open.tiktokapis.com/v2/post/publish/content/init/');
+  const body = JSON.parse(String(calls[0].init.body));
+  assert.equal(body.media_type, 'PHOTO');
+  assert.equal(body.post_mode, 'DIRECT_POST');
+  assert.deepEqual(body.source_info.photo_images, ['https://media.example/1.jpg', 'https://media.example/2.png']);
+});
+
 test('initVideoPost DIRECT: endpoint e post_info', async () => {
   const { api: a, calls } = api(() => json({ data: { publish_id: 'p2', upload_url: 'https://u' }, error: { code: 'ok' } }));
   await a.initVideoPost('tok', {

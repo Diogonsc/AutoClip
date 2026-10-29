@@ -28,6 +28,8 @@ export interface Job {
   workspace_id: string;
   channel_id: string;
   media_asset_id: string;
+  media_asset_ids?: string[];
+  post_type?: 'VIDEO' | 'PHOTO';
   caption: string;
   privacy_level: string | null;
   allow_comment: boolean | null;
@@ -45,6 +47,7 @@ export interface Job {
 export interface CreatorInfo {
   creator_username?: string;
   creator_nickname?: string;
+  creator_avatar_url?: string;
   privacy_level_options: string[];
   comment_disabled: boolean;
   duet_disabled: boolean;
@@ -79,6 +82,8 @@ export interface Media {
   mime_type: string;
   file_size_bytes: number;
   duration_seconds: number | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface Settings {
@@ -108,6 +113,7 @@ export interface Db {
   getSettings(workspaceId: string): Promise<Settings | null>;
   getChannel(channelId: string): Promise<Channel | null>;
   getMedia(mediaId: string): Promise<Media | null>;
+  getMediaAssets(mediaIds: string[]): Promise<Media[]>;
   saveCreatorInfo(channelId: string, info: CreatorInfo): Promise<void>;
   setChannelStatus(
     channelId: string,
