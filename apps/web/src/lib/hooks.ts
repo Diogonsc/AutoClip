@@ -24,6 +24,23 @@ export function usePlatformOwner(userId: string | undefined) {
   });
 }
 
+export interface PlatformFlags {
+  tiktok_audited?: boolean;
+}
+
+/** Flags globais (ex.: app já auditado pelo TikTok). Leitura liberada a qualquer usuário logado. */
+export function usePlatformFlags() {
+  return useQuery({
+    queryKey: ['platform-flags'],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_platform_flags');
+      if (error) throw toError(error);
+      return (data ?? {}) as PlatformFlags;
+    },
+  });
+}
+
 export function useChannels(workspaceId: string) {
   return useQuery({
     queryKey: ['channels', workspaceId],

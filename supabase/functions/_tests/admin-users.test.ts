@@ -44,6 +44,10 @@ function setup(over: Record<string, unknown> = {}) {
     },
     listOwners: async () => [...owners],
     isPlatformOwner: async (id: string) => owners.has(id),
+    setFlags: async (flags: Record<string, boolean>) => {
+      calls.push(`flags:${JSON.stringify(flags)}`);
+    },
+    getFlags: async () => ({ tiktok_audited: false }),
     ...over,
   };
   const call = (method: string, auth: string | null, opts: { body?: unknown; query?: string } = {}) =>
@@ -153,4 +157,17 @@ test('admin: falha na limpeza do Storage não desfaz a exclusão; erro 23514 vir
   assert.equal((await a.call('DELETE', 'Bearer owner', { body: { user_id: CLIENT } })).status, 200);
   const b = setup({ deleteUser: async () => { throw Object.assign(new Error('x'), { code: '23514' }); } });
   assert.equal((await b.call('DELETE', 'Bearer owner', { body: { user_id: CLIENT } })).status, 409);
+});
+
+test('admin: flags da plataforma — só owner, só chaves conhecidas, só booleanos', async () => {
+  const { call, calls } = setup();
+  assert.equal((await call('PATCH', 'Bearer client', { body: { flags: { tiktok_audited: true } } })).status, 403);
+  assert.equal((await call('PATCH', 'Bearer owner', { body: { flags: { outra: true } } })).status, 400);
+  assert.equal((await call('PATCH', 'Bearer owner', { body: { flags: { tiktok_audited: 'sim' } } })).status, 400);
+  assert.equal((await call('PATCH', 'Bearer owner', { body: { flags: {} } })).status, 400);
+  assert.deepEqual(calls, []);
+  assert.equal((await call('PATCH', 'Bearer owner', { body: { flags: { tiktok_audited: true } } })).status, 200);
+  assert.deepEqual(calls, ['flags:{"tiktok_audited":true}']);
+  const got = await (await call('GET', 'Bearer owner', { query: '?flags' })).json();
+  assert.deepEqual(got, { flags: { tiktok_audited: false } });
 });

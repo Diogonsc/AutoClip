@@ -18,14 +18,14 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { usePlatformOwner } from "../lib/hooks";
+import { usePlatformFlags, usePlatformOwner } from "../lib/hooks";
 import { useWorkspace } from "../auth/WorkspaceProvider";
 import { errorMessage } from "../lib/api";
 import { roleLabel } from "../lib/format";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "./mode-toggle";
 import { SelectField } from "./select-field";
-import { ErrorBox, Field, Modal } from "./ui";
+import { ErrorBox, Field, Modal, Notice } from "./ui";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -237,6 +237,18 @@ function NewWorkspaceModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function TestModeBanner() {
+  const flags = usePlatformFlags();
+  if (!flags.data || flags.data.tiktok_audited) return null;
+  return (
+    <Notice tone="warning">
+      <strong>Modo de teste do TikTok.</strong> Enquanto o AutoClip aguarda a
+      aprovação do TikTok, as publicações diretas ficam visíveis apenas para
+      você (privadas). Quando a aprovação sair, este aviso desaparece.
+    </Notice>
+  );
+}
+
 export default function Layout() {
   const { current, loading } = useWorkspace();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -284,6 +296,7 @@ export default function Layout() {
         </header>
 
         <main className="mx-auto flex w-full h-full flex-1 flex-col gap-5 p-4 md:p-8">
+          <TestModeBanner />
           {loading ? (
             <Loading />
           ) : current ? (

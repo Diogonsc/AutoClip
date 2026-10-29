@@ -22,6 +22,8 @@ type AdminUsersDeps = {
   purgeWorkspaceMedia(workspaceIds: string[]): Promise<void>;
   listOwners(): Promise<string[]>;
   isPlatformOwner(userId: string): Promise<boolean>;
+  setFlags(flags: Record<string, boolean>): Promise<void>;
+  getFlags(): Promise<Record<string, unknown>>;
   log?(event: string, data: Record<string, unknown>): void;
 };
 
@@ -54,6 +56,7 @@ export async function handleAdminUsers(req: Request, d: AdminUsersDeps): Promise
   try {
     if (req.method === 'GET') {
       if (url.searchParams.get('check') === 'owner') return json({ is_owner: true }, 200, { ...cors, 'Cache-Control': 'private, no-store' });
+      if (url.searchParams.get('flags') !== null) return json({ flags: await d.getFlags() }, 200, { ...cors, 'Cache-Control': 'private, no-store' });
       const page = Math.max(1, Math.floor(Number(url.searchParams.get('page')) || 1));
       const perPage = Math.min(100, Math.max(1, Math.floor(Number(url.searchParams.get('per_page')) || 50)));
       const { users, total } = await d.listUsers(page, perPage);
@@ -100,6 +103,20 @@ export async function handleAdminUsers(req: Request, d: AdminUsersDeps): Promise
       if (validDate(body.billing_started_at)) settings.billing_started_at = body.billing_started_at;
       if (Object.keys(settings).length) await d.updateSettings(created.id, settings);
       return json({ user: { id: created.id, email: created.email, created_at: created.created_at } }, 201, cors);
+    }
+
+    if (req.method === 'PATCH' && body.flags !== undefined) {
+      const flags = body.flags as Record<string, unknown> | null;
+      const allowed = ['tiktok_audited'];
+      if (!flags || typeof flags !== 'object' || Array.isArray(flags)) return json({ error: 'invalid_request' }, 400, cors);
+      const clean: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(flags)) {
+        if (!allowed.includes(key) || typeof value !== 'boolean') return json({ error: 'invalid_request', message: 'Flag inválida.' }, 400, cors);
+        clean[key] = value;
+      }
+      if (!Object.keys(clean).length) return json({ error: 'invalid_request' }, 400, cors);
+      await d.setFlags(clean);
+      return json({ ok: true }, 200, cors);
     }
 
     const userId = body.user_id;

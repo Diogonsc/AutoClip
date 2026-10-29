@@ -13,6 +13,8 @@ import {
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Switch } from "../components/ui/switch";
+import { Label } from "../components/ui/label";
 import { useConfirm } from "../components/confirm-provider";
 import { errorMessage } from "../lib/api";
 import { formatDateTime } from "../lib/format";
@@ -93,6 +95,21 @@ export default function UsersAdminPage() {
       ),
   });
   const reload = () => qc.invalidateQueries({ queryKey: ["platform-users"] });
+  const flags = useQuery({
+    queryKey: ["platform-flags-admin"],
+    queryFn: () =>
+      callAdmin<{ flags: { tiktok_audited?: boolean } }>("GET", undefined, "?flags"),
+  });
+  const setAudited = useMutation({
+    mutationFn: (value: boolean) =>
+      callAdmin("PATCH", { flags: { tiktok_audited: value } }),
+    onSuccess: async () => {
+      setActionError(null);
+      await flags.refetch();
+      await qc.invalidateQueries({ queryKey: ["platform-flags"] });
+    },
+    onError: setActionError,
+  });
 
   const save = useMutation({
     mutationFn: async (entry: UserForm) => {
@@ -177,6 +194,23 @@ export default function UsersAdminPage() {
         A data de início da cobrança é apenas controle administrativo; não
         processa pagamentos.
       </p>
+      <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+        <div className="grid gap-1">
+          <strong className="text-sm">App aprovado pelo TikTok para posts públicos</strong>
+          <span className="text-xs text-muted-foreground">
+            Ligue somente depois que a auditoria do TikTok for aprovada. Desligado, todos
+            os usuários veem o aviso de modo teste (posts diretos ficam privados).
+          </span>
+        </div>
+        <Label className="font-normal">
+          <Switch
+            checked={Boolean(flags.data?.flags.tiktok_audited)}
+            disabled={flags.isLoading || setAudited.isPending}
+            onCheckedChange={(next) => setAudited.mutate(next === true)}
+          />
+          <span>{flags.data?.flags.tiktok_audited ? "Aprovado" : "Em teste"}</span>
+        </Label>
+      </div>
       {notice && (
         <div className="flex items-center justify-between rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm">
           <span>{notice}</span>

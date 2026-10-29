@@ -5,8 +5,23 @@ import { useCurrentWorkspace } from "../auth/WorkspaceProvider";
 import { ApiError, invokeFunction, unwrap } from "../lib/api";
 import { buildDefaultCaption } from "../lib/channelDefaults";
 import { channelStatusLabel } from "../lib/format";
-import { useChannels, useMedia, useSettings } from "../lib/hooks";
+import {
+  useChannels,
+  useMedia,
+  usePlatformFlags,
+  useSettings,
+} from "../lib/hooks";
 import { supabase } from "../lib/supabase";
+import {
+  BRANDED_CONTENT_URL,
+  MUSIC_USAGE_URL,
+  commercialLabel,
+  declarationKind,
+  durationProblem,
+  privacyOptionsFor,
+  validateCompliance,
+} from "../lib/tiktokCompliance";
+import PublicationPreview from "./PublicationPreview";
 import type {
   CreatorInfo,
   PublicationJob,
@@ -66,16 +81,31 @@ export default function PublicationForm({
   const [allowStitch, setAllowStitch] = useState(job?.allow_stitch ?? false);
   const [brandContent, setBrandContent] = useState(job?.brand_content ?? false);
   const [brandOrganic, setBrandOrganic] = useState(job?.brand_organic ?? false);
+  const [commercialOn, setCommercialOn] = useState(
+    Boolean(job?.brand_content || job?.brand_organic),
+  );
   const [freshInfo, setFreshInfo] = useState<CreatorInfo | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const flags = usePlatformFlags();
 
   const readyMedia = (media.data ?? []).filter((m) => m.status === "READY");
   const selectedChannel = (channels.data ?? []).find((c) => c.id === channelId);
+  const selectedMedia = readyMedia.find((m) => m.id === mediaId);
 
   const direct = settings.data?.publish_mode === "DIRECT";
   const info: CreatorInfo | null =
     freshInfo ?? selectedChannel?.creator_info ?? null;
+  // Configurações que o criador desativou no TikTok prevalecem sobre o que está marcado.
+  const effComment = allowComment && !info?.comment_disabled;
+  const effDuet = allowDuet && !info?.duet_disabled;
+  const effStitch = allowStitch && !info?.stitch_disabled;
+  const effOrganic = commercialOn && brandOrganic;
+  const effBrand = commercialOn && brandContent;
+  const label = commercialLabel(effOrganic, effBrand);
+  const mediaDurationIssue = direct
+    ? durationProblem(info, selectedMedia?.duration_seconds ?? null)
+    : null;
 
   const loadInfo = useMutation({
     mutationFn: async () => {
@@ -112,11 +142,11 @@ export default function PublicationForm({
         caption,
         // No modo DIRECT a privacidade só vale se vier das opções reais do criador; no INBOX o usuário decide no app do TikTok.
         privacy_level: direct && privacy ? privacy : null,
-        allow_comment: direct ? allowComment : null,
-        allow_duet: direct ? allowDuet : null,
-        allow_stitch: direct ? allowStitch : null,
-        brand_content: direct ? brandContent : false,
-        brand_organic: direct ? brandOrganic : false,
+        allow_comment: direct ? effComment : null,
+        allow_duet: direct ? effDuet : null,
+        allow_stitch: direct ? effStitch : null,
+        brand_content: direct ? effBrand : false,
+        brand_organic: direct ? effOrganic : false,
         scheduled_at,
         timezone: tz,
         status,
@@ -149,20 +179,18 @@ export default function PublicationForm({
     if (!mediaId) return setLocalError("Selecione um vídeo.");
     if (caption.length > 2200)
       return setLocalError("A legenda pode ter no máximo 2200 caracteres.");
-    if (status === "SCHEDULED" && direct && !privacy)
-      return setLocalError("Escolha a privacidade da publicação.");
-    if (
-      status === "SCHEDULED" &&
-      direct &&
-      brandContent &&
-      privacy === "SELF_ONLY"
-    )
-      return setLocalError("Conteúdo de marca não pode ser “Somente eu”.");
-    if (status === "SCHEDULED" && !confirmed) {
-      return setLocalError(
-        "Confirme a revisão da publicação antes de agendar.",
-      );
-    }
+    const problem = validateCompliance({
+      direct,
+      scheduling: status === "SCHEDULED",
+      info,
+      privacy,
+      commercialOn,
+      organic: brandOrganic,
+      brand: brandContent,
+      durationSeconds: selectedMedia?.duration_seconds ?? null,
+      consent: confirmed,
+    });
+    if (problem) return setLocalError(problem);
     save.mutate(status);
   }
 
@@ -203,7 +231,10 @@ export default function PublicationForm({
               }}
             />
           </Field>
-          <Field label="Vídeo" hint="Somente vídeos prontos aparecem aqui.">
+          <Field
+            label="Vídeo"
+            hint="Somente vídeos prontos aparecem aqui. O vídeo precisa respeitar a duração máxima da sua conta no TikTok."
+          >
             <SelectField
               value={mediaId}
               onValueChange={setMediaId}
@@ -223,6 +254,8 @@ export default function PublicationForm({
               autorizado.
             </Notice>
           )}
+
+        {mediaDurationIssue && <Notice tone="danger">{mediaDurationIssue}</Notice>}
 
         <Field label="Legenda">
           <Textarea
@@ -287,11 +320,27 @@ export default function PublicationForm({
             <legend className="px-1 text-sm font-medium">
               Privacidade e interações (opções reais do seu TikTok)
             </legend>
-            <Field label="Quem pode ver">
+            <p className="m-0 text-sm text-muted-foreground">
+              Publicando como{" "}
+              <strong className="text-foreground">
+                {info.creator_nickname || info.creator_username || "—"}
+              </strong>
+              {info.creator_username && info.creator_nickname
+                ? ` (@${info.creator_username})`
+                : ""}
+            </p>
+            {flags.data && !flags.data.tiktok_audited && (
+              <Notice tone="warning">
+                Aplicativo em modo de teste no TikTok: independentemente da
+                opção escolhida, a publicação direta ficará visível apenas para
+                você até a aprovação.
+              </Notice>
+            )}
+            <Field label="Quem pode ver" hint="Sem valor padrão: escolha conscientemente.">
               <SelectField
                 value={privacy}
                 onValueChange={setPrivacy}
-                options={info.privacy_level_options.map((o) => ({
+                options={privacyOptionsFor(info, effBrand).map((o) => ({
                   value: o,
                   label: PRIVACY_LABEL[o] ?? o,
                 }))}
@@ -332,18 +381,61 @@ export default function PublicationForm({
             </Label>
             <Label className="font-normal">
               <Checkbox
-                checked={brandOrganic}
-                onCheckedChange={(checked) => setBrandOrganic(checked === true)}
+                checked={commercialOn}
+                onCheckedChange={(checked) => {
+                  const on = checked === true;
+                  setCommercialOn(on);
+                  if (!on) {
+                    setBrandOrganic(false);
+                    setBrandContent(false);
+                  }
+                }}
               />
-              <span>Promove a minha própria marca</span>
+              <span>Divulgar conteúdo comercial</span>
             </Label>
-            <Label className="font-normal">
-              <Checkbox
-                checked={brandContent}
-                onCheckedChange={(checked) => setBrandContent(checked === true)}
-              />
-              <span>Conteúdo de marca (parceria paga)</span>
-            </Label>
+            {commercialOn && (
+              <div className="grid gap-3 rounded-md border border-dashed p-3">
+                <Label className="font-normal">
+                  <Checkbox
+                    checked={brandOrganic}
+                    onCheckedChange={(checked) =>
+                      setBrandOrganic(checked === true)
+                    }
+                  />
+                  <span>Sua marca (você promove o seu próprio negócio)</span>
+                </Label>
+                <Label className="font-normal">
+                  <Checkbox
+                    checked={brandContent}
+                    onCheckedChange={(checked) => {
+                      const on = checked === true;
+                      setBrandContent(on);
+                      if (on && privacy === "SELF_ONLY") setPrivacy("");
+                    }}
+                  />
+                  <span>Conteúdo de marca (você promove outra marca ou terceiro)</span>
+                </Label>
+                {!effOrganic && !effBrand && (
+                  <Notice tone="warning">
+                    Indique se o conteúdo promove a sua marca, uma marca de
+                    terceiros ou ambos para poder agendar.
+                  </Notice>
+                )}
+                {label && (
+                  <Notice tone="info">
+                    Sua publicação será rotulada como{" "}
+                    <strong>
+                      {label === "PROMOTIONAL"
+                        ? "“Conteúdo promocional”"
+                        : "“Parceria paga”"}
+                    </strong>
+                    .
+                    {effBrand &&
+                      " Conteúdo de marca não pode ser privado: a opção “Somente eu” foi desativada."}
+                  </Notice>
+                )}
+              </div>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -357,13 +449,68 @@ export default function PublicationForm({
           </fieldset>
         )}
 
+        <PublicationPreview
+          nickname={info?.creator_nickname}
+          username={info?.creator_username}
+          caption={caption}
+          mediaName={selectedMedia?.original_filename}
+          mediaDuration={selectedMedia?.duration_seconds}
+          storageKey={selectedMedia?.storage_key}
+          privacyText={
+            direct && privacy ? (PRIVACY_LABEL[privacy] ?? privacy) : undefined
+          }
+          interactions={
+            direct
+              ? [
+                  effComment && "comentários",
+                  effDuet && "dueto",
+                  effStitch && "stitch",
+                ].filter((x): x is string => Boolean(x))
+              : []
+          }
+          whenText={when ? `${when.replace("T", " ")} (${tz})` : undefined}
+          label={label}
+        />
+
+        <Notice tone="info">
+          Depois do envio, o TikTok pode levar alguns minutos para processar o
+          vídeo e exibi-lo no perfil. Legenda e hashtags continuam editáveis por
+          você antes de agendar.
+        </Notice>
+
         <Label className="font-normal">
           <Checkbox
             checked={confirmed}
             onCheckedChange={(checked) => setConfirmed(checked === true)}
           />
-          <span>Revisei canal, vídeo, legenda e horário desta publicação.</span>
+          <span>
+            Revisei a prévia e autorizo o AutoClip a enviar este conteúdo ao
+            TikTok em meu nome.
+          </span>
         </Label>
+        <p className="m-0 text-xs text-muted-foreground">
+          {declarationKind(effBrand) === "BRANDED_AND_MUSIC" ? (
+            <>
+              Ao publicar, você concorda com a{" "}
+              <a href={BRANDED_CONTENT_URL} target="_blank" rel="noreferrer">
+                Política de Conteúdo de Marca
+              </a>{" "}
+              e com a{" "}
+              <a href={MUSIC_USAGE_URL} target="_blank" rel="noreferrer">
+                Confirmação de Uso de Música
+              </a>{" "}
+              do TikTok.
+            </>
+          ) : (
+            <>
+              Ao publicar, você concorda com a{" "}
+              <a href={MUSIC_USAGE_URL} target="_blank" rel="noreferrer">
+                Confirmação de Uso de Música
+              </a>{" "}
+              do TikTok.
+            </>
+          )}
+        </p>
 
         {(localError || save.error) && (
           <ErrorBox error={localError ? new Error(localError) : save.error} />
