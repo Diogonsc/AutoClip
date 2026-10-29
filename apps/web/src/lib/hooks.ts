@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from './supabase';
-import { unwrap } from './api';
+import { toError, unwrap } from './api';
 import type {
   Channel,
   MediaAsset,
   Profile,
   PublicationJob,
+  PublicationStatus,
   WorkspaceSettings,
 } from './types';
 
@@ -38,18 +39,30 @@ export function useMedia(workspaceId: string) {
   });
 }
 
-export function useJobs(workspaceId: string) {
+export function useJobsPage(
+  workspaceId: string,
+  page: number,
+  pageSize: number,
+  statuses?: readonly PublicationStatus[],
+  sortBy: 'scheduled_at' | 'updated_at' = 'scheduled_at',
+) {
+  const statusKey = statuses?.join(',') ?? 'all';
   return useQuery({
-    queryKey: ['jobs', workspaceId],
-    queryFn: async () =>
-      unwrap(
-        await supabase
-          .from('publication_jobs')
-          .select('*')
-          .eq('workspace_id', workspaceId)
-          .order('scheduled_at', { ascending: false, nullsFirst: false })
-          .limit(1000),
-      ) as unknown as PublicationJob[],
+    queryKey: ['jobs', workspaceId, 'page', page, pageSize, statusKey, sortBy],
+    queryFn: async () => {
+      let request = supabase
+        .from('publication_jobs')
+        .select('*', { count: 'exact' })
+        .eq('workspace_id', workspaceId)
+        .order(sortBy, { ascending: false, nullsFirst: sortBy === 'scheduled_at' })
+        .order('scheduled_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true });
+      if (statuses?.length) request = request.in('status', [...statuses]);
+      const { data, error, count } = await request.range(page * pageSize, (page + 1) * pageSize - 1);
+      if (error) throw toError(error);
+      return { rows: (data ?? []) as unknown as PublicationJob[], total: count ?? 0 };
+    },
   });
 }
 

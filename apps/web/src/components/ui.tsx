@@ -94,9 +94,7 @@ export function Empty({
   return (
     <Card className="border border-dashed bg-transparent shadow-none ring-0">
       <CardContent className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-        {Icon && (
-          <Icon aria-hidden="true" className="size-7 text-primary" />
-        )}
+        {Icon && <Icon aria-hidden="true" className="size-7 text-primary" />}
         <strong className="text-foreground">{title}</strong>
         {children && (
           <p className="m-0 max-w-md text-sm text-muted-foreground">
@@ -105,19 +103,6 @@ export function Empty({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-export function Spinner({ label = "Carregando…" }: { label?: string }) {
-  return (
-    <div
-      className="flex items-center gap-3 p-4 text-sm text-muted-foreground"
-      role="status"
-      aria-live="polite"
-    >
-      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-      {label}
-    </div>
   );
 }
 

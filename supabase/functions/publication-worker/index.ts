@@ -8,7 +8,7 @@ declare const Deno: { serve(handler: (req: Request) => Response | Promise<Respon
 declare const EdgeRuntime: { waitUntil(work: Promise<unknown>): void } | undefined;
 
 const LEASE_NAME = 'publication-worker';
-const LEASE_TTL_SECONDS = 150; // >= limite de tempo da função
+const LEASE_TTL_SECONDS = 300; // margem para uma execução longa; renovado enquanto o worker está ativo
 const BUDGET_MS = 90_000; // não inicia novos envios depois disso
 
 Deno.serve(async (req) => {
@@ -40,6 +40,16 @@ Deno.serve(async (req) => {
         const r = await c.sb.rpc('release_worker_lease', { p_name: LEASE_NAME, p_holder: holder });
         if (r.error) throw new Error(`release_worker_lease: ${r.error.message}`);
       },
+      renewLease: async (holder) => {
+        const r = await c.sb.rpc('acquire_worker_lease', {
+          p_name: LEASE_NAME,
+          p_holder: holder,
+          p_ttl_seconds: LEASE_TTL_SECONDS,
+        });
+        if (r.error) throw new Error(`renew_worker_lease: ${r.error.message}`);
+        return r.data === true;
+      },
+      leaseTtlSeconds: LEASE_TTL_SECONDS,
       // Responde 202 na hora (o pg_net não espera) e continua o trabalho em segundo plano.
       background: typeof EdgeRuntime !== 'undefined' ? (work) => EdgeRuntime.waitUntil(work) : undefined,
       newId: () => crypto.randomUUID(),

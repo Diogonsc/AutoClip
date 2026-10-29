@@ -2,7 +2,7 @@
 -- Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(42);
+select plan(43);
 
 -- ---------------------------------------------------------------------
 -- Setup (como postgres)
@@ -226,6 +226,10 @@ select is(
   (select status::text || ':' || (locked_at is null)::text from public.publication_jobs
     where id = '30000000-0000-0000-0000-000000000002'),
   'PROCESSING:true', 'com publish_id: libera para conferência de status');
+
+select ok((select next_attempt_at <= now() from public.publication_jobs
+            where id = '30000000-0000-0000-0000-000000000002'),
+  'job recuperado fica pronto para polling automático');
 
 select is((select status::text from public.publication_jobs where id = '30000000-0000-0000-0000-000000000003'),
   'UNKNOWN', 'sem publish_id: vira UNKNOWN (nunca reenvia sozinho)');

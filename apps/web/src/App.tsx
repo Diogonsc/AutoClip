@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "./lib/supabase";
 import { WorkspaceProvider, useWorkspace } from "./auth/WorkspaceProvider";
 import Layout from "./components/Layout";
-import { Spinner } from "./components/ui";
 import { supabaseConfigured } from "./lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import {
@@ -21,18 +22,43 @@ import MembersPage from "./pages/MembersPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import PublicationsPage from "./pages/PublicationsPage";
 import SettingsPage from "./pages/SettingsPage";
+import UsersAdminPage from "./pages/UsersAdminPage";
+import Loading from "./components/loading";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <Spinner />;
+  if (loading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
   return <WorkspaceProvider>{children}</WorkspaceProvider>;
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { canAdmin, loading } = useWorkspace();
-  if (loading) return <Spinner />;
+  if (loading) return <Loading />;
   return canAdmin ? <>{children}</> : <Navigate to="/" replace />;
+}
+
+function RequirePlatformOwner({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const owner = useQuery({
+    queryKey: ["platform-owner", user?.id],
+    enabled: Boolean(user),
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke(
+        "admin-users?check=owner",
+        { method: "GET" },
+      );
+      if (error) {
+        const status = (error as { context?: Response }).context?.status;
+        if (status === 403 || status === 401) return false;
+        throw error;
+      }
+      return Boolean(data?.is_owner);
+    },
+  });
+  if (loading || owner.isLoading) return <Loading />;
+  if (owner.isError) return <Navigate to="/" replace />;
+  return owner.data ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function MissingConfig() {
@@ -81,6 +107,14 @@ export default function App() {
           <Route path="notificacoes" element={<NotificationsPage />} />
           <Route path="membros" element={<MembersPage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
+          <Route
+            path="owner/usuarios"
+            element={
+              <RequirePlatformOwner>
+                <UsersAdminPage />
+              </RequirePlatformOwner>
+            }
+          />
           <Route
             path="auditoria"
             element={

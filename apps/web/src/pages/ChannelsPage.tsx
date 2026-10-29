@@ -13,7 +13,6 @@ import {
   Modal,
   Notice,
   PageHeader,
-  Spinner,
   TableCard,
   Toolbar,
 } from "../components/ui";
@@ -42,6 +41,7 @@ import { channelStatusLabel, channelTone, formatDateTime } from "../lib/format";
 import { useChannels } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { Channel } from "../lib/types";
+import Loading from "@/components/loading";
 
 /** Valor-sentinela para "Não definido" (o Select não aceita string vazia como opção). */
 const UNSET = "__unset__";
@@ -484,7 +484,7 @@ export default function ChannelsPage() {
       />
 
       {channels.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : (channels.data ?? []).length === 0 ? (
         <Empty title="Nenhum canal cadastrado" icon={Radio}>
           Adicione o primeiro canal acima.
@@ -599,7 +599,8 @@ export default function ChannelsPage() {
                               if (
                                 await confirm({
                                   title: `Excluir o canal "${c.display_name}"?`,
-                                  description: "Esta ação não pode ser desfeita.",
+                                  description:
+                                    "Esta ação não pode ser desfeita.",
                                   confirmLabel: "Excluir",
                                   destructive: true,
                                 })

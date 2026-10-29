@@ -5,7 +5,7 @@ import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import { Users } from "lucide-react";
 import { useConfirm } from "../components/confirm-provider";
 import { SelectField } from "../components/select-field";
-import { Empty, ErrorBox, PageHeader, Spinner, TableCard } from "../components/ui";
+import { Empty, ErrorBox, PageHeader, TableCard } from "../components/ui";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
@@ -21,6 +21,7 @@ import { formatDateTime, roleLabel } from "../lib/format";
 import { useProfiles } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { Member, Role } from "../lib/types";
+import Loading from "@/components/loading";
 
 const ROLES: Role[] = ["OWNER", "ADMIN", "EDITOR", "VIEWER"];
 
@@ -138,7 +139,7 @@ export default function MembersPage() {
       />
 
       {members.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : (members.data ?? []).length === 0 ? (
         <Empty title="Sem membros" icon={Users} />
       ) : (

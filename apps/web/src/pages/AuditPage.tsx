@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentWorkspace } from "../auth/WorkspaceProvider";
-import { Empty, ErrorBox, PageHeader, Spinner } from "../components/ui";
+import { Empty, ErrorBox, PageHeader } from "../components/ui";
 import { unwrap } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { useProfiles } from "../lib/hooks";
@@ -10,6 +10,7 @@ import { Activity, ArrowRight, ScrollText, Trash2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { cn } from "@/lib/utils";
+import Loading from "@/components/loading";
 
 const ACTION: Record<string, string> = {
   INSERT: "Criou",
@@ -52,7 +53,7 @@ export default function AuditPage() {
       />
       <ErrorBox error={logs.error} />
       {logs.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : (logs.data ?? []).length === 0 ? (
         <Empty title="Nenhum registro" icon={ScrollText} />
       ) : (

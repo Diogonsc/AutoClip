@@ -83,6 +83,64 @@ test('worker: com background responde 202 e libera o lease ao terminar', async (
   assert.deepEqual(calls, ['acquire', 'release']);
 });
 
+test('worker: para de reivindicar jobs após perder a renovação do lease', async () => {
+  let bg: Promise<unknown> | null = null;
+  let claims = 0;
+  let unblock!: () => void;
+  const { d } = workerDeps({
+    leaseTtlSeconds: 3,
+    renewLease: async () => false,
+    background: (work) => (bg = work),
+    workerDeps: {
+      db: {
+        claimPollingJob: async () => {
+          claims++;
+          await new Promise<void>((resolve) => (unblock = resolve));
+          return null;
+        },
+        claimPublishJob: () => Promise.resolve(null),
+      },
+      now: () => new Date(),
+    } as unknown as WorkerHandlerDeps['workerDeps'],
+  });
+  await handleWorker(post({ 'x-worker-secret': 's3cret' }), d);
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  unblock();
+  await bg;
+  assert.equal(claims, 1, 'não reivindica outro job depois de perder o lease');
+});
+
+test('worker: renova periodicamente o lease durante uma execução longa', async () => {
+  let unblock!: () => void;
+  let bg: Promise<unknown> | null = null;
+  let renewals = 0;
+  const { d, calls } = workerDeps({
+    leaseTtlSeconds: 3,
+    renewLease: async () => {
+      renewals++;
+      return true;
+    },
+    background: (work) => (bg = work),
+    workerDeps: {
+      db: {
+        claimPollingJob: async () => {
+          await new Promise<void>((resolve) => (unblock = resolve));
+          return null;
+        },
+        claimPublishJob: () => Promise.resolve(null),
+      },
+      now: () => new Date(),
+    } as unknown as WorkerHandlerDeps['workerDeps'],
+  });
+  const response = await handleWorker(post({ 'x-worker-secret': 's3cret' }), d);
+  assert.equal(response.status, 202);
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  unblock();
+  await bg;
+  assert.ok(renewals >= 1);
+  assert.deepEqual(calls, ['acquire', 'release']);
+});
+
 test('worker: erro no processamento é registrado e o lease é liberado', async () => {
   const logs: string[] = [];
   const { d, calls } = workerDeps({

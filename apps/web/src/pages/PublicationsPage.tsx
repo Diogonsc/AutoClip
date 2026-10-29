@@ -12,7 +12,6 @@ import {
   ErrorBox,
   Notice,
   PageHeader,
-  Spinner,
   TableCard,
   Toolbar,
 } from "../components/ui";
@@ -23,7 +22,7 @@ import {
   publicationStatusLabel,
   publicationTone,
 } from "../lib/format";
-import { useChannels, useJobs, useMedia, useSettings } from "../lib/hooks";
+import { useChannels, useJobsPage, useMedia, useSettings } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { PublicationJob, PublicationStatus } from "../lib/types";
 import { Button } from "../components/ui/button";
@@ -35,13 +34,16 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
+import Loading from "@/components/loading";
 
 export default function PublicationsPage() {
   const ws = useCurrentWorkspace();
   const { canEdit } = useWorkspace();
   const qc = useQueryClient();
   const confirm = useConfirm();
-  const jobs = useJobs(ws.id);
+  const pageSize = 50;
+  const [page, setPage] = useState(0);
+  const jobs = useJobsPage(ws.id, page, pageSize);
   const channels = useChannels(ws.id);
   const media = useMedia(ws.id);
   const settings = useSettings(ws.id);
@@ -71,8 +73,13 @@ export default function PublicationsPage() {
 
   const channelOf = (id: string) => channels.data?.find((c) => c.id === id);
   const mediaOf = (id: string) => media.data?.find((m) => m.id === id);
-  const list = (jobs.data ?? []).filter((j) => !filter || j.status === filter);
-  const hasScheduled = (jobs.data ?? []).some((j) => j.status === "SCHEDULED");
+  const list = (jobs.data?.rows ?? []).filter(
+    (j) => !filter || j.status === filter,
+  );
+  const hasScheduled = (jobs.data?.rows ?? []).some(
+    (j) => j.status === "SCHEDULED",
+  );
+  const totalPages = Math.ceil((jobs.data?.total ?? 0) / pageSize);
 
   return (
     <>
@@ -99,9 +106,10 @@ export default function PublicationsPage() {
           aria-label="Filtrar por estado"
           className="w-full sm:w-64"
           value={filter || "all"}
-          onValueChange={(value) =>
-            setFilter(value === "all" ? "" : (value as PublicationStatus))
-          }
+          onValueChange={(value) => {
+            setFilter(value === "all" ? "" : (value as PublicationStatus));
+            setPage(0);
+          }}
           options={[
             { value: "all", label: "Todos os estados" },
             ...(Object.keys(publicationStatusLabel) as PublicationStatus[]).map(
@@ -112,7 +120,7 @@ export default function PublicationsPage() {
       </Toolbar>
 
       {jobs.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : list.length === 0 ? (
         <Empty title="Nenhuma publicação" icon={Send}>
           {canEdit ? "Clique em “Nova publicação” para começar." : undefined}
@@ -155,63 +163,65 @@ export default function PublicationsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDetail(j)}
-                      >
-                        Detalhes
-                      </Button>
-                      {editable && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setFormJob(j)}
+                          onClick={() => setDetail(j)}
                         >
-                          Editar
+                          Detalhes
                         </Button>
-                      )}
-                      {editable && j.status !== "DRAFT" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            if (
-                              await confirm({
-                                title: "Cancelar esta publicação?",
-                                description:
-                                  "Ela deixa de ser enviada ao TikTok no horário agendado.",
-                                confirmLabel: "Cancelar publicação",
-                                cancelLabel: "Voltar",
-                                destructive: true,
-                              })
-                            )
-                              cancel.mutate(j.id);
-                          }}
-                        >
-                          Cancelar
-                        </Button>
-                      )}
-                      {canEdit &&
-                        (j.status === "DRAFT" || j.status === "CANCELLED") && (
+                        {editable && (
                           <Button
-                            variant="destructive"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormJob(j)}
+                          >
+                            Editar
+                          </Button>
+                        )}
+                        {editable && j.status !== "DRAFT" && (
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={async () => {
                               if (
                                 await confirm({
-                                  title: "Excluir definitivamente?",
-                                  description: "Esta ação não pode ser desfeita.",
-                                  confirmLabel: "Excluir",
+                                  title: "Cancelar esta publicação?",
+                                  description:
+                                    "Ela deixa de ser enviada ao TikTok no horário agendado.",
+                                  confirmLabel: "Cancelar publicação",
+                                  cancelLabel: "Voltar",
                                   destructive: true,
                                 })
                               )
-                                remove.mutate(j.id);
+                                cancel.mutate(j.id);
                             }}
                           >
-                            Excluir
+                            Cancelar
                           </Button>
                         )}
+                        {canEdit &&
+                          (j.status === "DRAFT" ||
+                            j.status === "CANCELLED") && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                if (
+                                  await confirm({
+                                    title: "Excluir definitivamente?",
+                                    description:
+                                      "Esta ação não pode ser desfeita.",
+                                    confirmLabel: "Excluir",
+                                    destructive: true,
+                                  })
+                                )
+                                  remove.mutate(j.id);
+                              }}
+                            >
+                              Excluir
+                            </Button>
+                          )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -220,6 +230,29 @@ export default function PublicationsPage() {
             </TableBody>
           </Table>
         </TableCard>
+      )}
+      {!jobs.isLoading && (jobs.data?.total ?? 0) > pageSize && (
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">
+            Página {page + 1} de {totalPages} · {jobs.data?.total} publicações
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={page === 0}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
       )}
 
       {formJob && (

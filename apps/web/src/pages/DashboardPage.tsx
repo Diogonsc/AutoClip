@@ -2,14 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { CalendarClock, Activity } from "lucide-react";
 import { useCurrentWorkspace } from "../auth/WorkspaceProvider";
-import {
-  Badge,
-  Empty,
-  ErrorBox,
-  Notice,
-  PageHeader,
-  Spinner,
-} from "../components/ui";
+import { Badge, Empty, ErrorBox, Notice, PageHeader } from "../components/ui";
 import {
   Card,
   CardContent,
@@ -24,11 +17,12 @@ import {
   publicationStatusLabel,
   publicationTone,
 } from "../lib/format";
-import { useChannels, useJobs, useSettings } from "../lib/hooks";
+import { useChannels, useJobsPage, useSettings } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { PublicationEvent } from "../lib/types";
 import type { Tone } from "../lib/format";
 import { cn } from "@/lib/utils";
+import Loading from "@/components/loading";
 
 const STAT_ACCENT: Record<Tone, string> = {
   success: "text-success",
@@ -63,7 +57,7 @@ function Timeline({
 export default function DashboardPage() {
   const ws = useCurrentWorkspace();
   const channels = useChannels(ws.id);
-  const jobs = useJobs(ws.id);
+  const jobs = useJobsPage(ws.id, 0, 1000, undefined, "updated_at");
   const settings = useSettings(ws.id);
   const events = useQuery({
     queryKey: ["recent-events", ws.id],
@@ -78,11 +72,13 @@ export default function DashboardPage() {
       ) as unknown as PublicationEvent[],
   });
 
-  if (channels.isLoading || jobs.isLoading) return <Spinner />;
+  if (channels.isLoading || jobs.isLoading) return <Loading />;
 
   const ch = channels.data ?? [];
-  const jb = jobs.data ?? [];
-  const connected = ch.filter((c) => c.connection_status === "CONNECTED").length;
+  const jb = jobs.data?.rows ?? [];
+  const connected = ch.filter(
+    (c) => c.connection_status === "CONNECTED",
+  ).length;
   const problemChannels = ch.filter((c) =>
     PROBLEM_CHANNEL_STATUSES.includes(c.connection_status),
   );
@@ -137,9 +133,8 @@ export default function DashboardPage() {
       {settings.data && !settings.data.auto_publish_enabled && (
         <Notice tone="info">
           A publicação automática está <strong>desligada</strong> neste
-          workspace: os agendamentos ficam salvos, mas nada é enviado ao
-          TikTok. A ativação depende da integração oficial validada
-          (Configurações).
+          workspace: os agendamentos ficam salvos, mas nada é enviado ao TikTok.
+          A ativação depende da integração oficial validada (Configurações).
         </Notice>
       )}
       {problemChannels.length > 0 && (
@@ -178,15 +173,18 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4 text-primary" aria-hidden="true" />
+              <CalendarClock
+                className="size-4 text-primary"
+                aria-hidden="true"
+              />
               Próximas publicações
             </CardTitle>
           </CardHeader>
           <CardContent>
             {upcoming.length === 0 ? (
               <Empty title="Nada agendado">
-                Crie uma publicação em <Link to="/publicacoes">Publicações</Link>
-                .
+                Crie uma publicação em{" "}
+                <Link to="/publicacoes">Publicações</Link>.
               </Empty>
             ) : (
               <Timeline
@@ -211,7 +209,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {events.isLoading ? (
-              <Spinner />
+              <Loading />
             ) : (events.data ?? []).length === 0 ? (
               <Empty title="Sem atividade ainda" />
             ) : (

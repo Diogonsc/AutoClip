@@ -3,13 +3,14 @@ import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import JobDetail from "../components/JobDetail";
 import PublicationForm from "../components/PublicationForm";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { ErrorBox, PageHeader, Spinner, Toolbar, toneClasses } from "../components/ui";
+import { ErrorBox, PageHeader, Toolbar, toneClasses } from "../components/ui";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { publicationTone } from "../lib/format";
-import { useChannels, useJobs, useMedia } from "../lib/hooks";
+import { useChannels, useJobsPage, useMedia } from "../lib/hooks";
 import type { PublicationJob } from "../lib/types";
 import { Button } from "../components/ui/button";
+import Loading from "@/components/loading";
 
 type View = "month" | "week" | "day";
 
@@ -28,7 +29,7 @@ function key(d: Date): string {
 export default function CalendarPage() {
   const ws = useCurrentWorkspace();
   const { canEdit } = useWorkspace();
-  const jobs = useJobs(ws.id);
+  const jobs = useJobsPage(ws.id, 0, 1000);
   const channels = useChannels(ws.id);
   const media = useMedia(ws.id);
 
@@ -39,7 +40,7 @@ export default function CalendarPage() {
 
   const byDay = useMemo(() => {
     const map = new Map<string, PublicationJob[]>();
-    for (const j of jobs.data ?? []) {
+    for (const j of jobs.data?.rows ?? []) {
       if (!j.scheduled_at || j.status === "CANCELLED") continue;
       const k = key(new Date(j.scheduled_at)); // exibido no fuso do navegador
       map.set(k, [...(map.get(k) ?? []), j]);
@@ -123,17 +124,27 @@ export default function CalendarPage() {
         >
           <ChevronLeft />
         </Button>
-        <Button variant="outline" onClick={() => setCursor(startOfDay(new Date()))}>
+        <Button
+          variant="outline"
+          onClick={() => setCursor(startOfDay(new Date()))}
+        >
           Hoje
         </Button>
-        <Button variant="outline" size="icon" onClick={() => move(1)} aria-label="Próximo">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => move(1)}
+          aria-label="Próximo"
+        >
           <ChevronRight />
         </Button>
-        <strong className="ml-1 font-heading text-base capitalize">{title}</strong>
+        <strong className="ml-1 font-heading text-base capitalize">
+          {title}
+        </strong>
       </Toolbar>
 
       {jobs.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : (
         <div className="overflow-x-auto">
           <div

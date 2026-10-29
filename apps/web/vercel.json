@@ -4,10 +4,6 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/tiktok/callback",
-      "destination": "https://djrwfvcxgpyknmizqumn.supabase.co/functions/v1/tiktok-oauth-callback"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

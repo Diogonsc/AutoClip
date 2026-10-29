@@ -21,6 +21,8 @@ export interface WorkerHandlerDeps {
   workerDeps: WorkerDeps;
   acquireLease(holder: string): Promise<boolean>;
   releaseLease(holder: string): Promise<void>;
+  renewLease?(holder: string): Promise<boolean>;
+  leaseTtlSeconds?: number;
   /** EdgeRuntime.waitUntil: responde logo e continua o trabalho em segundo plano. */
   background?(work: Promise<unknown>): void;
   newId(): string;
@@ -38,13 +40,40 @@ export async function handleWorker(req: Request, d: WorkerHandlerDeps): Promise<
   // Uma execução por vez: evita refresh de token concorrente (quebraria a rotação do refresh_token).
   if (!(await d.acquireLease(holder))) return json({ accepted: false, reason: 'busy' }, 202);
 
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  let renewalInFlight: Promise<void> | undefined;
+  let heartbeatFailed = false;
+  if (d.renewLease) {
+    const intervalMs = Math.max(1_000, Math.floor(((d.leaseTtlSeconds ?? 300) * 1_000) / 3));
+    heartbeat = setInterval(() => {
+      if (renewalInFlight || heartbeatFailed) return;
+      renewalInFlight = d.renewLease!(holder)
+        .then((renewed) => {
+          if (!renewed) heartbeatFailed = true;
+        })
+        .catch((e) => {
+          heartbeatFailed = true;
+          d.log('worker.lease_renew_failed', { error: errMsg(e) });
+        })
+        .finally(() => {
+          renewalInFlight = undefined;
+        });
+    }, intervalMs);
+  }
+
   const work = (async () => {
     try {
-      const r = await runWorker(d.workerDeps, { workerId: holder, budgetMs: d.budgetMs });
-      d.log('worker.done', r);
+      const r = await runWorker(d.workerDeps, {
+        workerId: holder,
+        budgetMs: d.budgetMs,
+        shouldContinue: () => !heartbeatFailed,
+      });
+      d.log('worker.done', { ...r, leaseLost: heartbeatFailed });
     } catch (e) {
       d.log('worker.error', { error: errMsg(e) });
     } finally {
+      if (heartbeat) clearInterval(heartbeat);
+      await renewalInFlight;
       await d.releaseLease(holder).catch((e) => d.log('worker.release_failed', { error: errMsg(e) }));
     }
   })();

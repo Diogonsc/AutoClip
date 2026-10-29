@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace } from "../auth/WorkspaceProvider";
-import { Empty, ErrorBox, PageHeader, Spinner } from "../components/ui";
+import { Empty, ErrorBox, PageHeader } from "../components/ui";
 import { unwrap } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { supabase } from "../lib/supabase";
@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { cn } from "@/lib/utils";
+import Loading from "@/components/loading";
 
 export default function NotificationsPage() {
   const ws = useCurrentWorkspace();
@@ -64,7 +65,7 @@ export default function NotificationsPage() {
       <ErrorBox error={list.error ?? markRead.error} />
 
       {list.isLoading ? (
-        <Spinner />
+        <Loading />
       ) : (list.data ?? []).length === 0 ? (
         <Empty title="Sem notificações" icon={Bell} />
       ) : (
@@ -93,7 +94,9 @@ export default function NotificationsPage() {
                     {!n.read_at ? <Badge>Nova</Badge> : null}
                   </div>
                   {n.body && (
-                    <p className="m-0 text-sm text-muted-foreground">{n.body}</p>
+                    <p className="m-0 text-sm text-muted-foreground">
+                      {n.body}
+                    </p>
                   )}
                   <time
                     className="text-xs text-muted-foreground"

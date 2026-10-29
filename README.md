@@ -68,8 +68,10 @@ npm run build
 ```
 
 Deploy na Vercel: Root Directory = `apps/web`, variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
-(somente a chave pública). No Supabase, em Auth → URL Configuration, inclua a URL da Vercel em Site URL e Redirect URLs
-(inclusive `/reset-password`). A migration `20261020000004_frontend_support.sql` precisa estar aplicada.
+(somente a chave pública). O callback OAuth usa diretamente a Edge Function do Supabase; não é necessário um
+rewrite nem segredo de callback na Vercel. No Supabase, em Auth → URL Configuration, inclua a URL da Vercel em
+Site URL e Redirect URLs (inclusive `/reset-password`). A migration `20261020000004_frontend_support.sql`
+precisa estar aplicada.
 
 ## Etapa 3: Edge Functions (OAuth TikTok, worker, pg_cron)
 
@@ -79,7 +81,7 @@ supabase/functions/
 ├── publication-worker/          # disparado a cada minuto pelo pg_cron (header x-worker-secret)
 ├── tiktok-channel/              # front: connect | creator_info | disconnect (JWT do usuário)
 ├── tiktok-oauth-callback/       # redirect_uri do TikTok (state de uso único)
-└── _tests/                      # 72 testes (node --test)
+└── _tests/                      # 74 testes (node --test)
 ```
 
 **Modos de publicação** (`workspace_settings.publish_mode`, só OWNER altera):
@@ -95,7 +97,8 @@ Tokens ficam cifrados (AES-256-GCM, AAD = id do canal) em `oauth_connections`.
 ### Configuração
 
 1. No app em developers.tiktok.com: produtos *Login Kit* e *Content Posting API*; Redirect URI =
-   `https://<ref>.supabase.co/functions/v1/tiktok-oauth-callback`.
+   `https://<project-ref>.supabase.co/functions/v1/tiktok-oauth-callback` (idêntico ao `TIKTOK_REDIRECT_URI`
+   configurado nas Edge Functions).
 2. Segredos das funções (veja `supabase/functions/.env.example`):
    ```bash
    cp supabase/functions/.env.example supabase/functions/.env   # preencha
@@ -121,9 +124,35 @@ cd supabase/functions && node --test _tests/*.test.ts     # Node >= 22.6 (type s
 supabase test db                                          # pgTAP (isolamento + integração)
 ```
 
-Limites da validação feita até aqui: o código Deno (`index.ts`, `runtime.ts`, `supabase-db.ts`, `channel-db.ts`)
-e o frontend **não foram executados** (sem Deno/CLI/npm no ambiente de desenvolvimento); a API real do TikTok
-também não foi chamada. Faça um teste ponta a ponta com um canal sandbox antes de usar em produção.
+Limites da validação feita até aqui: os testes unitários simulam as dependências externas; a integração real
+com Supabase/Deno e a API do TikTok não é exercitada por eles. Faça um teste ponta a ponta com um canal sandbox
+antes de usar em produção.
+
+## Área administrativa (owner da plataforma)
+
+"OWNER" nos workspaces é por tenant e **não** dá acesso administrativo global. O painel `/owner/usuarios`
+só aparece para contas listadas em `platform_owners` (tabela sem grants para o navegador) e toda operação
+passa pela Edge Function `admin-users`, que valida o JWT e usa a `service_role` apenas no servidor.
+
+Migrations: `20261028000001_platform_user_management.sql` e `20261028000002_platform_user_deletion.sql`.
+
+```bash
+supabase db push
+supabase functions deploy admin-users
+# WEB_URL (CORS) precisa conter a origem do front: supabase secrets set WEB_URL=https://seu-app.vercel.app
+```
+
+Cadastre o primeiro owner uma única vez (SQL editor, como postgres):
+
+```sql
+insert into public.platform_owners (user_id) select id from auth.users where email = 'seu@email.com';
+```
+
+- **Criar**: convite por e-mail (o usuário define a própria senha) + data de início da cobrança.
+- **Editar**: nome, e-mail e data de início da cobrança (controle administrativo; não processa pagamentos).
+- **Desativar/ativar**: ban no Auth + `is_active=false`; o RLS (`private.role_in`) bloqueia mesmo JWTs ainda válidos. Dados preservados.
+- **Excluir**: apaga a conta, os workspaces próprios sem outro OWNER (com dados e arquivos do Storage) e transfere
+  workspaces compartilhados a outro OWNER. Não permite excluir/desativar a si mesmo nem o último owner.
 
 ## Próximas etapas
 

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import { useConfirm } from "../components/confirm-provider";
 import { SelectField } from "../components/select-field";
-import { ErrorBox, Field, Notice, PageHeader, Spinner } from "../components/ui";
+import { ErrorBox, Field, Notice, PageHeader } from "../components/ui";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -20,6 +20,7 @@ import { useSettings } from "../lib/hooks";
 import { allTimezones } from "../lib/time";
 import { supabase } from "../lib/supabase";
 import type { PublishMode } from "../lib/types";
+import Loading from "@/components/loading";
 
 export default function SettingsPage() {
   const ws = useCurrentWorkspace();
@@ -79,7 +80,7 @@ export default function SettingsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", ws.id] }),
   });
 
-  if (settings.isLoading) return <Spinner />;
+  if (settings.isLoading) return <Loading />;
   const mode: PublishMode = settings.data?.publish_mode ?? "INBOX";
   const auto = settings.data?.auto_publish_enabled ?? false;
 

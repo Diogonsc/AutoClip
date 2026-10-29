@@ -303,13 +303,20 @@ test('poll: falhas não retentáveis do TikTok => FAILED; auth_removed => BLOCKE
   assert.equal(revoked.channel!.connection_status, 'REVOKED');
 });
 
-test('poll: erro de rede na conferência não muda o resultado (continua aguardando)', async () => {
+test('poll: erro de rede preserva o publish_id e reagenda nova consulta', async () => {
   const clock = mkClock();
   const db = new FakeDb(clock, { job: { status: 'PROCESSING', remote_publish_id: 'p1' } });
   const tk = mkTikTok({ fetchPublishStatus: () => Promise.reject(err('NETWORK', 'network_error')) });
-  await pollJob(db.job, mkDeps(db, tk, clock));
+  const deps = mkDeps(db, tk, clock);
+
+  await pollJob(db.job, deps);
   assert.equal(db.job.status, 'PROCESSING');
   assert.equal(db.job.remote_publish_id, 'p1');
+  assert.equal(db.nextAt!.getTime() - clock.t, 2 * 60_000);
+  assert.equal(await db.claimPollingJob(), null, 'aguarda o intervalo de retry');
+
+  clock.advance(2 * 60_000);
+  assert.ok(await db.claimPollingJob(), 'volta a ser reivindicável sem intervenção manual');
 });
 
 // ------------------------------------------------------------------ laço principal

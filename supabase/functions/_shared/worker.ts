@@ -510,7 +510,7 @@ export async function pollJob(job: Job, d: WorkerDeps): Promise<void> {
 
       default:
         // PROCESSING_UPLOAD / PROCESSING_DOWNLOAD / desconhecido: continua aguardando.
-        await d.db.addEvent(job.id, 'POLL', { publish_id: remoteId, status: st.status }).catch(() => undefined);
+        await d.db.addEvent(job.id, 'POLL', { publish_id: remoteId, status: st.status });
         await waitOrUnknown('PENDING', `Status no TikTok: ${st.status}.`);
         return;
     }
@@ -543,12 +543,12 @@ export async function pollJob(job: Job, d: WorkerDeps): Promise<void> {
             });
             return;
           default: // RATE_LIMIT, SERVER, NETWORK, MALFORMED, QUOTA...
-            await waitOrUnknown(e.code, e.message);
+            await waitOrUnknown(e.code, 'Não foi possível consultar o TikTok agora; uma nova consulta será tentada automaticamente.');
             return;
         }
       }
       d.log('poll.unexpected', { job: job.id, error: e instanceof Error ? e.message : String(e) });
-      await waitOrUnknown('INTERNAL_ERROR', e instanceof Error ? e.message : 'Erro inesperado.');
+      await waitOrUnknown('INTERNAL_ERROR', 'Não foi possível consultar o TikTok agora; uma nova consulta será tentada automaticamente.');
     } catch (inner) {
       d.log('poll.finish_failed', { job: job.id, error: inner instanceof Error ? inner.message : String(inner) });
     }
@@ -560,10 +560,10 @@ export async function pollJob(job: Job, d: WorkerDeps): Promise<void> {
 // ---------------------------------------------------------------------
 export async function runWorker(
   d: WorkerDeps,
-  o: { workerId: string; budgetMs: number; maxPolls?: number },
+  o: { workerId: string; budgetMs: number; maxPolls?: number; shouldContinue?: () => boolean },
 ): Promise<{ polled: number; handled: number }> {
   const start = d.now().getTime();
-  const inBudget = () => d.now().getTime() - start < o.budgetMs;
+  const inBudget = () => d.now().getTime() - start < o.budgetMs && (o.shouldContinue?.() ?? true);
   let polled = 0;
   let handled = 0;
 
@@ -571,6 +571,17 @@ export async function runWorker(
   while (inBudget() && polled < (o.maxPolls ?? 50)) {
     const job = await d.db.claimPollingJob(o.workerId);
     if (!job) break;
+    if (!inBudget()) {
+      await d.db.finishJob({
+        jobId: job.id,
+        status: 'PROCESSING',
+        errorCode: null,
+        errorMessage: null,
+        nextAttemptAt: d.now(),
+        result: 'RELEASED',
+      });
+      break;
+    }
     polled++;
     await pollJob(job, d);
   }
@@ -579,6 +590,18 @@ export async function runWorker(
   while (inBudget()) {
     const job = await d.db.claimPublishJob(o.workerId);
     if (!job) break;
+    if (!inBudget()) {
+      await d.db.finishJob({
+        jobId: job.id,
+        status: 'RETRY_WAIT',
+        errorCode: null,
+        errorMessage: null,
+        nextAttemptAt: d.now(),
+        result: 'RELEASED',
+        refundAttempt: true,
+      });
+      break;
+    }
     handled++;
     await processPublish(job, d);
   }

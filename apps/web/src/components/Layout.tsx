@@ -9,6 +9,7 @@ import {
   Library,
   LogOut,
   Menu,
+  ShieldCheck,
   Plus,
   Radio,
   ScrollText,
@@ -17,18 +18,21 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
 import { useWorkspace } from "../auth/WorkspaceProvider";
 import { errorMessage } from "../lib/api";
 import { roleLabel } from "../lib/format";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "./mode-toggle";
 import { SelectField } from "./select-field";
-import { ErrorBox, Field, Modal, Spinner } from "./ui";
+import { ErrorBox, Field, Modal } from "./ui";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
+import Loading from "./loading";
 
 const NAV_GROUPS = [
   {
@@ -69,6 +73,23 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const { user, signOut } = useAuth();
   const { workspaces, current, setCurrentId, role, canAdmin } = useWorkspace();
+  const isPlatformOwner = useQuery({
+    queryKey: ["platform-owner", user?.id],
+    enabled: Boolean(user),
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke(
+        "admin-users?check=owner",
+        { method: "GET" },
+      );
+      if (error) {
+        const status = (error as { context?: Response }).context?.status;
+        if (status === 401 || status === 403) return false;
+        throw error;
+      }
+      return Boolean(data?.is_owner);
+    },
+  });
   const [creating, setCreating] = useState(false);
 
   return (
@@ -133,6 +154,12 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink to="/auditoria" className={navLinkClass}>
                 <ScrollText aria-hidden="true" />
                 <span>Auditoria</span>
+              </NavLink>
+            )}
+            {isPlatformOwner.data && group.label === "Administração" && (
+              <NavLink to="/owner/usuarios" className={navLinkClass}>
+                <ShieldCheck aria-hidden="true" />
+                <span>Usuários da plataforma</span>
               </NavLink>
             )}
           </div>
@@ -263,13 +290,13 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="mx-auto flex w-full flex-1 flex-col gap-5 p-4 md:p-8">
+        <main className="mx-auto flex w-full h-full flex-1 flex-col gap-5 p-4 md:p-8">
           {loading ? (
-            <Spinner />
+            <Loading />
           ) : current ? (
             <Outlet key={current.id} />
           ) : (
-            <Spinner label="Nenhum workspace encontrado." />
+            <Loading label="Nenhum workspace encontrado." />
           )}
         </main>
       </div>

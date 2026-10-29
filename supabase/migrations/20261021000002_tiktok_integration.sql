@@ -512,7 +512,7 @@ begin
     update public.publication_jobs j
        set locked_at = null,
            locked_by = null,
-           next_attempt_at = now()
+           next_attempt_at = coalesce(j.next_attempt_at, now())
      where j.status = 'PROCESSING'
        and j.locked_at < now() - p_stale
        and j.remote_publish_id is not null
