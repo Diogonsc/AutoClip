@@ -95,14 +95,16 @@ Deno.serve(async (req) => {
         return (data ?? []).map((row) => row.user_id);
       },
       async setFlags(flags) {
-        const rows = Object.entries(flags).map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
-        const { error } = await admin.from('platform_flags').upsert(rows, { onConflict: 'key' });
+        // platform_flags é uma linha única (singleton = true).
+        const { error } = await admin
+          .from('platform_flags')
+          .upsert({ singleton: true, tiktok_audited: flags.tiktok_audited, updated_at: new Date().toISOString() }, { onConflict: 'singleton' });
         if (error) throw error;
       },
       async getFlags() {
-        const { data, error } = await admin.from('platform_flags').select('key,value');
+        const { data, error } = await admin.from('platform_flags').select('tiktok_audited').eq('singleton', true).maybeSingle();
         if (error) throw error;
-        return Object.fromEntries((data ?? []).map((row) => [row.key, row.value]));
+        return { tiktok_audited: data?.tiktok_audited === true };
       },
       async isPlatformOwner(userId) {
         const { data, error } = await admin.from('platform_owners').select('user_id').eq('user_id', userId).maybeSingle();
