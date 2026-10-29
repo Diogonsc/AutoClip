@@ -695,7 +695,7 @@ export default function PublicationForm({
                   ? ` (@${info.creator_username})`
                   : ""}
               </p>
-              {flags.data && !flags.data.tiktok_audited && (
+              {platformFlags.data && !platformFlags.data.tiktok_audited && (
                 <Notice tone="warning">
                   Aplicativo em modo de teste no TikTok: independentemente da
                   opção escolhida, a publicação direta ficará visível apenas
