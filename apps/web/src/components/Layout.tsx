@@ -18,8 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../lib/supabase";
+import { usePlatformOwner } from "../lib/hooks";
 import { useWorkspace } from "../auth/WorkspaceProvider";
 import { errorMessage } from "../lib/api";
 import { roleLabel } from "../lib/format";
@@ -34,7 +33,11 @@ import { Separator } from "./ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 import Loading from "./loading";
 
-const NAV_GROUPS = [
+type NavItem = { to: string; label: string; end?: boolean; icon: typeof Radio };
+type NavGroup = { label: string; items: NavItem[] };
+
+// Todo usuário: o fluxo de criador (canais → vídeos → publicar → acompanhar).
+const USER_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
     items: [
@@ -52,14 +55,23 @@ const NAV_GROUPS = [
       { to: "/notificacoes", label: "Notificações", icon: Bell },
     ],
   },
-  {
-    label: "Administração",
-    items: [
-      { to: "/membros", label: "Membros", icon: Users },
-      { to: "/configuracoes", label: "Configurações", icon: Settings },
-    ],
-  },
 ];
+
+// Só quem administra o workspace (OWNER/ADMIN do workspace): equipe, regras de publicação e auditoria.
+const WORKSPACE_ADMIN_GROUP: NavGroup = {
+  label: "Gestão do workspace",
+  items: [
+    { to: "/membros", label: "Membros", icon: Users },
+    { to: "/configuracoes", label: "Configurações", icon: Settings },
+    { to: "/auditoria", label: "Auditoria", icon: ScrollText },
+  ],
+};
+
+// Só o dono do SaaS (platform_owners).
+const PLATFORM_GROUP: NavGroup = {
+  label: "Administração",
+  items: [{ to: "/owner/usuarios", label: "Usuários da plataforma", icon: ShieldCheck }],
+};
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
@@ -73,23 +85,12 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const { user, signOut } = useAuth();
   const { workspaces, current, setCurrentId, role, canAdmin } = useWorkspace();
-  const isPlatformOwner = useQuery({
-    queryKey: ["platform-owner", user?.id],
-    enabled: Boolean(user),
-    retry: false,
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        "admin-users?check=owner",
-        { method: "GET" },
-      );
-      if (error) {
-        const status = (error as { context?: Response }).context?.status;
-        if (status === 401 || status === 403) return false;
-        throw error;
-      }
-      return Boolean(data?.is_owner);
-    },
-  });
+  const isPlatformOwner = usePlatformOwner(user?.id);
+  const groups = [
+    ...USER_GROUPS,
+    ...(canAdmin ? [WORKSPACE_ADMIN_GROUP] : []),
+    ...(isPlatformOwner.data ? [PLATFORM_GROUP] : []),
+  ];
   const [creating, setCreating] = useState(false);
 
   return (
@@ -139,7 +140,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4"
         onClick={onNavigate}
       >
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div className="grid gap-0.5" key={group.label}>
             <span className="px-3 pb-1 text-xs font-medium text-muted-foreground">
               {group.label}
@@ -150,18 +151,6 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
                 <span>{label}</span>
               </NavLink>
             ))}
-            {canAdmin && group.label === "Administração" && (
-              <NavLink to="/auditoria" className={navLinkClass}>
-                <ScrollText aria-hidden="true" />
-                <span>Auditoria</span>
-              </NavLink>
-            )}
-            {isPlatformOwner.data && group.label === "Administração" && (
-              <NavLink to="/owner/usuarios" className={navLinkClass}>
-                <ShieldCheck aria-hidden="true" />
-                <span>Usuários da plataforma</span>
-              </NavLink>
-            )}
           </div>
         ))}
       </nav>
@@ -182,7 +171,11 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             {user?.email}
           </strong>
           <small className="text-xs text-muted-foreground">
-            {role ? roleLabel[role] : "Membro"}
+            {isPlatformOwner.data
+              ? "Owner da plataforma"
+              : role
+                ? roleLabel[role]
+                : "Membro"}
           </small>
         </span>
         <Button

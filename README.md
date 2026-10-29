@@ -134,7 +134,7 @@ antes de usar em produção.
 só aparece para contas listadas em `platform_owners` (tabela sem grants para o navegador) e toda operação
 passa pela Edge Function `admin-users`, que valida o JWT e usa a `service_role` apenas no servidor.
 
-Migrations: `20261028000001_platform_user_management.sql` e `20261028000002_platform_user_deletion.sql`.
+Migrations: `20261028000001_platform_user_management.sql`, `20261028000002_platform_user_deletion.sql` e `20261028000003_is_platform_owner.sql` (RPC que só decide se o menu aparece).
 
 ```bash
 supabase db push

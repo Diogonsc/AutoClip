@@ -10,6 +10,20 @@ import type {
   WorkspaceSettings,
 } from './types';
 
+/** Owner da plataforma (SaaS). Só controla a visibilidade da UI; a Edge Function reautoriza no servidor. */
+export function usePlatformOwner(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['platform-owner', userId],
+    enabled: Boolean(userId),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('is_platform_owner');
+      if (error) throw toError(error);
+      return Boolean(data);
+    },
+  });
+}
+
 export function useChannels(workspaceId: string) {
   return useQuery({
     queryKey: ['channels', workspaceId],
