@@ -2,6 +2,7 @@
 // Autenticação: segredo compartilhado no header x-worker-secret (verify_jwt = false).
 import { env, envOptional } from '../_shared/env.ts';
 import { handleWorker } from '../_shared/handlers.ts';
+import { signMediaToken } from '../_shared/media-token.ts';
 import { buildContext, log } from '../_shared/runtime.ts';
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
@@ -31,6 +32,14 @@ Deno.serve(async (req) => {
           },
           verifiedHost: envOptional('TIKTOK_VERIFIED_MEDIA_HOST'),
           async signedUrl(key, expiresInSeconds) {
+            // Fotos: o TikTok só busca em domínio verificado. Com TIKTOK_VERIFIED_MEDIA_HOST e
+            // MEDIA_PROXY_SECRET, a URL passa pelo proxy (/m/<token> na Vercel -> media-serve).
+            const host = envOptional('TIKTOK_VERIFIED_MEDIA_HOST');
+            const proxySecret = envOptional('MEDIA_PROXY_SECRET');
+            if (host && proxySecret) {
+              const token = await signMediaToken(proxySecret, key, Date.now() + expiresInSeconds * 1000);
+              return `https://${host}/m/${token}`;
+            }
             const { data, error } = await c.sb.storage.from('media').createSignedUrl(key, expiresInSeconds);
             if (error || !data?.signedUrl) throw new Error(`storage.signedUrl: ${error?.message ?? 'URL vazia'}`);
             return data.signedUrl;

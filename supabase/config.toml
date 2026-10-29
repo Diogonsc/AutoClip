@@ -42,3 +42,6 @@ verify_jwt = false # o JWT do usuário é repassado às RPCs; o banco aplica o p
 
 [functions.admin-users]
 verify_jwt = false # o JWT é validado na função (auth.getUser) e o chamador precisa estar em platform_owners
+
+[functions.media-serve]
+verify_jwt = false # chamada pelo TikTok via domínio verificado; protegida por token HMAC de curta duração
