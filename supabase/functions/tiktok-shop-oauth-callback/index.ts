@@ -34,20 +34,22 @@ Deno.serve(async (req) => {
     const refresh = typeof data?.refresh_token === "string" ? data.refresh_token : "";
     const userType = Number(data?.user_type);
     if (!response.ok || payload?.code !== 0 || !access || userType !== 1) {
-      await sb.from("tiktok_shop_connections").update({ connection_status: "ERROR", last_error_code: String(payload?.code ?? response.status), last_error_message: "A autorização do criador não foi aceita pelo TikTok Shop." }).eq("id", value.connection_id);
+      const { error: saveError } = await sb.from("tiktok_shop_connections").update({ connection_status: "ERROR", last_error_code: String(payload?.code ?? response.status), last_error_message: "A autorização do criador não foi aceita pelo TikTok Shop." }).eq("id", value.connection_id);
+      if (saveError) throw new Error("Não foi possível registrar a falha de autorização TikTok Shop.");
       return finish("error");
     }
     const key = await importKey(env("TOKEN_ENCRYPTION_KEY"));
     const exp = typeof data?.access_token_expire_in === "number" ? new Date(data.access_token_expire_in * 1000).toISOString() : null;
     const refreshExp = typeof data?.refresh_token_expire_in === "number" ? new Date(data.refresh_token_expire_in * 1000).toISOString() : null;
     const scopes = Array.isArray(data?.granted_scopes) ? data.granted_scopes.filter((v): v is string => typeof v === "string") : [];
-    await sb.from("tiktok_shop_connections").update({
+    const { data: saved, error: saveError } = await sb.from("tiktok_shop_connections").update({
       creator_id: typeof data?.open_id === "string" ? data.open_id : null,
       encrypted_access_token: await encryptToken(key, access, value.connection_id),
       encrypted_refresh_token: refresh ? await encryptToken(key, refresh, value.connection_id) : null,
       access_token_expires_at: exp, refresh_token_expires_at: refreshExp, granted_scopes: scopes,
       connection_status: "CONNECTED", last_error_code: null, last_error_message: null,
-    }).eq("id", value.connection_id);
+    }).eq("id", value.connection_id).select("id").maybeSingle();
+    if (saveError || !saved) throw new Error("Não foi possível salvar a autorização TikTok Shop.");
     return finish("connected");
   } catch (error) {
     console.log(JSON.stringify({ msg: "shop.callback_error", error: error instanceof Error ? error.message : String(error) }));

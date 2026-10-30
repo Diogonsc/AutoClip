@@ -22,10 +22,10 @@ Deno.serve(async (req) => {
         tiktok: c.tiktok,
         ensureToken: c.ensureToken,
         shop: {
-          async publish(job, media) {
+          async publish(job) {
             const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/tiktok-shop-publish`, {
               method: 'POST', headers: { 'Content-Type': 'application/json', 'x-worker-secret': env('WORKER_SECRET') },
-              body: JSON.stringify({ action: 'publish', job_id: job.id, storage_key: media.storage_key }),
+              body: JSON.stringify({ action: 'publish', job_id: job.id }),
             });
             const body = await response.json().catch(() => null) as { video_id?: string; message?: string } | null;
             if (!response.ok || !body?.video_id) throw new Error(body?.message ?? 'Falha ao enviar vídeo para TikTok Shop.');

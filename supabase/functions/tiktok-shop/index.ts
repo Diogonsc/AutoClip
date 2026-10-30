@@ -52,12 +52,13 @@ async function freshToken(connection: Record<string, unknown>, connectionId: str
   const data = payload?.data;
   const access = typeof data?.access_token === "string" ? data.access_token : "";
   if (!response.ok || payload?.code !== 0 || !access) throw new Error(payload?.message || "Não foi possível renovar a autorização TikTok Shop.");
-  await serviceClient().from("tiktok_shop_connections").update({
+  const { data: updated, error: updateError } = await serviceClient().from("tiktok_shop_connections").update({
     encrypted_access_token: await encryptToken(key, access, connectionId),
     encrypted_refresh_token: typeof data?.refresh_token === "string" ? await encryptToken(key, data.refresh_token, connectionId) : connection.encrypted_refresh_token,
     access_token_expires_at: typeof data?.access_token_expire_in === "number" ? new Date(data.access_token_expire_in * 1000).toISOString() : null,
     refresh_token_expires_at: typeof data?.refresh_token_expire_in === "number" ? new Date(data.refresh_token_expire_in * 1000).toISOString() : null,
-  }).eq("id", connectionId);
+  }).eq("id", connectionId).select("id").maybeSingle();
+  if (updateError || !updated) throw new Error("Não foi possível salvar a renovação do token TikTok Shop.");
   return access;
 }
 

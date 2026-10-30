@@ -135,7 +135,7 @@ export function useTikTokShopConnections(workspaceId: string) {
   return useQuery({
     queryKey: ["shop-connections", workspaceId],
     queryFn: async () =>
-      unwrap(await supabase.from("tiktok_shop_connections").select("*").eq("workspace_id", workspaceId).order("created_at")) as unknown as TikTokShopConnection[],
+      unwrap(await supabase.rpc("list_tiktok_shop_connections", { p_workspace: workspaceId })) as unknown as TikTokShopConnection[],
   });
 }
 

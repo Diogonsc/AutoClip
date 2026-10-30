@@ -67,6 +67,25 @@ test('DIRECT PHOTO: cria publicação de carrossel e grava publish_id antes da c
   assert.ok(db.events.some((event) => event.type === 'PHOTO_SUBMITTED'));
 });
 
+test('SHOP: encaminha ao pipeline interno somente o job autorizado, nunca a storage_key', async () => {
+  const clock = mkClock();
+  const db = new FakeDb(clock, { job: { shop_product_id: 'product-1', shop_anchor_title: 'Produto' } });
+  const tk = mkTikTok();
+  let received: unknown[] = [];
+  await processPublish(await claim(db), mkDeps(db, tk, clock, {
+    shop: {
+      publish(job) {
+        received = Array.from(arguments);
+        assert.equal(job.id, 'job-1');
+        return Promise.resolve({ videoId: 'shop-video-1' });
+      },
+      status: () => Promise.resolve({ status: 'PROCESSING' }),
+    },
+  }));
+  assert.equal(received.length, 1, 'nenhum caminho de storage é encaminhado ao endpoint Shop');
+  assert.equal(db.job.remote_publish_id, 'shop:shop-video-1');
+});
+
 // ------------------------------------------------------------------ bloqueios (nada vai ao TikTok)
 test('DIRECT: privacidade fora das opções do criador => BLOCKED_PERMISSION, sem init', async () => {
   const clock = mkClock();

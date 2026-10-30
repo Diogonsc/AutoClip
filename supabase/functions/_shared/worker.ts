@@ -28,7 +28,7 @@ export interface WorkerDeps {
   tiktok: Pick<TikTokApi, 'queryCreatorInfo' | 'initVideoPost' | 'initPhotoPost' | 'uploadVideo' | 'fetchPublishStatus'>;
   ensureToken(channelId: string, opts?: { force?: boolean }): Promise<string>;
   shop?: {
-    publish(job: Job, media: { storage_key: string; mime_type: string; file_size_bytes: number }): Promise<{ videoId: string }>;
+    publish(job: Job): Promise<{ videoId: string }>;
     status(videoId: string): Promise<{ status: string; reason?: string }>;
   };
   now(): Date;
@@ -281,7 +281,7 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
         await fin({ status: 'BLOCKED_PERMISSION', errorCode: 'SHOP_NOT_CONFIGURED', errorMessage: 'A integração TikTok Shop não está configurada para este workspace.', result: 'BLOCKED' });
         return;
       }
-      const shop = await d.shop.publish(job, media);
+      const shop = await d.shop.publish(job);
       remoteId = `shop:${shop.videoId}`;
       await d.db.recordRemoteId(job.id, remoteId);
       idSaved = true;
