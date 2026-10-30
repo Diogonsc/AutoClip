@@ -24,6 +24,7 @@ import PublicationsPage from "./pages/PublicationsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import UsersAdminPage from "./pages/UsersAdminPage";
+import TikTokShopPage from "./pages/TikTokShopPage";
 import Loading from "./components/loading";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="historico" element={<HistoryPage />} />
           <Route path="relatorios" element={<ReportsPage />} />
+          <Route path="shop" element={<TikTokShopPage />} />
           <Route path="notificacoes" element={<NotificationsPage />} />
           <Route
             path="membros"

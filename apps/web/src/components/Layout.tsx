@@ -16,6 +16,7 @@ import {
   FileText,
   Send,
   Settings,
+  ShoppingBag,
   Users,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
@@ -54,6 +55,7 @@ const USER_GROUPS: NavGroup[] = [
       { to: "/calendario", label: "Agendamentos", icon: CalendarDays },
       { to: "/historico", label: "Histórico e logs", icon: History },
       { to: "/relatorios", label: "Relatório semanal", icon: FileText },
+      { to: "/shop", label: "TikTok Shop e afiliados", icon: ShoppingBag },
       { to: "/notificacoes", label: "Notificações", icon: Bell },
     ],
   },

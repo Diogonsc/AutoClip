@@ -184,3 +184,53 @@ export interface AuditLog {
   metadata: Record<string, unknown>;
   created_at: string;
 }
+
+export type ShopConnectionStatus = "PENDING_AUTH" | "CONNECTED" | "REAUTH_REQUIRED" | "ERROR" | "REVOKED";
+export type ShopOrderStatus = "PENDING" | "PAID" | "COMPLETED" | "CANCELLED" | "RETURNED" | "REFUNDED" | "UNKNOWN";
+
+export interface TikTokShopConnection {
+  id: string;
+  workspace_id: string;
+  channel_id: string;
+  creator_id: string | null;
+  shop_cipher: string | null;
+  shop_name: string | null;
+  connection_status: ShopConnectionStatus;
+  granted_scopes: string[];
+  last_synced_at: string | null;
+  last_error_code: string | null;
+  last_error_message: string | null;
+  created_at: string;
+}
+
+export interface TikTokShopProduct {
+  id: string;
+  workspace_id: string;
+  connection_id: string;
+  external_product_id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  detail_url: string | null;
+  promotion_url: string | null;
+  currency: string | null;
+  price: number | null;
+  commission_rate: number | null;
+  commission_amount: number | null;
+  availability: string | null;
+  synced_at: string;
+}
+
+export interface TikTokShopOrder {
+  id: string;
+  workspace_id: string;
+  connection_id: string;
+  product_id: string | null;
+  external_order_id: string;
+  status: ShopOrderStatus;
+  currency: string | null;
+  order_amount: number | null;
+  commission_amount: number | null;
+  ordered_at: string | null;
+  settled_at: string | null;
+}

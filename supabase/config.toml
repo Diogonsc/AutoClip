@@ -40,6 +40,12 @@ verify_jwt = false # o navegador chega vindo do TikTok, sem JWT; protegida pelo 
 [functions.tiktok-channel]
 verify_jwt = false # o JWT do usuário é repassado às RPCs; o banco aplica o papel (assert_channel_access)
 
+[functions.tiktok-shop]
+verify_jwt = false # valida o JWT com RPCs do banco; OAuth do Shop é iniciado pelo usuário autenticado
+
+[functions.tiktok-shop-oauth-callback]
+verify_jwt = false # callback público, protegido por state de uso único
+
 [functions.admin-users]
 verify_jwt = false # o JWT é validado na função (auth.getUser) e o chamador precisa estar em platform_owners
 

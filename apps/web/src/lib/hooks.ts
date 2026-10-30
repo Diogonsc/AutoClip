@@ -9,6 +9,9 @@ import type {
   PublicationJob,
   PublicationStatus,
   WorkspaceSettings,
+  TikTokShopConnection,
+  TikTokShopOrder,
+  TikTokShopProduct,
 } from "./types";
 
 /** Owner da plataforma (SaaS). Só controla a visibilidade da UI; a Edge Function reautoriza no servidor. */
@@ -125,6 +128,30 @@ export function useSettings(workspaceId: string) {
           .eq("workspace_id", workspaceId)
           .maybeSingle(),
       ) as unknown as WorkspaceSettings | null,
+  });
+}
+
+export function useTikTokShopConnections(workspaceId: string) {
+  return useQuery({
+    queryKey: ["shop-connections", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("tiktok_shop_connections").select("*").eq("workspace_id", workspaceId).order("created_at")) as unknown as TikTokShopConnection[],
+  });
+}
+
+export function useTikTokShopProducts(workspaceId: string) {
+  return useQuery({
+    queryKey: ["shop-products", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("tiktok_shop_products").select("*").eq("workspace_id", workspaceId).order("synced_at", { ascending: false })) as unknown as TikTokShopProduct[],
+  });
+}
+
+export function useTikTokShopOrders(workspaceId: string) {
+  return useQuery({
+    queryKey: ["shop-orders", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("tiktok_shop_orders").select("*").eq("workspace_id", workspaceId).order("ordered_at", { ascending: false }).limit(500)) as unknown as TikTokShopOrder[],
   });
 }
 
