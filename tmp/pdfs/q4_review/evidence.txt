@@ -1,0 +1,120 @@
+          AutoClip | Q4 Administrative Security Evidence
+ Document version: 1.0        Evidence date: 30 October 2026        Status: Prepared for formal approval
+ Document owner / approver: ______________________________ Approval date: ______________
+
+
+
+
+ Purpose and scope
+ Evidence supporting Q4 of the TikTok Shop Data Security and Privacy Review. The materials document
+ multi-factor authentication for three identified administrative service accounts and technical workstation
+ password and locking controls. The screenshots demonstrate account-level settings only; they do not establish
+ organization-wide enforcement or the configuration of any other privileged accounts.
+
+
+ Summary of confirmed controls
+
+   Control                                Evidence / verification
+
+
+   GitHub MFA                             Authenticator app configured; passkeys shown (Exhibit A)
+
+
+   Supabase MFA                           Microsoft Authenticator registered on 30 Oct 2026 (Exhibit B)
+
+
+   Vercel 2FA                             Two-Factor Authentication Active; TOTP enrolled (Exhibit C)
+
+
+   Ubuntu screen lock                     GNOME: lock-enabled=true; lock-delay=0; idle-delay=300 seconds
+
+
+   Ubuntu password                        Account password set; pam_pwquality 1.4.5; yescrypt in PAM
+
+
+   Password policy                        minlen=12, minclass=3, maxrepeat=3, dictcheck=1, enforcing=1
+
+
+   Functional tests                       Weak sample rejected for length; strong sample pwscore=100
+
+
+   Idle locking                           User reported successful automatic lock after five minutes
+
+
+
+ Limitations and pending confirmations
+ The password-strength tests exercise libpwquality, not the entire PAM password-change workflow. A password
+ prompt on unlock was not separately confirmed in the provided conversation. The account has no periodic
+ password expiration; the formal policy rationale remains to be approved. Recovery-code storage, coverage for
+ other privileged administrators, and formal approval remain unverified. Screenshots are user-provided and do
+ not constitute an independent platform audit.
+
+
+ Screenshot handling
+ Exhibits A–C are the supplied screenshots. A personal email address visible in Exhibit C has been redacted;
+ other incidental account identifiers remain visible. Do not attach recovery codes, authentication secrets, or
+ passwords.
+
+
+
+
+AutoClip • Q4 Evidence • Version 1.0 • 30 Oct 2026                                                          Page 1
+                                      Exhibit A — GitHub MFA
+ Authenticator app: Configured; passkeys: 2 configured.
+
+
+
+
+AutoClip • Q4 Evidence • Version 1.0 • 30 Oct 2026             Page 2
+                                   Exhibit B — Supabase MFA
+ Microsoft Authenticator registered; account security page.
+
+
+
+
+AutoClip • Q4 Evidence • Version 1.0 • 30 Oct 2026            Page 3
+                                        Exhibit C — Vercel 2FA
+ Two-Factor Authentication: Active; TOTP: Enrolled. Personal email redacted.
+
+
+
+
+AutoClip • Q4 Evidence • Version 1.0 • 30 Oct 2026                             Page 4
+              Exhibit D — Ubuntu Workstation Verification
+ Commands and outputs supplied by the AutoClip administrator on 30 October 2026. This is a transcription of
+ terminal results, not an independent machine audit.
+
+
+ GNOME screen lock
+ lock-enabled = true
+ lock-delay = uint32 0
+ idle-delay = uint32 300
+
+
+ PAM password configuration
+ pam_pwquality.so retry=3
+ pam_unix.so obscure use_authtok try_first_pass yescrypt
+ libpam-pwquality = 1.4.5-5build1
+
+
+ Password quality configuration
+ minlen = 12
+ minclass = 3
+ maxrepeat = 3
+ dictcheck = 1
+ enforcing = 1
+
+
+ Functional password tests
+ Weak sample abc123: rejected as shorter than 12 characters.
+ Strong fictitious sample: pwscore returned 100.
+
+
+ Account aging
+ Password expires: never; maximum days between changes: 99999. Formal policy approval pending.
+
+
+
+
+AutoClip • Q4 Evidence • Version 1.0 • 30 Oct 2026                                                       Page 5
+
