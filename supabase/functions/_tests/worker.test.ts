@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pollJob, processPublish, runWorker } from '../_shared/worker.ts';
+import { pollJob, processPublish, runWorker, ShopPublishReconciliationError } from '../_shared/worker.ts';
 import { CREATOR, err, FakeDb, mkClock, mkDeps, mkTikTok } from './helpers.ts';
 
 const DIRECT_JOB = { privacy_level: 'SELF_ONLY', allow_comment: true, allow_duet: false, allow_stitch: false };
@@ -84,6 +84,21 @@ test('SHOP: encaminha ao pipeline interno somente o job autorizado, nunca a stor
   }));
   assert.equal(received.length, 1, 'nenhum caminho de storage é encaminhado ao endpoint Shop');
   assert.equal(db.job.remote_publish_id, 'shop:shop-video-1');
+});
+
+test('SHOP: publicação possivelmente concluída sem ID remoto confirmado fica UNKNOWN e não é reenviada', async () => {
+  const clock = mkClock();
+  const db = new FakeDb(clock, { job: { shop_product_id: 'product-1', shop_anchor_title: 'Produto' } });
+  const tk = mkTikTok();
+  await processPublish(await claim(db), mkDeps(db, tk, clock, {
+    shop: {
+      publish: () => Promise.reject(new ShopPublishReconciliationError()),
+      status: () => Promise.resolve({ status: 'PROCESSING' }),
+    },
+  }));
+  assert.equal(db.job.status, 'UNKNOWN');
+  assert.equal(db.last().errorCode, 'SHOP_PUBLISH_RECONCILIATION_REQUIRED');
+  assert.equal(await db.claimPublishJob(), null);
 });
 
 // ------------------------------------------------------------------ bloqueios (nada vai ao TikTok)

@@ -51,8 +51,9 @@ Deno.serve(async (req) => {
     }).eq("id", value.connection_id).select("id").maybeSingle();
     if (saveError || !saved) throw new Error("Não foi possível salvar a autorização TikTok Shop.");
     return finish("connected");
-  } catch (error) {
-    console.log(JSON.stringify({ msg: "shop.callback_error", error: error instanceof Error ? error.message : String(error) }));
+  } catch {
+    // Não incluir o erro bruto: ele pode conter parâmetros da URL OAuth.
+    console.log(JSON.stringify({ msg: "shop.callback_error" }));
     return finish("error");
   }
 });

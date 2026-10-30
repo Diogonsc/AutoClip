@@ -4,6 +4,7 @@ import { env, envOptional } from '../_shared/env.ts';
 import { handleWorker } from '../_shared/handlers.ts';
 import { signMediaToken } from '../_shared/media-token.ts';
 import { buildContext, log } from '../_shared/runtime.ts';
+import { ShopPublishReconciliationError } from '../_shared/worker.ts';
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
 declare const EdgeRuntime: { waitUntil(work: Promise<unknown>): void } | undefined;
@@ -27,7 +28,8 @@ Deno.serve(async (req) => {
               method: 'POST', headers: { 'Content-Type': 'application/json', 'x-worker-secret': env('WORKER_SECRET') },
               body: JSON.stringify({ action: 'publish', job_id: job.id }),
             });
-            const body = await response.json().catch(() => null) as { video_id?: string; message?: string } | null;
+            const body = await response.json().catch(() => null) as { error?: string; video_id?: string; message?: string } | null;
+            if (response.status === 409 && body?.error === 'shop_publish_reconciliation_required') throw new ShopPublishReconciliationError();
             if (!response.ok || !body?.video_id) throw new Error(body?.message ?? 'Falha ao enviar vídeo para TikTok Shop.');
             return { videoId: body.video_id };
           },

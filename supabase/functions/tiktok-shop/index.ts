@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
       if (error || !connection) return json({ error: "not_found" }, 404, cors);
       if (connection.connection_status !== "CONNECTED") return json({ error: "reauth_required", message: "Autorize a conta de criador no TikTok Shop antes de sincronizar." }, 409, cors);
       const run = await sb.from("tiktok_shop_sync_runs").insert({ workspace_id: connection.workspace_id, connection_id: body.connection_id, kind: "PRODUCTS", status: "RUNNING" }).select("id").single();
+      if (run.error || !run.data?.id) throw new Error("Não foi possível registrar o início da sincronização.");
       try {
         const data = await shopRequest("/affiliate_creator/202509/shop_products", await freshToken(connection, body.connection_id));
         const rows = [data.products, data.shop_products, data.product_list].find(Array.isArray) as Record<string, unknown>[] | undefined ?? [];
@@ -101,20 +102,27 @@ Deno.serve(async (req) => {
           commission_amount: Number(product.commission_amount) || null,
           availability: typeof product.status === "string" ? product.status : null, raw: product, synced_at: new Date().toISOString(),
         })).filter((product) => product.external_product_id);
-        if (mapped.length) await sb.from("tiktok_shop_products").upsert(mapped, { onConflict: "connection_id,external_product_id" });
-        await sb.from("tiktok_shop_connections").update({ last_synced_at: new Date().toISOString(), last_error_code: null, last_error_message: null }).eq("id", body.connection_id);
-        if (run.data?.id) await sb.from("tiktok_shop_sync_runs").update({ status: "SUCCEEDED", result: { products: mapped.length }, finished_at: new Date().toISOString() }).eq("id", run.data.id);
+        if (mapped.length) {
+          const { error: productsError } = await sb.from("tiktok_shop_products").upsert(mapped, { onConflict: "connection_id,external_product_id" });
+          if (productsError) throw new Error("Não foi possível salvar os produtos sincronizados.");
+        }
+        const { error: connectionUpdateError } = await sb.from("tiktok_shop_connections").update({ last_synced_at: new Date().toISOString(), last_error_code: null, last_error_message: null }).eq("id", body.connection_id);
+        if (connectionUpdateError) throw new Error("Não foi possível concluir a sincronização da conexão.");
+        const { error: runUpdateError } = await sb.from("tiktok_shop_sync_runs").update({ status: "SUCCEEDED", result: { products: mapped.length }, finished_at: new Date().toISOString() }).eq("id", run.data.id);
+        if (runUpdateError) throw new Error("Não foi possível registrar o resultado da sincronização.");
         return json({ message: `${mapped.length} produto(s) sincronizado(s).` }, 200, cors);
       } catch (syncError) {
         const message = syncError instanceof Error ? syncError.message : "Falha na sincronização.";
         await sb.from("tiktok_shop_connections").update({ last_error_message: message.slice(0, 500), last_error_code: "SHOP_SYNC_FAILED" }).eq("id", body.connection_id);
-        if (run.data?.id) await sb.from("tiktok_shop_sync_runs").update({ status: "FAILED", error_message: message.slice(0, 500), finished_at: new Date().toISOString() }).eq("id", run.data.id);
+        await sb.from("tiktok_shop_sync_runs").update({ status: "FAILED", error_message: message.slice(0, 500), finished_at: new Date().toISOString() }).eq("id", run.data.id);
         return json({ error: "sync_failed", message: "Não foi possível sincronizar o catálogo TikTok Shop." }, 502, cors);
       }
     }
     return json({ error: "invalid_request" }, 400, cors);
-  } catch (error) {
-    console.log(JSON.stringify({ msg: "shop.unexpected", error: error instanceof Error ? error.message : String(error) }));
+  } catch {
+    // Nunca registrar erros brutos de chamadas OAuth: bibliotecas ou proxies podem
+    // incluir a URL de refresh, que contém credenciais exigidas pela API do TikTok Shop.
+    console.log(JSON.stringify({ msg: "shop.unexpected", action: body?.action ?? "unknown" }));
     return json({ error: "internal", message: "Não foi possível concluir a operação." }, 500, cors);
   }
 });

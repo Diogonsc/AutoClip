@@ -52,9 +52,11 @@ Deno.serve(async (req) => {
   try {
     const sb = serviceClient();
     if (input?.action === "publish" && input.job_id) {
-      const { data: job, error: jobError } = await sb.from("publication_jobs").select("id,workspace_id,channel_id,media_asset_id,caption,shop_product_id,shop_anchor_title,shop_is_ai_generated").eq("id", input.job_id).single();
+      const { data: job, error: jobError } = await sb.from("publication_jobs").select("id,workspace_id,channel_id,media_asset_id,caption,shop_product_id,shop_anchor_title,shop_is_ai_generated,shop_video_id,shop_publish_started_at").eq("id", input.job_id).single();
       if (jobError || !job) throw new Error("Publicação não encontrada.");
       if (!job?.shop_product_id || !job.shop_anchor_title) throw new Error("Publicação sem produto afiliado.");
+      if (job.shop_video_id) return json({ video_id: job.shop_video_id });
+      if (job.shop_publish_started_at) return json({ error: "shop_publish_reconciliation_required" }, 409);
       const { data: media, error: mediaError } = await sb.from("media_assets").select("id,workspace_id,storage_key,status,mime_type,file_size_bytes").eq("id", job.media_asset_id).eq("workspace_id", job.workspace_id).maybeSingle();
       if (mediaError || !media || media.status !== "READY" || !media.storage_key) throw new Error("Mídia autorizada não está disponível para esta publicação.");
       const { data: product, error: productError } = await sb.from("tiktok_shop_products").select("external_product_id,connection_id,workspace_id").eq("id", job.shop_product_id).eq("workspace_id", job.workspace_id).maybeSingle();
@@ -68,6 +70,16 @@ Deno.serve(async (req) => {
       const uploaded = await request("/affiliate_creator/202505/videos/video_files", access, "POST", undefined, form);
       const fileId = typeof (uploaded.video_file as Record<string, unknown> | undefined)?.id === "string" ? (uploaded.video_file as Record<string, unknown>).id as string : "";
       if (!fileId) throw new Error("TikTok Shop não retornou file_id.");
+      const { data: markedJob, error: markError } = await sb.from("publication_jobs")
+        .update({ shop_publish_started_at: new Date().toISOString() })
+        .eq("id", job.id)
+        .eq("workspace_id", job.workspace_id)
+        .is("shop_video_id", null)
+        .is("shop_publish_started_at", null)
+        .select("id")
+        .maybeSingle();
+      if (markError) throw new Error("Não foi possível preparar a publicação TikTok Shop para reconciliação.");
+      if (!markedJob) return json({ error: "shop_publish_reconciliation_required" }, 409);
       const payload = JSON.stringify({ video_info: { file_id: fileId, title: job.caption, is_ai_generated: job.shop_is_ai_generated === true }, product_link_info: { product_id: product.external_product_id, title: job.shop_anchor_title } });
       const posted = await request("/affiliate_creator/202607/videos", access, "POST", payload);
       const video = posted.video as Record<string, unknown> | undefined; const id = typeof video?.id === "string" ? video.id : typeof posted.video_id === "string" ? posted.video_id : "";

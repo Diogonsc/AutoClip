@@ -36,6 +36,14 @@ export interface WorkerDeps {
   log(msg: string, data?: unknown): void;
 }
 
+/** A API Shop pode ter aceitado a publicação, mas o ID remoto não foi persistido. */
+export class ShopPublishReconciliationError extends Error {
+  constructor() {
+    super('A publicação TikTok Shop requer reconciliação antes de uma nova tentativa.');
+    this.name = 'ShopPublishReconciliationError';
+  }
+}
+
 interface Outcome {
   status: JobStatus;
   code: string;
@@ -368,6 +376,16 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
     await fin({ status: 'PROCESSING', errorCode: null, errorMessage: null, nextAttemptAt: addSeconds(d.now(), 15), result: 'UPLOADED', remoteStatus: 'UPLOADED', event: { type: 'UPLOAD_OK', payload: { publish_id: init.publishId, mode } } });
   } catch (e) {
     try {
+      if (e instanceof ShopPublishReconciliationError) {
+        await fin({
+          status: 'UNKNOWN',
+          errorCode: 'SHOP_PUBLISH_RECONCILIATION_REQUIRED',
+          errorMessage: 'A publicação TikTok Shop pode ter sido concluída, mas o identificador remoto não foi confirmado. Confira o TikTok Shop antes de reenviar.',
+          result: 'UNKNOWN',
+          event: { type: 'UNKNOWN', payload: { reason: 'shop_publish_reconciliation_required' } },
+        });
+        return;
+      }
       if (e instanceof TikTokError) {
         if (!initStarted) {
           await applyOutcome(job, d, outcomeForError(e)); // nada foi criado: seguro decidir
