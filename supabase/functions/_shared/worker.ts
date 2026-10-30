@@ -27,6 +27,10 @@ export interface WorkerDeps {
   storage: { download(key: string): Promise<Uint8Array>; signedUrl(key: string, expiresInSeconds: number): Promise<string>; verifiedHost?: string | null };
   tiktok: Pick<TikTokApi, 'queryCreatorInfo' | 'initVideoPost' | 'initPhotoPost' | 'uploadVideo' | 'fetchPublishStatus'>;
   ensureToken(channelId: string, opts?: { force?: boolean }): Promise<string>;
+  shop?: {
+    publish(job: Job, media: { storage_key: string; mime_type: string; file_size_bytes: number }): Promise<{ videoId: string }>;
+    status(videoId: string): Promise<{ status: string; reason?: string }>;
+  };
   now(): Date;
   sleep(ms: number): Promise<void>;
   log(msg: string, data?: unknown): void;
@@ -234,7 +238,8 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
     }
 
     const need = REQUIRED_SCOPE[mode];
-    if (!channel.granted_scopes.includes(need)) {
+    // O Shoppable Video usa o token/escopo do TikTok Shop Creator, separado do Login Kit.
+    if (!job.shop_product_id && !channel.granted_scopes.includes(need)) {
       await fin({
         status: 'BLOCKED_PERMISSION',
         errorCode: 'SCOPE_MISSING',
@@ -266,6 +271,21 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
       }
     } else if (mediaList.length !== 1 || !ALLOWED_MIME.includes(media.mime_type)) {
       await fin({ status: 'FAILED', errorCode: 'UNSUPPORTED_MIME', errorMessage: `Formato ${media.mime_type} não suportado para vídeo.`, result: 'FAILED' });
+      return;
+    }
+
+    // Shoppable Video tem pipeline próprio no TikTok Shop (upload de arquivo + âncora de produto).
+    // Não use o Content Posting API normal: ele não cria o carrinho laranja.
+    if (job.shop_product_id) {
+      if (!d.shop || !job.shop_anchor_title) {
+        await fin({ status: 'BLOCKED_PERMISSION', errorCode: 'SHOP_NOT_CONFIGURED', errorMessage: 'A integração TikTok Shop não está configurada para este workspace.', result: 'BLOCKED' });
+        return;
+      }
+      const shop = await d.shop.publish(job, media);
+      remoteId = `shop:${shop.videoId}`;
+      await d.db.recordRemoteId(job.id, remoteId);
+      idSaved = true;
+      await fin({ status: 'PROCESSING', errorCode: null, errorMessage: null, nextAttemptAt: addSeconds(d.now(), 30), result: 'SHOP_SUBMITTED', remoteStatus: 'PROCESSING', event: { type: 'SHOP_SUBMITTED', payload: { video_id: shop.videoId, product_id: job.shop_product_id } } });
       return;
     }
 
@@ -449,6 +469,18 @@ export async function pollJob(job: Job, d: WorkerDeps): Promise<void> {
     const channel = await d.db.getChannel(job.channel_id);
     if (!channel) {
       await fin({ status: 'UNKNOWN', errorCode: 'CHANNEL_NOT_FOUND', errorMessage: 'Canal não encontrado.', result: 'UNKNOWN' });
+      return;
+    }
+
+    if (remoteId.startsWith('shop:') && d.shop) {
+      const st = await d.shop.status(remoteId.slice(5));
+      if (['PUBLISHED', 'SUCCESS', 'PUBLISH_COMPLETE'].includes(st.status)) {
+        await fin({ status: 'PUBLISHED', errorCode: null, errorMessage: null, result: 'PUBLISHED', remoteStatus: st.status, event: { type: 'SHOP_PUBLISH_COMPLETE', payload: { video_id: remoteId.slice(5) } } });
+      } else if (['FAILED', 'FAILURE'].includes(st.status)) {
+        await fin({ status: 'FAILED', errorCode: 'SHOP_PUBLISH_FAILED', errorMessage: st.reason ?? 'O TikTok Shop recusou a publicação.', result: 'FAILED', remoteStatus: st.status });
+      } else {
+        await waitOrUnknown('SHOP_PENDING', `Status TikTok Shop: ${st.status}.`);
+      }
       return;
     }
 

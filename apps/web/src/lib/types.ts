@@ -141,6 +141,9 @@ export interface PublicationJob {
   approval_status?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED";
   approved_at?: string | null;
   approval_note?: string | null;
+  shop_product_id?: string | null;
+  shop_anchor_title?: string | null;
+  shop_is_ai_generated?: boolean;
 }
 
 export interface PublicationEvent {

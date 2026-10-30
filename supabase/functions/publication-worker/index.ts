@@ -21,6 +21,26 @@ Deno.serve(async (req) => {
         db: c.db,
         tiktok: c.tiktok,
         ensureToken: c.ensureToken,
+        shop: {
+          async publish(job, media) {
+            const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/tiktok-shop-publish`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'x-worker-secret': env('WORKER_SECRET') },
+              body: JSON.stringify({ action: 'publish', job_id: job.id, storage_key: media.storage_key }),
+            });
+            const body = await response.json().catch(() => null) as { video_id?: string; message?: string } | null;
+            if (!response.ok || !body?.video_id) throw new Error(body?.message ?? 'Falha ao enviar vídeo para TikTok Shop.');
+            return { videoId: body.video_id };
+          },
+          async status(videoId) {
+            const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/tiktok-shop-publish`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'x-worker-secret': env('WORKER_SECRET') },
+              body: JSON.stringify({ action: 'status', video_id: videoId }),
+            });
+            const body = await response.json().catch(() => null) as { status?: string; reason?: string; message?: string } | null;
+            if (!response.ok || !body?.status) throw new Error(body?.message ?? 'Falha ao consultar TikTok Shop.');
+            return { status: body.status, reason: body.reason };
+          },
+        },
         now: c.now,
         sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
         log,

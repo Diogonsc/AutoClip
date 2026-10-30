@@ -11,6 +11,7 @@ import {
   useMedia,
   usePlatformFlags,
   useSettings,
+  useTikTokShopProducts,
 } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import {
@@ -67,6 +68,7 @@ export default function PublicationForm({
   const scheduledJobs = useJobsPage(ws.id, 0, 1000);
   const settings = useSettings(ws.id);
   const platformFlags = usePlatformFlags();
+  const shopProducts = useTikTokShopProducts(ws.id);
 
   const tzList = useMemo(() => allTimezones(), []);
   const defaultTz = settings.data?.default_timezone ?? browserTimezone();
@@ -80,6 +82,9 @@ export default function PublicationForm({
     job?.media_asset_ids ?? (job?.media_asset_id ? [job.media_asset_id] : []),
   );
   const [caption, setCaption] = useState(job?.caption ?? "");
+  const [shopProductId, setShopProductId] = useState(job?.shop_product_id ?? "");
+  const [shopAnchorTitle, setShopAnchorTitle] = useState(job?.shop_anchor_title ?? "");
+  const [shopAiGenerated, setShopAiGenerated] = useState(job?.shop_is_ai_generated ?? false);
   const [when, setWhen] = useState(
     job?.scheduled_at
       ? utcToZonedInput(job.scheduled_at, job.timezone)
@@ -118,6 +123,10 @@ export default function PublicationForm({
     .filter((m): m is MediaAsset => Boolean(m));
   const selectedChannel = (channels.data ?? []).find((c) => c.id === channelId);
   const selectedMedia = readyMedia.find((m) => m.id === mediaId);
+  const eligibleShopProducts = (shopProducts.data ?? []).filter(
+    (p) => p.availability !== "OUT_OF_STOCK",
+  );
+  const selectedShopProduct = eligibleShopProducts.find((p) => p.id === shopProductId);
 
   const direct = settings.data?.publish_mode === "DIRECT";
   const audited = platformFlags.data?.tiktok_audited === true;
@@ -221,6 +230,9 @@ export default function PublicationForm({
         brand_content: direct ? brandContent : false,
         brand_organic: direct ? brandOrganic : false,
         music_rights_confirmed: musicRightsConfirmed,
+        shop_product_id: shopProductId || null,
+        shop_anchor_title: shopProductId ? shopAnchorTitle.trim() : null,
+        shop_is_ai_generated: shopProductId ? shopAiGenerated : false,
         scheduled_at,
         timezone: tz,
         status,
@@ -315,6 +327,12 @@ export default function PublicationForm({
       return setLocalError(
         "Publicações de fotos/carrossel exigem modo Publicação direta e permissões do TikTok. O modo Caixa de entrada aceita apenas vídeos neste fluxo.",
       );
+    if (shopProductId && postType !== "VIDEO")
+      return setLocalError("O carrinho laranja está disponível apenas para vídeos.");
+    if (shopProductId && !caption.trim())
+      return setLocalError("Vídeos com carrinho laranja exigem uma legenda.");
+    if (shopProductId && (!shopAnchorTitle.trim() || shopAnchorTitle.trim().length > 30 || /[^a-zA-Z0-9À-ÿ\s]/.test(shopAnchorTitle)))
+      return setLocalError("O título da âncora deve ter até 30 caracteres e não pode conter emojis ou pontuação.");
     if (caption.length > 2200)
       return setLocalError("A legenda pode ter no máximo 2200 caracteres.");
     if (status === "SCHEDULED" && direct && !privacy)
@@ -521,6 +539,26 @@ export default function PublicationForm({
               · {selectedMedia.mime_type}
             </p>
           </div>
+        )}
+
+        {postType === "VIDEO" && (
+          <fieldset className="grid gap-3 rounded-lg border p-4">
+            <legend className="px-1 text-sm font-medium">Carrinho laranja (TikTok Shop)</legend>
+            <Field label="Produto afiliado" hint="A publicação usa a API Shoppable Video e publica o produto como âncora do vídeo.">
+              <SelectField value={shopProductId || "__none__"} onValueChange={(value) => {
+                const id = value === "__none__" ? "" : value;
+                setShopProductId(id);
+                const product = eligibleShopProducts.find((p) => p.id === id);
+                if (product && !shopAnchorTitle) setShopAnchorTitle(product.title.slice(0, 30).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").trim());
+              }} options={[{ value: "__none__", label: "Sem produto afiliado" }, ...eligibleShopProducts.map((p) => ({ value: p.id, label: `${p.title} · ${p.commission_rate != null ? `${(p.commission_rate * 100).toFixed(1)}%` : "comissão variável"}` }))]} />
+            </Field>
+            {shopProductId && <>
+              <Field label="Título da âncora" hint="Até 30 caracteres, sem emojis ou pontuação."><Input value={shopAnchorTitle} maxLength={30} onChange={(e) => setShopAnchorTitle(e.target.value)} /></Field>
+              <Label className="font-normal"><Checkbox checked={shopAiGenerated} onCheckedChange={(value) => setShopAiGenerated(value === true)} /><span>Este vídeo foi gerado por IA</span></Label>
+              <Notice tone="info">O produto será vinculado ao vídeo no TikTok Shop; o fluxo comum de publicação não será usado.</Notice>
+            </>}
+            {shopProducts.isLoading && <span className="text-sm text-muted-foreground">Carregando catálogo afiliado…</span>}
+          </fieldset>
         )}
 
         {postType === "PHOTO" && selectedPhotos.length > 0 && (

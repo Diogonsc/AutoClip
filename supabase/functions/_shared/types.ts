@@ -40,6 +40,9 @@ export interface Job {
   scheduled_at: string | null;
   status: JobStatus;
   remote_publish_id: string | null;
+  shop_product_id?: string | null;
+  shop_anchor_title?: string | null;
+  shop_is_ai_generated?: boolean;
   attempt_count: number;
   max_attempts: number;
 }

@@ -46,6 +46,9 @@ verify_jwt = false # valida o JWT com RPCs do banco; OAuth do Shop é iniciado p
 [functions.tiktok-shop-oauth-callback]
 verify_jwt = false # callback público, protegido por state de uso único
 
+[functions.tiktok-shop-publish]
+verify_jwt = false # chamada interna pelo worker com x-worker-secret
+
 [functions.admin-users]
 verify_jwt = false # o JWT é validado na função (auth.getUser) e o chamador precisa estar em platform_owners
 
