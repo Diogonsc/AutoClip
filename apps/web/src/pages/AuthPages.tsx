@@ -56,7 +56,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -64,7 +64,7 @@ export function LoginPage() {
     setBusy(true);
     try {
       await signIn(email.trim(), password);
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -114,7 +114,7 @@ export function SignupPage() {
   const [done, setDone] = useState<null | { needsConfirmation: boolean }>(null);
   const [busy, setBusy] = useState(false);
 
-  if (user && !done) return <Navigate to="/" replace />;
+  if (user && !done) return <Navigate to="/app" replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -264,7 +264,7 @@ export function ResetPasswordPage() {
     setBusy(true);
     try {
       await updatePassword(password);
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     } catch (err) {
       setError(errorMessage(err));
     } finally {

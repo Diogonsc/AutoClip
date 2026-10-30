@@ -26,6 +26,7 @@ import SettingsPage from "./pages/SettingsPage";
 import UsersAdminPage from "./pages/UsersAdminPage";
 import TikTokShopPage from "./pages/TikTokShopPage";
 import Loading from "./components/loading";
+import LandingPage from "./pages/LandingPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -37,14 +38,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { canAdmin, loading } = useWorkspace();
   if (loading) return <Loading />;
-  return canAdmin ? <>{children}</> : <Navigate to="/" replace />;
+  return canAdmin ? <>{children}</> : <Navigate to="/app" replace />;
 }
 
 function RequirePlatformOwner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const owner = usePlatformOwner(user?.id);
   if (loading || owner.isLoading) return <Loading />;
-  return owner.data ? <>{children}</> : <Navigate to="/" replace />;
+  return owner.data ? <>{children}</> : <Navigate to="/app" replace />;
 }
 
 function MissingConfig() {
@@ -67,11 +68,10 @@ function MissingConfig() {
 }
 
 export default function App() {
-  if (!supabaseConfigured) return <MissingConfig />;
-
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<SignupPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
@@ -85,7 +85,7 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<DashboardPage />} />
+          <Route path="app" element={<DashboardPage />} />
           <Route path="canais" element={<ChannelsPage />} />
           <Route path="biblioteca" element={<MediaPage />} />
           <Route path="publicacoes" element={<PublicationsPage />} />
@@ -128,6 +128,7 @@ export default function App() {
           />
         </Route>
 
+        {!supabaseConfigured && <Route path="app/*" element={<MissingConfig />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

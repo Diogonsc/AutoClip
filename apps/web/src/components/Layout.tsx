@@ -43,7 +43,7 @@ const USER_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
     items: [
-      { to: "/", label: "Visão geral", end: true, icon: LayoutDashboard },
+      { to: "/app", label: "Visão geral", end: true, icon: LayoutDashboard },
       { to: "/canais", label: "Canais", icon: Radio },
       { to: "/biblioteca", label: "Biblioteca de vídeos", icon: Library },
     ],
