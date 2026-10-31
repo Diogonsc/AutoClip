@@ -189,3 +189,58 @@
     @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
   }
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 1080px) {
+  html {
+    font-size: 93.75%;
+  }
+}
+
+@media (max-width: 720px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  padding: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  height: 5px;
+  width: 3px;
+  padding: 0 3px;
+  background: #555;
+  border-radius: 4px;
+
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+
+  padding: 0 3px;
+  background-clip: padding-box;
+}
+
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    padding: 5px;
+  }
+}
