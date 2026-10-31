@@ -54,3 +54,6 @@ verify_jwt = false # o JWT é validado na função (auth.getUser) e o chamador p
 
 [functions.media-serve]
 verify_jwt = false # chamada pelo TikTok via domínio verificado; protegida por token HMAC de curta duração
+
+[functions.media-cleanup]
+verify_jwt = false # tarefa interna; autenticada por x-worker-secret e jamais pelo navegador

@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { toError, unwrap } from "./api";
 import type {
+  BillingPlan,
   Channel,
   MediaAsset,
   Profile,
   PlatformFlags,
   PublicationJob,
   PublicationStatus,
+  SaasOverview,
   WorkspaceSettings,
   TikTokShopConnection,
   TikTokShopOrder,
@@ -128,6 +130,23 @@ export function useSettings(workspaceId: string) {
           .eq("workspace_id", workspaceId)
           .maybeSingle(),
       ) as unknown as WorkspaceSettings | null,
+  });
+}
+
+export function useBillingPlans() {
+  return useQuery({
+    queryKey: ["billing-plans"],
+    staleTime: 5 * 60_000,
+    queryFn: async () =>
+      unwrap(await supabase.from("billing_plans").select("*").eq("active", true).order("sort_order")) as unknown as BillingPlan[],
+  });
+}
+
+export function useSaasOverview(workspaceId: string) {
+  return useQuery({
+    queryKey: ["saas-overview", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.rpc("get_workspace_saas_overview", { p_workspace: workspaceId })) as unknown as SaasOverview,
   });
 }
 

@@ -60,6 +60,36 @@ export interface WorkspaceSettings {
   publish_mode: PublishMode;
   auto_publish_enabled: boolean;
   default_timezone: string;
+  auto_delete_media_enabled: boolean;
+  auto_delete_media_dry_run: boolean;
+  auto_delete_media_grace_hours: number;
+  auto_delete_media_batch_size: number;
+}
+
+export interface BillingPlan {
+  id: string;
+  display_name: string;
+  max_connected_accounts: number;
+  monthly_publication_limit: number;
+  price_cents: number;
+  currency: string;
+  active: boolean;
+  sort_order: number;
+}
+
+export interface SaasOverview {
+  subscription_status: "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED";
+  plan_id: string;
+  plan_name: string;
+  period_ends_at: string;
+  trial_ends_at: string | null;
+  connected_accounts: number;
+  connected_account_limit: number;
+  publication_limit: number;
+  reserved_publications: number;
+  consumed_publications: number;
+  storage_bytes: number;
+  deleted_storage_bytes: number;
 }
 
 export interface Member {

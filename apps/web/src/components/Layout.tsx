@@ -17,6 +17,7 @@ import {
   Send,
   Settings,
   ShoppingBag,
+  CreditCard,
   Users,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
@@ -57,6 +58,7 @@ const USER_GROUPS: NavGroup[] = [
       { to: "/relatorios", label: "Relatório semanal", icon: FileText },
       { to: "/shop", label: "TikTok Shop e afiliados", icon: ShoppingBag },
       { to: "/notificacoes", label: "Notificações", icon: Bell },
+      { to: "/plano", label: "Plano e consumo", icon: CreditCard },
     ],
   },
 ];

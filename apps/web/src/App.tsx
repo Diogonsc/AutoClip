@@ -25,6 +25,7 @@ import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import UsersAdminPage from "./pages/UsersAdminPage";
 import TikTokShopPage from "./pages/TikTokShopPage";
+import BillingPage from "./pages/BillingPage";
 import Loading from "./components/loading";
 import LandingPage from "./pages/LandingPage";
 
@@ -94,6 +95,7 @@ export default function App() {
           <Route path="relatorios" element={<ReportsPage />} />
           <Route path="shop" element={<TikTokShopPage />} />
           <Route path="notificacoes" element={<NotificationsPage />} />
+          <Route path="plano" element={<BillingPage />} />
           <Route
             path="membros"
             element={

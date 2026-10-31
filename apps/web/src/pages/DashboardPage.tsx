@@ -14,10 +14,11 @@ import {
   BLOCKED_STATUSES,
   PROBLEM_CHANNEL_STATUSES,
   formatDateTime,
+  formatBytes,
   publicationStatusLabel,
   publicationTone,
 } from "../lib/format";
-import { useChannels, useJobsPage, useSettings } from "../lib/hooks";
+import { useChannels, useJobsPage, useSaasOverview, useSettings } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { PublicationEvent } from "../lib/types";
 import type { Tone } from "../lib/format";
@@ -59,6 +60,7 @@ export default function DashboardPage() {
   const channels = useChannels(ws.id);
   const jobs = useJobsPage(ws.id, 0, 1000, undefined, "updated_at");
   const settings = useSettings(ws.id);
+  const entitlement = useSaasOverview(ws.id);
   const events = useQuery({
     queryKey: ["recent-events", ws.id],
     queryFn: async () =>
@@ -129,6 +131,12 @@ export default function DashboardPage() {
     <>
       <PageHeader title="Painel" subtitle={ws.name} />
       <ErrorBox error={channels.error ?? jobs.error} />
+
+      {entitlement.data && (
+        <Notice tone="info">
+          <strong>{entitlement.data.plan_name}</strong>: {entitlement.data.connected_accounts}/{entitlement.data.connected_account_limit} contas conectadas e {entitlement.data.consumed_publications + entitlement.data.reserved_publications}/{entitlement.data.publication_limit} publicações neste ciclo. Armazenamento atual: {formatBytes(entitlement.data.storage_bytes)}; espaço liberado: {formatBytes(entitlement.data.deleted_storage_bytes)}.
+        </Notice>
+      )}
 
       {settings.data && !settings.data.auto_publish_enabled && (
         <Notice tone="info">

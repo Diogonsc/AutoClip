@@ -21,6 +21,12 @@ function friendly(e: RawError): string {
     return "Esta publicação precisa da aprovação do cliente antes de ser enviada.";
   if (m.includes("daily_channel_schedule_limit"))
     return "Este canal já tem 15 publicações agendadas para essa data local. Escolha outro dia ou horário.";
+  if (m.includes("publication_quota_exceeded"))
+    return "O limite de publicações do plano para este ciclo foi atingido.";
+  if (m.includes("connected_channel_limit_exceeded"))
+    return "O limite de contas TikTok conectadas do plano foi atingido.";
+  if (m.includes("subscription is not active"))
+    return "A assinatura deste workspace não está ativa para novas operações.";
   if (m.includes("not ready"))
     return "O vídeo ainda não está pronto (upload não finalizado).";
   if (m.includes("in the past")) return "A data de agendamento já passou.";

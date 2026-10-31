@@ -80,9 +80,29 @@ export default function SettingsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", ws.id] }),
   });
 
+  const saveMediaRetention = useMutation({
+    mutationFn: async (values: {
+      auto_delete_media_enabled: boolean;
+      auto_delete_media_dry_run: boolean;
+      auto_delete_media_grace_hours?: number;
+      auto_delete_media_batch_size?: number;
+    }) =>
+      unwrap(
+        await supabase
+          .from("workspace_settings")
+          .update(values)
+          .eq("workspace_id", ws.id),
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", ws.id] }),
+  });
+
   if (settings.isLoading) return <Loading />;
   const mode: PublishMode = settings.data?.publish_mode ?? "INBOX";
   const auto = settings.data?.auto_publish_enabled ?? false;
+  const mediaAutoDelete = settings.data?.auto_delete_media_enabled ?? false;
+  const mediaDryRun = settings.data?.auto_delete_media_dry_run ?? true;
+  const mediaGraceHours = settings.data?.auto_delete_media_grace_hours ?? 24;
+  const mediaBatchSize = settings.data?.auto_delete_media_batch_size ?? 10;
 
   return (
     <>
@@ -92,7 +112,8 @@ export default function SettingsPage() {
           settings.error ??
           saveGeneral.error ??
           toggleAuto.error ??
-          setMode.error
+          setMode.error ??
+          saveMediaRetention.error
         }
       />
 
@@ -147,6 +168,80 @@ export default function SettingsPage() {
                 </p>
               )}
             </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Retenção de mídia</CardTitle>
+            <CardDescription>
+              Arquivos publicados só podem ser limpos após a confirmação do TikTok, sem agendamentos ou reconciliações pendentes e após 24 horas de segurança.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Notice tone={mediaAutoDelete ? (mediaDryRun ? "info" : "warning") : "neutral"}>
+              {!mediaAutoDelete
+                ? "Limpeza automática desativada: nenhum arquivo será removido pelo AutoClip."
+                : mediaDryRun
+                  ? "Simulação ativa: o sistema registra os candidatos, mas não remove objetos do Storage."
+                  : "Exclusão automática ativa. Use somente após homologar a simulação."}
+            </Notice>
+            <Label className="font-normal">
+              <Switch
+                checked={mediaAutoDelete}
+                disabled={!isOwner || saveMediaRetention.isPending}
+                onCheckedChange={(next) =>
+                  saveMediaRetention.mutate({
+                    auto_delete_media_enabled: next,
+                    auto_delete_media_dry_run: mediaDryRun,
+                  })
+                }
+              />
+              <span>Executar limpeza automática</span>
+            </Label>
+            <Label className="font-normal">
+              <Switch
+                checked={mediaDryRun}
+                disabled={!isOwner || saveMediaRetention.isPending}
+                onCheckedChange={(next) =>
+                  saveMediaRetention.mutate({
+                    auto_delete_media_enabled: mediaAutoDelete,
+                    auto_delete_media_dry_run: next,
+                  })
+                }
+              />
+              <span>Modo de simulação (recomendado)</span>
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Período de segurança (horas)">
+                <Input
+                  type="number"
+                  min={1}
+                  max={720}
+                  defaultValue={mediaGraceHours}
+                  disabled={!isOwner || saveMediaRetention.isPending}
+                  onBlur={(event) => {
+                    const next = Number(event.target.value);
+                    if (Number.isInteger(next) && next >= 1 && next <= 720 && next !== mediaGraceHours)
+                      saveMediaRetention.mutate({ auto_delete_media_enabled: mediaAutoDelete, auto_delete_media_dry_run: mediaDryRun, auto_delete_media_grace_hours: next });
+                  }}
+                />
+              </Field>
+              <Field label="Arquivos por workspace/lote">
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  defaultValue={mediaBatchSize}
+                  disabled={!isOwner || saveMediaRetention.isPending}
+                  onBlur={(event) => {
+                    const next = Number(event.target.value);
+                    if (Number.isInteger(next) && next >= 1 && next <= 50 && next !== mediaBatchSize)
+                      saveMediaRetention.mutate({ auto_delete_media_enabled: mediaAutoDelete, auto_delete_media_dry_run: mediaDryRun, auto_delete_media_batch_size: next });
+                  }}
+                />
+              </Field>
+            </div>
           </CardContent>
         </Card>
 
