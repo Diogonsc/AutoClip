@@ -600,7 +600,7 @@ export default function ChannelsPage() {
                                 await confirm({
                                   title: `Excluir o canal "${c.display_name}"?`,
                                   description:
-                                    "Esta ação não pode ser desfeita.",
+                                    "As publicações deste canal e seus registros associados também serão excluídos. Esta ação não pode ser desfeita.",
                                   confirmLabel: "Excluir",
                                   destructive: true,
                                 })

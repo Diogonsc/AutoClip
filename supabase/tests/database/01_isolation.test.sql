@@ -2,7 +2,7 @@
 -- Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(14);
 
 -- ---------------------------------------------------------------------
 -- Setup (como postgres): 3 usuários. O trigger cria um workspace para cada.
@@ -90,6 +90,22 @@ select throws_ok(
 
 select is((select count(*) from public.workspaces), 2::bigint,
   'C enxerga o próprio workspace e o workspace A (membro)');
+
+-- O administrador pode excluir um canal mesmo quando houver publicações;
+-- a FK remove o histórico operacional dependente junto com o canal.
+select set_config('request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
+
+select lives_ok(
+  format($q$
+    insert into public.publication_jobs (workspace_id, channel_id, media_asset_id, created_by)
+    values (%L, %L, %L, 'aaaaaaaa-0000-0000-0000-000000000001');
+    delete from public.channels where id = %L;
+  $q$, (select wa from ctx), (select ca from ctx), (select ma from ctx), (select ca from ctx)),
+  'A exclui canal com publicação associada');
+
+select is((select count(*) from public.publication_jobs where channel_id = (select ca from ctx)), 0::bigint,
+  'exclusão do canal remove publicações associadas');
 
 -- ---------------------------------------------------------------------
 -- Como anônimo
