@@ -1,5 +1,9 @@
 -- Teste de contrato da aprovação: executado em ambiente de teste com migrações aplicadas.
 BEGIN;
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+
+select lives_ok($test$
 DO $$
 DECLARE
   has_approval_required boolean;
@@ -18,4 +22,7 @@ BEGIN
     RAISE EXCEPTION 'Public approval links must not expose direct table policies; access must go through the Edge Function.';
   END IF;
 END $$;
+$test$, 'schema e políticas de aprovação estão consistentes');
+
+select * from finish();
 ROLLBACK;

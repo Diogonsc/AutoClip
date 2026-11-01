@@ -2,7 +2,7 @@
 -- Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('77777777-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'saas@test.dev');
@@ -34,6 +34,9 @@ select is((select status::text from public.publication_quota_reservations where 
 
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, created_by, status, scheduled_at, music_rights_confirmed)
 select job2_id, workspace_id, channel_id, media_id, '77777777-0000-0000-0000-000000000007', 'SCHEDULED', now() + interval '2 day', true from saas_ctx;
+update public.publication_jobs set scheduled_at = scheduled_at + interval '1 hour' where id = (select job2_id from saas_ctx);
+select is((select count(*) from public.publication_quota_reservations where publication_job_id = (select job2_id from saas_ctx)), 1::bigint,
+  'reagendamento do mesmo job não cria reserva duplicada');
 update public.publication_jobs set status = 'FAILED' where id = (select job2_id from saas_ctx);
 select is((select status::text from public.publication_quota_reservations where publication_job_id = (select job2_id from saas_ctx)), 'RELEASED',
   'falha definitiva libera a reserva');

@@ -69,8 +69,8 @@ select throws_ok(
   '23503', null, 'Job não pode usar canal de outro workspace (FK composta)');
 
 select throws_ok(
-  format($q$insert into public.publication_jobs (workspace_id, channel_id, media_asset_id, status, created_by)
-            values (%L, %L, %L, 'PROCESSING', 'aaaaaaaa-0000-0000-0000-000000000001')$q$,
+  format($q$insert into public.publication_jobs (workspace_id, channel_id, media_asset_id, status, music_rights_confirmed, created_by)
+            values (%L, %L, %L, 'PROCESSING', true, 'aaaaaaaa-0000-0000-0000-000000000001')$q$,
          (select wa from ctx), (select ca from ctx), (select ma from ctx)),
   '42501', null, 'Usuário não cria job direto em PROCESSING');
 

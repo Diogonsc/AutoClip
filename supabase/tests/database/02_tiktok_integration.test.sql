@@ -37,10 +37,10 @@ select '20000000-0000-0000-0000-000000000001', wa, 'a.mp4',
        wa::text || '/20000000-0000-0000-0000-000000000001/original.mp4', 'video/mp4', 1000, 'READY'
 from ctx;
 
-insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, status, scheduled_at, created_by)
+insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, status, scheduled_at, music_rights_confirmed, created_by)
 select '30000000-0000-0000-0000-000000000001', wa,
        '10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001',
-       'SCHEDULED', now() - interval '10 seconds', 'aaaaaaaa-0000-0000-0000-000000000001'
+       'SCHEDULED', now() - interval '10 seconds', true, 'aaaaaaaa-0000-0000-0000-000000000001'
 from ctx;
 
 -- ---------------------------------------------------------------------
@@ -206,15 +206,15 @@ select ok((select count(*) from public.notifications where type = 'JOB_PUBLISHED
 -- Recuperação de jobs presos
 -- ---------------------------------------------------------------------
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, status, scheduled_at,
-                                     remote_publish_id, locked_at, attempt_count, created_by)
+                                     remote_publish_id, locked_at, attempt_count, music_rights_confirmed, created_by)
 select '30000000-0000-0000-0000-000000000002'::uuid, wa, '10000000-0000-0000-0000-00000000000a'::uuid,
        '20000000-0000-0000-0000-000000000001'::uuid, 'PROCESSING'::public.publication_status, now() - interval '2 hours',
-       'pub_x', now() - interval '1 hour', 1, 'aaaaaaaa-0000-0000-0000-000000000001'::uuid
+       'pub_x', now() - interval '1 hour', 1, true, 'aaaaaaaa-0000-0000-0000-000000000001'::uuid
 from ctx
 union all
 select '30000000-0000-0000-0000-000000000003'::uuid, wa, '10000000-0000-0000-0000-00000000000a'::uuid,
        '20000000-0000-0000-0000-000000000001'::uuid, 'PROCESSING'::public.publication_status, now() - interval '2 hours',
-       null::text, now() - interval '1 hour', 1, 'aaaaaaaa-0000-0000-0000-000000000001'::uuid
+       null::text, now() - interval '1 hour', 1, true, 'aaaaaaaa-0000-0000-0000-000000000001'::uuid
 from ctx;
 
 insert into public.publication_attempts (workspace_id, publication_job_id, attempt_number)
@@ -276,7 +276,7 @@ select set_config('request.jwt.claims',
   '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
 
 update public.publication_jobs
-   set status = 'SCHEDULED', scheduled_at = now() + interval '1 day'
+   set status = 'SCHEDULED', scheduled_at = now() + interval '1 day', music_rights_confirmed = true
  where id = '30000000-0000-0000-0000-000000000005';
 
 select throws_ok(
@@ -295,10 +295,10 @@ select is((select attempt_count::text || ':' || coalesce(last_error_code, 'null'
 -- attempt_number segue o histórico, não o contador
 -- ---------------------------------------------------------------------
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, status, scheduled_at,
-                                     attempt_count, created_by)
+                                     attempt_count, music_rights_confirmed, created_by)
 select '30000000-0000-0000-0000-000000000006', wa, '10000000-0000-0000-0000-00000000000a',
        '20000000-0000-0000-0000-000000000001', 'DRAFT', now() - interval '1 hour',
-       0, 'aaaaaaaa-0000-0000-0000-000000000001'
+       0, true, 'aaaaaaaa-0000-0000-0000-000000000001'
 from ctx;
 update public.publication_jobs set status = 'RETRY_WAIT' where id = '30000000-0000-0000-0000-000000000006';
 insert into public.publication_attempts (workspace_id, publication_job_id, attempt_number, finished_at, result)

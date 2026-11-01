@@ -77,3 +77,24 @@ OAuth fora do Sandbox depende da aprovação do app TikTok. Enquanto estiver em 
 O front deve passar em `npm --prefix apps/web run typecheck`, `npm --prefix apps/web test` e `npm --prefix apps/web run build`. Os testes de banco são executados com `supabase test db` somente contra o stack local; não execute testes destrutivos contra produção. Testes de publicação devem mockar TikTok e Storage.
 
 Em uma falha de limpeza, mantenha dry-run ativo, consulte `media_cleanup_audit`, verifique o status dos jobs e corrija/reexecute a função. Se a remoção do objeto ocorreu mas a atualização do banco falhou, a trava expira e a próxima execução faz a reconciliação idempotente. Nunca altere manualmente um job `UNKNOWN` para publicar; use o fluxo de reconciliação já existente.
+
+## Evidências de homologação pós-deploy (2026-11-01)
+
+Validação remota realizada sem upload para Storage, sem publicação para o TikTok e com transações de teste revertidas:
+
+- A Vercel respondeu HTTP 200 e o bundle publicado contém as telas **Plano e consumo** e **Retenção de mídia**. Não havia sessão de navegador autorizada disponível para validar a navegação autenticada visualmente.
+- Os cinco planos, uma assinatura Starter ativa e o ciclo de 120 publicações foram encontrados no banco. Uma transação temporária comprovou `RESERVED` na criação de um agendamento e `CONSUMED` após mudança para `PUBLISHED`; os registros temporários não permaneceram após `ROLLBACK`.
+- Mídia fictícia publicada há 25 horas só ficou elegível depois da remoção de um job `UNKNOWN` compartilhado. O teste confirmou lock exclusivo, auditoria `DRY_RUN`, manutenção do status `READY` no dry-run e idempotência da finalização física simulada. O rollback impediu qualquer alteração persistente ou chamada ao Storage.
+- O dry-run real da Edge Function retornou HTTP 200 com zero candidatos, zero dry-runs e zero objetos removidos. No ambiente atual não há histórico/mídia elegível, portanto ainda falta observar uma auditoria `DRY_RUN` persistente com um asset real de homologação.
+- A função respondeu HTTP 401 sem `x-worker-secret`. A RPC de claim não tem execução para `anon` nem `authenticated`; apenas `service_role` a possui. As seis novas tabelas têm RLS ativo e políticas de leitura por workspace/papel.
+- O cron `invoke-media-cleanup` está ativo a cada 15 minutos. Dois HTTP 500 foram registrados antes da correção de ambiguidade de `workspace_id`; após a migration `20261102000002_fix_media_cleanup_candidate_query.sql`, a resposta foi HTTP 200. `net._http_response` e `media_cleanup_audit` são os pontos de diagnóstico operacional.
+
+## Evidências locais complementares (2026-11-01)
+
+O stack Supabase local foi recriado com `supabase db reset`, aplicando todas as migrations até `20261102000002`. Em seguida, `supabase test db` passou integralmente: **8 arquivos e 93 testes**. As fixtures antigas de jobs ativos foram atualizadas para informar `music_rights_confirmed = true`, requisito já imposto pelo banco; o contrato de aprovação também passou a emitir TAP, eliminando um falso negativo do runner.
+
+O script `scripts/test_local_concurrency.sh` abriu duas conexões PostgreSQL independentes contra o banco local. Com limite de ciclo igual a um, só uma inserção concorrente conseguiu reservar quota; a outra falhou de forma esperada. Em paralelo, uma transação manteve o claim de limpeza e a segunda recebeu zero candidatos por `FOR UPDATE SKIP LOCKED`. O script usa somente mídia fictícia sem objeto no Storage e remove o usuário/workspace de fixture no `trap` de saída.
+
+O frontend também foi verificado no mesmo ciclo: `typecheck`, Vitest (**25 testes**) e build de produção passaram. O bundle ainda emite o aviso não bloqueante de chunk JavaScript acima de 500 kB.
+
+Pendências de lançamento: validar a interface com uma conta de teste autenticada, registrar ao menos um candidato de homologação em dry-run persistente, configurar observabilidade/alerta externo para respostas não-2xx, concluir aprovação TikTok fora do Sandbox e configurar provedor de pagamentos/webhooks antes de qualquer cobrança.
