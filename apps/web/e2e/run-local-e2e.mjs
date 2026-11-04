@@ -193,6 +193,15 @@ try {
   if (addMemberError) throw addMemberError;
   const { data: channelA, error: channelError } = await admin.from('channels').insert({ workspace_id: ownerA.workspaceId, display_name: `E2E fixture ${suffix}`, provider_user_id: `e2e-${suffix}`, connection_status: 'CONNECTED', authorized_at: new Date().toISOString(), last_validated_at: new Date().toISOString(), creator_info_at: new Date().toISOString(), creator_info: { privacy_level_options:['SELF_ONLY'],comment_disabled:false,duet_disabled:false,stitch_disabled:false,max_video_post_duration_sec:600 } }).select('id').single();
   if (channelError) throw channelError;
+  const connectChannels = [];
+  for (const label of ['A', 'B']) {
+    const name = `E2E OAuth ${label} ${suffix}`;
+    const { data, error } = await admin.from('channels')
+      .insert({ workspace_id: ownerA.workspaceId, display_name: name })
+      .select('id').single();
+    if (error) throw error;
+    connectChannels.push({ id: data.id, name });
+  }
   const { data: channelB, error: channelBError } = await admin.from('channels').insert({ workspace_id: ownerB.workspaceId, display_name: `PRIVATE E2E ${suffix}`, provider_user_id: `private-${suffix}`, connection_status: 'CONNECTED', authorized_at: new Date().toISOString(), last_validated_at: new Date().toISOString(), creator_info_at: new Date().toISOString(), creator_info: { privacy_level_options:['SELF_ONLY'],comment_disabled:false,duet_disabled:false,stitch_disabled:false,max_video_post_duration_sec:600 } }).select('id').single();
   if (channelBError) throw channelBError;
   const { data: group, error: groupError } = await admin.from('account_groups').insert({ workspace_id: ownerA.workspaceId, name: `E2E group ${suffix}`, created_by: ownerA.userId }).select('id').single();
@@ -217,7 +226,7 @@ try {
   const videoA=await createValidatedMedia(ownerA,`fixture-video-${suffix}.mp4`,'video/mp4',mp4);
   const videoB=await createValidatedMedia(ownerB,`fixture-video-b-${suffix}.mp4`,'video/mp4',mp4);
   const {data:workspaceB}=await admin.from('workspaces').select('name').eq('id',ownerB.workspaceId).single();
-  payload = { apiUrl: sb.API_URL, anonKey: sb.ANON_KEY, password, ownerA, ownerB, viewer, fixture: suffix, mediaDir, workspaceBName:workspaceB.name, foreignChannelId: channelB.id, fixtureObject: primaryMedia.key, fixtureMediaId:primaryMedia.id, fixtureMediaFilename, fixtureVideoObject:videoA.key, fixtureVideoId:videoA.id, fixtureVideoFilename:`fixture-video-${suffix}.mp4`, foreignObject:foreignMedia.key, foreignMediaId:foreignMedia.id, foreignMediaFilename:'foreign.png', foreignVideoId:videoB.id, foreignVideoFilename:`fixture-video-b-${suffix}.mp4`, users, workspaces };
+  payload = { apiUrl: sb.API_URL, anonKey: sb.ANON_KEY, password, ownerA, ownerB, viewer, fixture: suffix, mediaDir, workspaceBName:workspaceB.name, foreignChannelId: channelB.id, connectChannels, fixtureObject: primaryMedia.key, fixtureMediaId:primaryMedia.id, fixtureMediaFilename, fixtureVideoObject:videoA.key, fixtureVideoId:videoA.id, fixtureVideoFilename:`fixture-video-${suffix}.mp4`, foreignObject:foreignMedia.key, foreignMediaId:foreignMedia.id, foreignMediaFilename:'foreign.png', foreignVideoId:videoB.id, foreignVideoFilename:`fixture-video-b-${suffix}.mp4`, users, workspaces };
   writeFileSync(tmp, JSON.stringify(payload), { mode: 0o600, flag: 'wx' });
   const args = process.argv.slice(2);
   const webDir = resolve(repoRoot, 'apps/web');

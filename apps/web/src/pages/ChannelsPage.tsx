@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
-import { Radio } from "lucide-react";
+import { Loader2, Radio } from "lucide-react";
 import { useConfirm } from "../components/confirm-provider";
 import { SelectField } from "../components/select-field";
 import {
@@ -379,11 +379,11 @@ export default function ChannelsPage() {
   });
 
   const connect = useMutation({
-    mutationFn: async (channel_id: string) => {
+    mutationFn: async ({ channelId }: { channelId: string }) => {
       const r = await invokeFunction<{ url: string }>(
         supabase,
         "tiktok-channel",
-        { action: "connect", channel_id },
+        { action: "connect", channel_id: channelId },
       );
       window.location.assign(r.url); // vai para a tela de autorização do TikTok
     },
@@ -572,7 +572,10 @@ export default function ChannelsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleChannels.map((c) => (
+              {visibleChannels.map((c) => {
+                const isConnecting =
+                  connect.isPending && connect.variables?.channelId === c.id;
+                return (
                   <TableRow key={c.id}>
                     <TableCell>
                       <Checkbox
@@ -613,12 +616,22 @@ export default function ChannelsPage() {
                         {canEdit && (
                           <Button
                             size="sm"
+                            aria-label={`${c.connection_status === "CONNECTED" ? "Reconectar" : "Conectar"} ${c.display_name}`}
+                            aria-busy={isConnecting}
                             disabled={connect.isPending}
-                            onClick={() => connect.mutate(c.id)}
+                            onClick={() => connect.mutate({ channelId: c.id })}
                           >
-                            {c.connection_status === "CONNECTED"
-                              ? "Reconectar"
-                              : "Conectar"}
+                            {isConnecting && (
+                              <Loader2
+                                className="animate-spin"
+                                aria-hidden="true"
+                              />
+                            )}
+                            {isConnecting
+                              ? "Conectando…"
+                              : c.connection_status === "CONNECTED"
+                                ? "Reconectar"
+                                : "Conectar"}
                           </Button>
                         )}
                         {canAdmin &&
@@ -685,7 +698,8 @@ export default function ChannelsPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                );
+              })}
             </TableBody>
           </Table>
         </TableCard>

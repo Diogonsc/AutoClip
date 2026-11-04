@@ -19,7 +19,11 @@ export interface OAuthDeps {
   key: CryptoKey;
   now: () => Date;
   consumeState(state: string): Promise<{ workspace_id: string; channel_id: string; required_scopes: string[] } | null>;
-  getChannel(channelId: string): Promise<{ id: string; provider_user_id: string | null } | null>;
+  getChannel(channelId: string, workspaceId: string): Promise<{
+    id: string;
+    workspace_id: string;
+    provider_user_id: string | null;
+  } | null>;
   saveConnection(a: {
     channelId: string;
     openId: string;
@@ -46,14 +50,17 @@ export async function handleOAuthCallback(
   if (params.error) return 'denied';
   if (!params.code) return 'error';
 
-  const channel = await d.getChannel(st.channel_id);
-  if (!channel) return 'error';
+  const channel = await d.getChannel(st.channel_id, st.workspace_id);
+  if (!channel || channel.id !== st.channel_id || channel.workspace_id !== st.workspace_id) {
+    return 'invalid_state';
+  }
 
   let tokens;
   try {
     tokens = await d.tiktok.exchangeCode(d.cfg, params.code, d.redirectUri);
-  } catch (e) {
-    d.log?.('oauth.exchange_failed', e instanceof Error ? e.message : String(e));
+  } catch {
+    // Never log the authorization code, tokens, or provider response text.
+    d.log?.('oauth.exchange_failed');
     return 'error';
   }
 
