@@ -53,6 +53,124 @@ test('rejeita login inválido sem criar sessão', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test('Conectar envia exclusivamente o ID do canal da linha clicada', async ({ page }) => {
+  const callbackRequests: Array<{ action: string; channel_id: string }> = [];
+  await login(page);
+  await page.route('**/functions/v1/tiktok-channel', async (route) => {
+    const request = route.request();
+    const origin = request.headers().origin ?? '*';
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: {
+        'access-control-allow-origin': origin,
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+      } });
+      return;
+    }
+    callbackRequests.push(request.postDataJSON());
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      url: 'https://www.tiktok.com/oauth-e2e', publish_mode: 'INBOX',
+    }) });
+  });
+  await page.route('https://www.tiktok.com/oauth-e2e', (route) => route.fulfill({ status: 200, body: 'Synthetic OAuth page' }));
+
+  for (let index = 0; index < fixture.connectChannels.length; index++) {
+    const channel = fixture.connectChannels[index];
+    await page.goto('/canais');
+    await page.getByRole('button', { name: `Conectar ${channel.name}` }).click();
+    await expect(page).toHaveURL('https://www.tiktok.com/oauth-e2e');
+    expect(callbackRequests[index]).toEqual({ action: 'connect', channel_id: channel.id });
+  }
+  expect(callbackRequests.map((request) => request.channel_id)).toEqual(
+    fixture.connectChannels.map((channel: { id: string }) => channel.id),
+  );
+});
+
+test('loading de conexão é por canal, bloqueia os outros e limpa após falha', async ({ page }) => {
+  const requests: Array<{ action: string; channel_id: string }> = [];
+  let finishRequest: (() => void) | undefined;
+
+  await login(page);
+  await page.route('**/functions/v1/tiktok-channel', async (route) => {
+    const request = route.request();
+    const origin = request.headers().origin ?? '*';
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: {
+        'access-control-allow-origin': origin,
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+      } });
+      return;
+    }
+    requests.push(request.postDataJSON());
+    await new Promise<void>((resolve) => { finishRequest = resolve; });
+    await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'synthetic_failure' }) });
+  });
+
+  for (const channel of fixture.connectChannels) {
+    const otherChannel = fixture.connectChannels.find(
+      (candidate: { id: string }) => candidate.id !== channel.id,
+    );
+    if (!otherChannel) throw new Error('A fixture must contain two separate channels.');
+
+    await page.goto('/canais');
+    const selected = page.getByRole('button', { name: `Conectar ${channel.name}` });
+    const other = page.getByRole('button', { name: `Conectar ${otherChannel.name}` });
+    await selected.click();
+
+    await expect(selected).toHaveText('Conectando…');
+    await expect(selected).toBeDisabled();
+    await expect(selected).toHaveAttribute('aria-busy', 'true');
+    await expect(other).toHaveText('Conectar');
+    await expect(other).toBeDisabled();
+    await expect(other).toHaveAttribute('aria-busy', 'false');
+    expect(requests.at(-1)).toEqual({ action: 'connect', channel_id: channel.id });
+
+    await expect.poll(() => Boolean(finishRequest)).toBe(true);
+    finishRequest?.();
+    finishRequest = undefined;
+    await expect(selected).toHaveText('Conectar');
+    await expect(selected).toBeEnabled();
+    await expect(other).toBeEnabled();
+  }
+});
+
+test('callback OAuth encaminha parâmetros uma vez e retorna a Canais com mensagem', async ({ page }) => {
+  await login(page);
+  let posted: Record<string, unknown> | undefined;
+  let addressBarAtPost = '';
+  await page.route('**/functions/v1/tiktok-oauth-callback', async (route) => {
+    const request = route.request();
+    const origin = request.headers().origin ?? '*';
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: {
+        'access-control-allow-origin': origin,
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+      } });
+      return;
+    }
+    posted = request.postDataJSON();
+    addressBarAtPost = page.url();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ result: 'connected' }) });
+  });
+  await page.goto('/tiktok/callback?code=synthetic-code&state=synthetic-state&scopes=user.info.basic');
+  await expect(page).toHaveURL(/\/canais\?tiktok=connected$/);
+  await expect(page.getByText('Canal conectado ao TikTok.')).toBeVisible();
+  expect(posted).toEqual({ code: 'synthetic-code', state: 'synthetic-state', error: null, scopes: 'user.info.basic' });
+  expect(page.url()).not.toContain('synthetic-code');
+  expect(page.url()).not.toContain('synthetic-state');
+  expect(addressBarAtPost).not.toContain('synthetic-code');
+  expect(addressBarAtPost).not.toContain('synthetic-state');
+});
+
+test('callback OAuth sem parâmetros mostra resultado controlado em Canais', async ({ page }) => {
+  await login(page);
+  await page.goto('/tiktok/callback');
+  await expect(page).toHaveURL(/\/canais\?tiktok=invalid_state$/);
+  await expect(page.getByText('O link de autorização expirou ou já foi usado. Inicie a conexão novamente.')).toBeVisible();
+});
+
 test('Shop: rota direta e endpoints recusam acesso sem chamar integrações', async ({ page }) => {
   await page.goto('/shop', { waitUntil: 'domcontentloaded' });
   await expect(page).toHaveURL(/\/$/);

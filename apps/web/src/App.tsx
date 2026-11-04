@@ -14,6 +14,7 @@ import {
 } from "./pages/AuthPages";
 import Loading from "./components/loading";
 import LandingPage from "./pages/LandingPage";
+import TikTokOAuthCallbackPage from "./pages/TikTokOAuthCallbackPage";
 
 const AuditPage = lazy(() => import("./pages/AuditPage"));
 const ClientApprovalPage = lazy(() => import("./pages/ClientApprovalPage"));
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/cadastro" element={<SignupPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/tiktok/callback" element={<TikTokOAuthCallbackPage />} />
         <Route path="/aprovar/:token" element={<ClientApprovalPage />} />
 
         <Route

@@ -2,10 +2,16 @@
 // a segurança vem do `state` de uso único, criado por create_oauth_state e consumido aqui.
 import { handleCallback } from '../_shared/handlers.ts';
 import { buildContext, log } from '../_shared/runtime.ts';
+import { corsHeaders, json, parseOrigins } from '../_shared/http.ts';
+import { envOptional } from '../_shared/env.ts';
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
 
 Deno.serve(async (req) => {
+  const origins = parseOrigins(envOptional('WEB_URL'));
+  const headers = corsHeaders(req.headers.get('origin'), origins);
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+
   try {
     const c = await buildContext();
     const rpc = async (fn: string, args: Record<string, unknown>) => {
@@ -16,6 +22,7 @@ Deno.serve(async (req) => {
 
     return await handleCallback(req, {
       webUrl: c.webUrl,
+      origins,
       log,
       oauth: {
         tiktok: c.tiktok,
@@ -30,7 +37,10 @@ Deno.serve(async (req) => {
             channel_id: string;
             required_scopes: string[];
           } | null,
-        getChannel: (id) => c.db.getChannel(id),
+        getChannel: async (id, workspaceId) => {
+          const channel = await c.db.getChannel(id);
+          return channel?.workspace_id === workspaceId ? channel : null;
+        },
         saveConnection: async (a) =>
           (await rpc('save_tiktok_connection', {
             p_channel: a.channelId,
@@ -44,11 +54,8 @@ Deno.serve(async (req) => {
         markChannel: (id, status, code, message) => c.db.setChannelStatus(id, status, code, message),
       },
     });
-  } catch (e) {
-    log('callback.fatal', { error: e instanceof Error ? e.message : String(e) });
-    return new Response('Não foi possível concluir a conexão. Feche esta janela e tente novamente.', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+  } catch {
+    log('callback.fatal');
+    return json({ error: 'callback_unavailable' }, 500, headers);
   }
 });
