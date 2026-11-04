@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { usePlatformOwner } from "./lib/hooks";
@@ -11,23 +12,24 @@ import {
   ResetPasswordPage,
   SignupPage,
 } from "./pages/AuthPages";
-import AuditPage from "./pages/AuditPage";
-import ClientApprovalPage from "./pages/ClientApprovalPage";
-import CalendarPage from "./pages/CalendarPage";
-import ChannelsPage from "./pages/ChannelsPage";
-import DashboardPage from "./pages/DashboardPage";
-import HistoryPage from "./pages/HistoryPage";
-import MediaPage from "./pages/MediaPage";
-import MembersPage from "./pages/MembersPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import PublicationsPage from "./pages/PublicationsPage";
-import ReportsPage from "./pages/ReportsPage";
-import SettingsPage from "./pages/SettingsPage";
-import UsersAdminPage from "./pages/UsersAdminPage";
-import TikTokShopPage from "./pages/TikTokShopPage";
-import BillingPage from "./pages/BillingPage";
 import Loading from "./components/loading";
 import LandingPage from "./pages/LandingPage";
+
+const AuditPage = lazy(() => import("./pages/AuditPage"));
+const ClientApprovalPage = lazy(() => import("./pages/ClientApprovalPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const ChannelsPage = lazy(() => import("./pages/ChannelsPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const HistoryPage = lazy(() => import("./pages/HistoryPage"));
+const MediaPage = lazy(() => import("./pages/MediaPage"));
+const MembersPage = lazy(() => import("./pages/MembersPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const PublicationsPage = lazy(() => import("./pages/PublicationsPage"));
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const UsersAdminPage = lazy(() => import("./pages/UsersAdminPage"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const BatchesPage = lazy(() => import("./pages/BatchesPage"));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -71,6 +73,7 @@ function MissingConfig() {
 export default function App() {
   return (
     <AuthProvider>
+      <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -90,10 +93,10 @@ export default function App() {
           <Route path="canais" element={<ChannelsPage />} />
           <Route path="biblioteca" element={<MediaPage />} />
           <Route path="publicacoes" element={<PublicationsPage />} />
+          <Route path="lotes" element={<BatchesPage />} />
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="historico" element={<HistoryPage />} />
           <Route path="relatorios" element={<ReportsPage />} />
-          <Route path="shop" element={<TikTokShopPage />} />
           <Route path="notificacoes" element={<NotificationsPage />} />
           <Route path="plano" element={<BillingPage />} />
           <Route
@@ -133,6 +136,7 @@ export default function App() {
         {!supabaseConfigured && <Route path="app/*" element={<MissingConfig />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </AuthProvider>
   );
 }

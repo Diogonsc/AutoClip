@@ -2,7 +2,12 @@
 -- Não chama o Storage; a exclusão física é apenas simulada e toda a transação é revertida.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(13);
+
+select ok((select not public from storage.buckets where id='media'), 'bucket de mídia permanece privado');
+select ok((select allowed_mime_types @> array['video/mp4','video/quicktime','video/webm','image/jpeg','image/png','image/webp']::text[] from storage.buckets where id='media'), 'allowlist inclui formatos de vídeo e carrossel aceitos pela biblioteca');
+select is((select cardinality(allowed_mime_types) from storage.buckets where id='media'), 6, 'allowlist do bucket não é ampliada além dos tipos aceitos');
+select is((select file_size_limit::bigint from storage.buckets where id='media'), 52428800::bigint, 'limite do bucket continua em 50 MiB');
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('88888888-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cleanup@test.dev');
@@ -22,8 +27,8 @@ update public.workspace_settings
 
 insert into public.channels (id, workspace_id, display_name)
 select channel_id, workspace_id, 'Canal de retenção' from cleanup_ctx;
-insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status, created_by)
-select media_id, workspace_id, 'ficticio.mp4', workspace_id::text || '/' || media_id::text || '/original.mp4', 'video/mp4', 1024, 'READY', owner_id from cleanup_ctx;
+insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status, created_by, validation_status, checksum_sha256, detected_mime_type, detected_video_codec, validated_at, validator_version)
+select media_id, workspace_id, 'ficticio.mp4', workspace_id::text || '/' || media_id::text || '/original.mp4', 'video/mp4', 1024, 'READY', owner_id, 'VALIDATED', repeat('a',64), 'video/mp4', 'h264', now(), 'fixture' from cleanup_ctx;
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, created_by, status, scheduled_at, music_rights_confirmed)
 select published_job_id, workspace_id, channel_id, media_id, owner_id, 'PUBLISHED', now() - interval '2 days', true from cleanup_ctx;
 
@@ -36,16 +41,17 @@ set local session_replication_role = origin;
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, created_by, status, scheduled_at, music_rights_confirmed)
 select unknown_job_id, workspace_id, channel_id, media_id, owner_id, 'UNKNOWN', now() - interval '1 day', true from cleanup_ctx;
 
-select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx))), 0::bigint,
+select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx)) where media_asset_id = (select media_id from cleanup_ctx)), 0::bigint,
   'UNKNOWN impede a limpeza da mídia compartilhada');
 
 delete from public.publication_jobs where id = (select unknown_job_id from cleanup_ctx);
 
-select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx))), 1::bigint,
+select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx)) where media_asset_id = (select media_id from cleanup_ctx)), 1::bigint,
   'mídia publicada há mais do que o grace period fica elegível');
 select ok((select cleanup_lock_token = lock_id from public.media_assets join cleanup_ctx on media_assets.id = cleanup_ctx.media_id),
   'claim aplica lock exclusivo na mídia');
 
+select set_config('request.jwt.claims','{"role":"service_role"}',true);
 select ok(public.complete_media_cleanup((select media_id from cleanup_ctx), (select lock_id from cleanup_ctx), false, true, null),
   'dry-run finaliza sem apagar o objeto');
 select is((select status::text from public.media_assets where id = (select media_id from cleanup_ctx)), 'READY',
@@ -54,7 +60,7 @@ select is((select count(*) from public.media_cleanup_audit where media_asset_id 
   'dry-run registra auditoria');
 
 update cleanup_ctx set lock_id = gen_random_uuid();
-select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx))), 1::bigint,
+select is((select count(*) from public.claim_media_cleanup_candidates(10, (select lock_id from cleanup_ctx)) where media_asset_id = (select media_id from cleanup_ctx)), 1::bigint,
   'asset pode ser reivindicado novamente após dry-run');
 select ok(public.complete_media_cleanup((select media_id from cleanup_ctx), (select lock_id from cleanup_ctx), true, false, null),
   'finalização física simulada é aceita para um asset travado');

@@ -2,7 +2,7 @@
 -- Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(45);
 
 -- ---------------------------------------------------------------------
 -- Setup (como postgres)
@@ -32,9 +32,9 @@ select '10000000-0000-0000-0000-00000000000a'::uuid, wa, 'Canal A' from ctx
 union all
 select '10000000-0000-0000-0000-00000000000b'::uuid, wa, 'Canal B' from ctx;
 
-insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status)
+insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status, validation_status, checksum_sha256, detected_mime_type, detected_video_codec, validated_at, validator_version)
 select '20000000-0000-0000-0000-000000000001', wa, 'a.mp4',
-       wa::text || '/20000000-0000-0000-0000-000000000001/original.mp4', 'video/mp4', 1000, 'READY'
+       wa::text || '/20000000-0000-0000-0000-000000000001/original.mp4', 'video/mp4', 1000, 'READY', 'VALIDATED', repeat('a',64), 'video/mp4', 'h264', now(), 'fixture'
 from ctx;
 
 insert into public.publication_jobs (id, workspace_id, channel_id, media_asset_id, status, scheduled_at, music_rights_confirmed, created_by)
@@ -242,18 +242,25 @@ select set_config('request.jwt.claims',
   '{"sub":"cccccccc-0000-0000-0000-000000000003","role":"authenticated"}', true);
 
 select throws_ok(
-  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED')$q$,
+  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED', '02000000-0000-0000-0000-000000000001')$q$,
   '42501', null, 'VIEWER não resolve job UNKNOWN');
 
 select set_config('request.jwt.claims',
   '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
 
 select lives_ok(
-  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED')$q$,
-  'EDITOR+ resolve como NOT_PUBLISHED');
+  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED', '02000000-0000-0000-0000-000000000001')$q$,
+  'OWNER/ADMIN resolve como NOT_PUBLISHED');
+
+select lives_ok(
+  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED', '02000000-0000-0000-0000-000000000001')$q$,
+  'replay com o mesmo request_id e payload é idempotente');
+
+select is((select count(*) from public.publication_events where publication_job_id = '30000000-0000-0000-0000-000000000003' and event_type = 'MANUAL_RESOLUTION'),
+  1::bigint, 'replay não duplica o evento de auditoria');
 
 select throws_ok(
-  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED')$q$,
+  $q$select public.resolve_unknown_job('30000000-0000-0000-0000-000000000003', 'NOT_PUBLISHED', '02000000-0000-0000-0000-000000000002')$q$,
   '22023', null, 'só resolve job que está UNKNOWN');
 
 reset role;

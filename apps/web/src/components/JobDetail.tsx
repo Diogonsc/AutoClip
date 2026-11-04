@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import { supabase } from "../lib/supabase";
 import { unwrap } from "../lib/api";
@@ -32,22 +33,32 @@ export default function JobDetail({
   onClose: () => void;
 }) {
   const ws = useCurrentWorkspace();
-  const { canEdit } = useWorkspace();
+  const { canAdmin } = useWorkspace();
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const resolutionRequestIds = useRef(new Map<"PUBLISHED" | "NOT_PUBLISHED", string>());
   const resolve = useMutation({
-    mutationFn: async (outcome: "PUBLISHED" | "NOT_PUBLISHED") =>
+    mutationFn: async (input: { outcome: "PUBLISHED" | "NOT_PUBLISHED"; requestId: string }) =>
       unwrap(
         await supabase.rpc("resolve_unknown_job", {
           p_job: job.id,
-          p_outcome: outcome,
+          p_outcome: input.outcome,
+          p_request_id: input.requestId,
         }),
       ),
     onSuccess: async () => {
+      resolutionRequestIds.current.clear();
       await qc.invalidateQueries({ queryKey: ["jobs", ws.id] });
       onClose();
     },
   });
+  const getResolutionRequestId = (outcome: "PUBLISHED" | "NOT_PUBLISHED") => {
+    const existing = resolutionRequestIds.current.get(outcome);
+    if (existing) return existing;
+    const requestId = crypto.randomUUID();
+    resolutionRequestIds.current.set(outcome, requestId);
+    return requestId;
+  };
 
   const events = useQuery({
     queryKey: ["job-events", job.id],
@@ -117,7 +128,7 @@ export default function JobDetail({
             reenviada automaticamente, para evitar duplicidade; é preciso
             conferir o estado no TikTok antes de agir.
           </p>
-          {canEdit && (
+          {canAdmin && (
             <>
               <p className="mt-2 mb-2">
                 Depois de conferir no TikTok, informe o que aconteceu:
@@ -135,7 +146,10 @@ export default function JobDetail({
                         confirmLabel: "Sim, foi publicado",
                       })
                     )
-                      resolve.mutate("PUBLISHED");
+                      resolve.mutate({
+                        outcome: "PUBLISHED",
+                        requestId: getResolutionRequestId("PUBLISHED"),
+                      });
                   }}
                 >
                   O vídeo foi publicado
@@ -153,7 +167,10 @@ export default function JobDetail({
                         destructive: true,
                       })
                     )
-                      resolve.mutate("NOT_PUBLISHED");
+                      resolve.mutate({
+                        outcome: "NOT_PUBLISHED",
+                        requestId: getResolutionRequestId("NOT_PUBLISHED"),
+                      });
                   }}
                 >
                   Não foi publicado — reenviar

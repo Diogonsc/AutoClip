@@ -95,6 +95,10 @@ export class FakeDb implements Db {
             id: 'media-1',
             workspace_id: 'ws-1',
             status: 'READY',
+            validation_status: 'VALIDATED',
+            detected_mime_type: p.media?.mime_type ?? 'video/mp4',
+            detected_video_codec: (p.media?.mime_type ?? 'video/mp4') === 'video/mp4' ? 'h264' : null,
+            checksum_sha256: '5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef',
             storage_key: 'ws-1/media-1/original.mp4',
             mime_type: 'video/mp4',
             file_size_bytes: 1024,
@@ -247,6 +251,7 @@ export function mkDeps(
       tokenCalls.push(o?.force ? 'force' : 'normal');
       return Promise.resolve('tok');
     },
+    shopEnabled: false,
     now: () => clock.now(),
     sleep: () => Promise.resolve(),
     log: () => undefined,

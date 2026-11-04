@@ -43,6 +43,7 @@ export interface Job {
   shop_product_id?: string | null;
   shop_anchor_title?: string | null;
   shop_is_ai_generated?: boolean;
+  shop_video_id?: string | null;
   attempt_count: number;
   max_attempts: number;
 }
@@ -75,6 +76,8 @@ export interface Connection {
   access_token_expires_at: string | null;
   refresh_token_expires_at: string | null;
   granted_scopes: string[];
+  refresh_state: 'READY' | 'IN_FLIGHT' | 'REAUTH_REQUIRED';
+  token_version: number;
 }
 
 export interface Media {
@@ -87,6 +90,12 @@ export interface Media {
   duration_seconds: number | null;
   width?: number | null;
   height?: number | null;
+  validation_status: 'PENDING' | 'VALIDATING' | 'VALIDATED' | 'REJECTED' | 'UNVERIFIED';
+  checksum_sha256: string | null;
+  detected_mime_type?: string | null;
+  detected_video_codec?: string | null;
+  validated_at?: string | null;
+  validator_version?: string | null;
 }
 
 export interface Settings {

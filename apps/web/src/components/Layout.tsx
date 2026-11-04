@@ -16,7 +16,6 @@ import {
   FileText,
   Send,
   Settings,
-  ShoppingBag,
   CreditCard,
   Users,
 } from "lucide-react";
@@ -53,10 +52,10 @@ const USER_GROUPS: NavGroup[] = [
     label: "Publicação",
     items: [
       { to: "/publicacoes", label: "Publicações", icon: Send },
+      { to: "/lotes", label: "Lotes", icon: Clapperboard },
       { to: "/calendario", label: "Agendamentos", icon: CalendarDays },
       { to: "/historico", label: "Histórico e logs", icon: History },
       { to: "/relatorios", label: "Relatório semanal", icon: FileText },
-      { to: "/shop", label: "TikTok Shop e afiliados", icon: ShoppingBag },
       { to: "/notificacoes", label: "Notificações", icon: Bell },
       { to: "/plano", label: "Plano e consumo", icon: CreditCard },
     ],

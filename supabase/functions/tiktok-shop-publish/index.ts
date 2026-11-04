@@ -1,9 +1,12 @@
 // Pipeline interno de Shoppable Video: recebe um job já autorizado pelo worker,
 // envia o arquivo ao TikTok Shop e publica com a âncora do produto afiliado.
-import { decryptToken, encryptToken, importKey, timingSafeEqual } from "../_shared/crypto.ts";
+import { importKey, timingSafeEqual } from "../_shared/crypto.ts";
 import { env } from "../_shared/env.ts";
 import { json } from "../_shared/http.ts";
 import { serviceClient } from "../_shared/runtime.ts";
+import { freshShopToken } from "../_shared/tiktok-shop-tokens.ts";
+import type { SbClient } from "../_shared/supabase-db.ts";
+import { isTikTokShopEnabled, tikTokShopUnavailableResponse } from "../_shared/tiktok-shop-availability.ts";
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
 const encoder = new TextEncoder();
@@ -18,22 +21,7 @@ async function sign(path: string, params: Record<string, string>, body = "") {
 
 async function token(connection: Record<string, unknown>, connectionId: string) {
   const key = await importKey(env("TOKEN_ENCRYPTION_KEY"));
-  if (typeof connection.encrypted_access_token !== "string") throw new Error("Conexão TikTok Shop sem token.");
-  const expires = typeof connection.access_token_expires_at === "string" ? Date.parse(connection.access_token_expires_at) : 0;
-  if (expires > Date.now() + 60_000) return decryptToken(key, connection.encrypted_access_token, connectionId);
-  if (typeof connection.encrypted_refresh_token !== "string") throw new Error("Autorize novamente o TikTok Shop.");
-  const u = new URL("https://auth.tiktok-shops.com/api/v2/token/refresh");
-  u.search = new URLSearchParams({ app_key: env("TIKTOK_SHOP_APP_KEY"), app_secret: env("TIKTOK_SHOP_APP_SECRET"), refresh_token: await decryptToken(key, connection.encrypted_refresh_token, connectionId), grant_type: "refresh_token" }).toString();
-  const res = await fetch(u); const payload = await res.json().catch(() => null) as { code?: number; data?: Record<string, unknown>; message?: string } | null;
-  const data = payload?.data; const access = typeof data?.access_token === "string" ? data.access_token : "";
-  if (!res.ok || payload?.code !== 0 || !access) throw new Error(payload?.message ?? "Falha ao renovar token TikTok Shop.");
-  const { data: updated, error: updateError } = await serviceClient().from("tiktok_shop_connections")
-    .update({ encrypted_access_token: await encryptToken(key, access, connectionId), encrypted_refresh_token: typeof data?.refresh_token === "string" ? await encryptToken(key, data.refresh_token, connectionId) : connection.encrypted_refresh_token, access_token_expires_at: typeof data?.access_token_expire_in === "number" ? new Date(data.access_token_expire_in * 1000).toISOString() : null })
-    .eq("id", connectionId)
-    .select("id")
-    .maybeSingle();
-  if (updateError || !updated) throw new Error("Não foi possível salvar a renovação do token TikTok Shop.");
-  return access;
+  return freshShopToken(serviceClient() as unknown as SbClient, connection, connectionId, key, env);
 }
 
 async function request(path: string, access: string, method: "GET" | "POST", body?: string, form?: FormData) {
@@ -47,6 +35,7 @@ async function request(path: string, access: string, method: "GET" | "POST", bod
 }
 
 Deno.serve(async (req) => {
+  if (!isTikTokShopEnabled()) return tikTokShopUnavailableResponse();
   if (req.method !== "POST" || !timingSafeEqual(req.headers.get("x-worker-secret") ?? "", env("WORKER_SECRET"))) return json({ error: "unauthorized" }, 401);
   const input = await req.json().catch(() => null) as { action?: string; job_id?: string; video_id?: string } | null;
   try {
@@ -57,13 +46,16 @@ Deno.serve(async (req) => {
       if (!job?.shop_product_id || !job.shop_anchor_title) throw new Error("Publicação sem produto afiliado.");
       if (job.shop_video_id) return json({ video_id: job.shop_video_id });
       if (job.shop_publish_started_at) return json({ error: "shop_publish_reconciliation_required" }, 409);
-      const { data: media, error: mediaError } = await sb.from("media_assets").select("id,workspace_id,storage_key,status,mime_type,file_size_bytes").eq("id", job.media_asset_id).eq("workspace_id", job.workspace_id).maybeSingle();
-      if (mediaError || !media || media.status !== "READY" || !media.storage_key) throw new Error("Mídia autorizada não está disponível para esta publicação.");
+      const { data: media, error: mediaError } = await sb.from("media_assets").select("id,workspace_id,storage_key,status,mime_type,file_size_bytes,validation_status,checksum_sha256").eq("id", job.media_asset_id).eq("workspace_id", job.workspace_id).maybeSingle();
+      if (mediaError || !media || media.status !== "READY" || media.validation_status !== "VALIDATED" || !media.checksum_sha256 || !media.storage_key) throw new Error("Mídia autorizada não está validada para esta publicação.");
       const { data: product, error: productError } = await sb.from("tiktok_shop_products").select("external_product_id,connection_id,workspace_id").eq("id", job.shop_product_id).eq("workspace_id", job.workspace_id).maybeSingle();
       const { data: connection, error: connectionError } = product ? await sb.from("tiktok_shop_connections").select("*").eq("id", product.connection_id).eq("workspace_id", job.workspace_id).eq("channel_id", job.channel_id).eq("connection_status", "CONNECTED").maybeSingle() : { data: null, error: null };
       if (productError || connectionError || !product || !connection) throw new Error("Produto ou conexão TikTok Shop indisponível para este workspace e canal.");
       const { data: file, error: downloadError } = await sb.storage.from("media").download(media.storage_key);
       if (downloadError || !file) throw new Error("Vídeo autorizado não encontrado no armazenamento.");
+      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
+      const fileHash = [...digest].map((v) => v.toString(16).padStart(2, "0")).join("");
+      if (fileHash !== media.checksum_sha256 || file.size !== media.file_size_bytes) throw new Error("Mídia alterada desde a validação; publicação bloqueada.");
       if (file.size > 10 * 1024 * 1024) throw new Error("Vídeos Shop acima de 10 MB exigem upload multipart; reduza o arquivo antes de publicar.");
       const access = await token(connection, connection.id);
       const form = new FormData(); form.append("data", file, "video.mp4");

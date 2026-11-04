@@ -5,6 +5,7 @@ import { handleWorker } from '../_shared/handlers.ts';
 import { signMediaToken } from '../_shared/media-token.ts';
 import { buildContext, log } from '../_shared/runtime.ts';
 import { ShopPublishReconciliationError } from '../_shared/worker.ts';
+import { isTikTokShopEnabled } from '../_shared/tiktok-shop-availability.ts';
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
 declare const EdgeRuntime: { waitUntil(work: Promise<unknown>): void } | undefined;
@@ -22,6 +23,7 @@ Deno.serve(async (req) => {
         db: c.db,
         tiktok: c.tiktok,
         ensureToken: c.ensureToken,
+        shopEnabled: isTikTokShopEnabled(),
         shop: {
           async publish(job) {
             const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/tiktok-shop-publish`, {

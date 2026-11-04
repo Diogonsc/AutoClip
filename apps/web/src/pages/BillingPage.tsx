@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
+import { useAuth } from "../auth/AuthProvider";
 import { ErrorBox, Notice, PageHeader } from "../components/ui";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { toError, unwrap } from "../lib/api";
-import { useBillingPlans, useSaasOverview } from "../lib/hooks";
+import { useBillingPlans, usePlatformOwner, useSaasOverview } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import Loading from "@/components/loading";
 
@@ -13,9 +14,11 @@ const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL
 export default function BillingPage() {
   const ws = useCurrentWorkspace();
   const { canAdmin } = useWorkspace();
+  const { user } = useAuth();
   const query = useQueryClient();
   const plans = useBillingPlans();
   const overview = useSaasOverview(ws.id);
+  const platformOwner = usePlatformOwner(user?.id);
   const change = useMutation({
     mutationFn: async (plan: string) => {
       const { error } = await supabase.rpc("change_workspace_plan", { p_workspace: ws.id, p_plan: plan });
@@ -38,7 +41,7 @@ export default function BillingPage() {
   return (
     <>
       <PageHeader title="Plano e consumo" subtitle="Limites aplicados por workspace; cobrança real ainda não está ativada." />
-      <ErrorBox error={plans.error ?? overview.error ?? change.error ?? cancel.error} />
+      <ErrorBox error={plans.error ?? overview.error ?? platformOwner.error ?? change.error ?? cancel.error} />
       {overview.data && (
         <Notice tone="info">
           Plano atual: <strong>{overview.data.plan_name}</strong>. {overview.data.consumed_publications} confirmadas e {overview.data.reserved_publications} reservadas de {overview.data.publication_limit} neste ciclo. Renovação em {new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(new Date(overview.data.period_ends_at))}.
@@ -56,7 +59,7 @@ export default function BillingPage() {
               <CardContent className="grid gap-3 text-sm">
                 <span>{plan.max_connected_accounts} contas TikTok conectadas</span>
                 <span>{plan.monthly_publication_limit.toLocaleString("pt-BR")} publicações por ciclo</span>
-                {canAdmin && !current && <Button disabled={change.isPending} onClick={() => change.mutate(plan.id)}>Selecionar para teste</Button>}
+                {platformOwner.data === true && !current && <Button disabled={change.isPending} onClick={() => change.mutate(plan.id)}>Alterar plano manualmente</Button>}
               </CardContent>
             </Card>
           );

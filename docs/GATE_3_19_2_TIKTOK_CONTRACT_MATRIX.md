@@ -1,0 +1,18 @@
+# Gate 3.19.2 — Matriz de contrato TikTok
+
+Verificação em 2026-11-02, leitura pública, sem autenticação nem chamadas de API.
+
+| Produto | Requisito | Fonte oficial | Evidência | Código local | Compatibilidade/ação |
+|---|---|---|---|---|---|
+| Login Kit / Content Posting | Endpoint e método de token | [Get a User Access Token](https://developers.tiktok.com/docs/en/oauth-get-a-user-access-token) | POST `https://open.tiktokapis.com/v2/oauth/token/`, form-urlencoded | `supabase/functions/_shared/tiktok.ts` usa endpoint OAuth Open API e POST form | CONFIRMADO compatível no fluxo inspecionado. |
+| Login Kit | access token expira em 2h; refresh token em 180d | Mesma página | Página atual informa `expires_in`, `refresh_expires_in`, 2h e 180d | Parser usa `expires_in`, `refresh_expires_in` | CONFIRMADO nessa página atual; a data específica 2026-12-01 não foi confirmada. |
+| Login Kit | refresh bem-sucedido retorna refresh novo e invalida o anterior | Mesma página | Página atual afirma rotação/invalidação imediata | `ensureAccessToken` exige novo refresh e grava via CAS | CONFIRMADO nessa página, cenário de resposta perdida permanece não recuperável automaticamente. |
+| Login Kit | Contrato de gerenciamento | [User Access Token Management](https://developers.tiktok.com/docs/en/oauth-user-access-token-management?enter_method=left_navigation) | Página oficial ainda mostra valores antigos 24h/365d e formulação de rotação diferente | Implementação segue página atual do endpoint de token | DIVERGENTE entre páginas oficiais; confirmar versão/conta do app antes de staging. |
+| Login Kit | erros OAuth | [OAuth Error Handling](https://developers.tiktok.com/docs/en/oauth-error-handling?enter_method=left_navigation) | `invalid_grant` agrega causas; não fornece recuperação segura de token antigo em todo caso | Código trata resultado pós-envio como ambíguo e pede reautorização | Compatível conservadoramente; não fazer retry automático. |
+| TikTok Shop Creator | Endpoints de autorização/refresh | [TikTok Shop Partner Center — Creator authorization guide](https://partner.tiktokshop.com/docv2/page/678e3a362dccb8030ea6f98c) | Página pública apresenta fluxo Creator próprio, distinto do token de Seller; GET em `auth.tiktok-shops.com/api/v2/token/get` e `/refresh` | Callback e `tiktok-shop-tokens.ts` usam esse domínio/família de endpoint | CONFIRMADO apenas quanto à família de endpoint no trecho público; acesso integral ao guia é limitado por JS. |
+| TikTok Shop Creator | Campos de expiração, rotação, retries, revogação | Mesmo guia | Não foi possível confirmar integralmente resposta/semântica/timeout | Código espera `access_token_expire_in`, `refresh_token_expire_in` e refresh rotacionado | NÃO CONFIRMADO; blocker obrigatório antes de staging. |
+| TikTok Shop | App secret/refresh token em query | Mesmo endpoint público | Guia de Creator indica parâmetros query; transporte pode aparecer em logs de URL | `tiktok-shop-tokens.ts` constrói URL com app_secret e refresh_token | Risco de exposição em logs de proxy/telemetria; validar cadeia de logs e confirmar se endpoint aceita POST/body antes de alterar. |
+
+## Fontes consultadas e limites
+
+As páginas Login Kit acessíveis são fontes oficiais e apresentam inconsistência entre documentação atual do endpoint e página de gerenciamento. A mudança anunciada para 1º de dezembro de 2026 não foi localizada como data efetiva explícita, portanto é requisito informado, não fato independentemente confirmado. O Partner Center usa renderização dinâmica; a matriz não infere campos que não foram observados. Não houve teste autenticado com TikTok.

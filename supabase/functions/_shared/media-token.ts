@@ -1,5 +1,7 @@
 // Token curto e assinado (HMAC-SHA256) para o proxy de mídia: o TikTok precisa buscar as imagens
 // (PULL_FROM_URL) em um domínio verificado, e o Storage privado do Supabase não está nele.
+import { copyToArrayBuffer } from './bytes.ts';
+
 const enc = new TextEncoder();
 
 function b64url(bytes: Uint8Array): string {
@@ -43,7 +45,12 @@ export async function verifyMediaToken(secret: string, token: string, nowMs: num
   if (!payload || !sig || extra !== undefined) return { ok: false, reason: 'malformed' };
   let valid = false;
   try {
-    valid = await crypto.subtle.verify('HMAC', await hmacKey(secret, 'verify'), fromB64url(sig), enc.encode(payload));
+    valid = await crypto.subtle.verify(
+      'HMAC',
+      await hmacKey(secret, 'verify'),
+      copyToArrayBuffer(fromB64url(sig)),
+      enc.encode(payload),
+    );
   } catch {
     return { ok: false, reason: 'malformed' };
   }

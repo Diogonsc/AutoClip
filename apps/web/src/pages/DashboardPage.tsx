@@ -84,6 +84,9 @@ export default function DashboardPage() {
   const problemChannels = ch.filter((c) =>
     PROBLEM_CHANNEL_STATUSES.includes(c.connection_status),
   );
+  const reauthChannels = ch.filter((c) =>
+    c.connection_status === "REAUTH_REQUIRED" || c.connection_status === "REVOKED",
+  ).length;
   const scheduled = jb.filter(
     (j) => j.status === "SCHEDULED" || j.status === "READY",
   ).length;
@@ -91,6 +94,9 @@ export default function DashboardPage() {
   const failed = jb.filter((j) => j.status === "FAILED").length;
   const blocked = jb.filter((j) => BLOCKED_STATUSES.includes(j.status)).length;
   const unknown = jb.filter((j) => j.status === "UNKNOWN").length;
+  const awaitingTikTok = jb.filter(
+    (j) => j.status === "SENT_TO_INBOX" || j.status === "UNKNOWN",
+  ).length;
   const now = Date.now();
   const upcoming = jb
     .filter(
@@ -111,6 +117,7 @@ export default function DashboardPage() {
   const stats: { n: number; l: string; tone: Tone }[] = [
     { n: ch.length, l: "Canais cadastrados", tone: "neutral" },
     { n: connected, l: "Canais conectados", tone: "success" },
+    { n: reauthChannels, l: "Reconexão necessária", tone: reauthChannels ? "warning" : "neutral" },
     {
       n: problemChannels.length,
       l: "Canais com problema",
@@ -119,6 +126,7 @@ export default function DashboardPage() {
     { n: scheduled, l: "Agendadas", tone: "info" },
     { n: published, l: "Publicadas", tone: "success" },
     { n: failed, l: "Com falha", tone: failed ? "danger" : "neutral" },
+    { n: awaitingTikTok, l: "Aguardando ação TikTok", tone: awaitingTikTok ? "warning" : "neutral" },
     { n: blocked, l: "Bloqueadas", tone: blocked ? "warning" : "neutral" },
     {
       n: unknown,

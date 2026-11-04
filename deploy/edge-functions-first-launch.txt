@@ -1,0 +1,11 @@
+# First-launch Supabase Edge Function allowlist. One function per line.
+# TikTok Shop functions are deliberately excluded.
+admin-users
+client-approval
+media-cleanup
+media-serve
+media-validate
+publication-worker
+tiktok-channel
+tiktok-oauth-callback
+video-worker-api
