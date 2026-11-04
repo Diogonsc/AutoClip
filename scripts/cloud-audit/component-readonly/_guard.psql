@@ -1,0 +1,57 @@
+\set ON_ERROR_STOP on
+\if :{?component_local_test}
+\else
+  \set component_local_test false
+\endif
+
+\if :component_local_test
+  SELECT (current_database() ~ '^autoclip_component_audit_test_[a-f0-9]{8}$'
+      AND inet_server_addr() IS NULL
+      AND current_user='supabase_admin' AND session_user='supabase_admin'
+      AND current_setting('application_name')='autoclip_component_audit_test') AS component_guard_ok
+  \gset
+  \if :component_guard_ok
+  \else
+    \echo 'ABORT: local audit test requires isolated database, Unix socket, and test application_name.'
+    SELECT 1/0;
+  \endif
+\else
+  \if :{?component_cloud_approved}
+  \else
+    \echo 'ABORT: explicit component_cloud_approved=true is required.'
+    SELECT 1/0;
+  \endif
+  \if :component_cloud_approved
+  \else
+    \echo 'ABORT: Cloud audit approval is false.'
+    SELECT 1/0;
+  \endif
+  \if :{?cloud_project_ref}
+  \else
+    \echo 'ABORT: Project Ref is required.'
+    SELECT 1/0;
+  \endif
+  \if :{?cloud_host}
+  \else
+    \echo 'ABORT: expected Direct host is required.'
+    SELECT 1/0;
+  \endif
+  \if :{?cloud_port}
+  \else
+    \echo 'ABORT: expected port is required.'
+    SELECT 1/0;
+  \endif
+  SELECT (:'cloud_project_ref'='djrwfvcxgpyknmizqumn'
+      AND :'cloud_host'='db.djrwfvcxgpyknmizqumn.supabase.co'
+      AND :'cloud_port'='5432'
+      AND current_database()='postgres'
+      AND current_user='postgres' AND session_user='postgres'
+      AND current_setting('application_name')='autoclip_component_audit'
+      AND EXISTS(SELECT 1 FROM pg_catalog.pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)) AS component_guard_ok
+  \gset
+  \if :component_guard_ok
+  \else
+    \echo 'ABORT: session identity, target declaration, database, application_name, or TLS-active check failed.'
+    SELECT 1/0;
+  \endif
+\endif

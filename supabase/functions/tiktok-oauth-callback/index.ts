@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
             p_access_exp: a.accessExp.toISOString(),
             p_refresh_exp: a.refreshExp ? a.refreshExp.toISOString() : null,
           })) as 'ok' | 'duplicate',
-        markChannel: (id, status, code, message) => c.store.setChannelStatus(id, status, code, message),
+        markChannel: (id, status, code, message) => c.db.setChannelStatus(id, status, code, message),
       },
     });
   } catch (e) {

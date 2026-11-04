@@ -7,7 +7,7 @@ export const REQUIRED_SCOPE: Record<PublishMode, string> = {
   DIRECT: 'video.publish',
 };
 
-export const ALLOWED_MIME = ['video/mp4', 'video/quicktime', 'video/webm'];
+export const ALLOWED_MIME = ['video/mp4'];
 
 /** Tempo máximo aguardando o TikTok concluir o processamento antes de declarar UNKNOWN. */
 export const MAX_REMOTE_WAIT_MS = 2 * 60 * 60 * 1000;
@@ -88,7 +88,8 @@ export function validateDirect(job: Job, media: Media, info: CreatorInfo): Direc
       message: `Privacidade "${job.privacy_level}" não está entre as opções atuais do criador.`,
     };
   }
-  if (job.allow_comment === null || job.allow_duet === null || job.allow_stitch === null) {
+  const isVideo = (job.post_type ?? 'VIDEO') === 'VIDEO';
+  if (job.allow_comment === null || (isVideo && (job.allow_duet === null || job.allow_stitch === null))) {
     return {
       ok: false,
       status: 'BLOCKED_PERMISSION',
@@ -112,8 +113,9 @@ export function validateDirect(job: Job, media: Media, info: CreatorInfo): Direc
       privacy_level: job.privacy_level,
       // Configurações já desativadas pelo criador prevalecem sobre a escolha do job.
       disable_comment: !job.allow_comment || info.comment_disabled,
-      disable_duet: !job.allow_duet || info.duet_disabled,
-      disable_stitch: !job.allow_stitch || info.stitch_disabled,
+      // A publicação de fotos não aceita opções de duet/stitch; o payload PHOTO as omite.
+      disable_duet: isVideo ? !job.allow_duet || info.duet_disabled : true,
+      disable_stitch: isVideo ? !job.allow_stitch || info.stitch_disabled : true,
       brand_content_toggle: job.brand_content,
       brand_organic_toggle: job.brand_organic,
     },

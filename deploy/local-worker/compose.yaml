@@ -1,0 +1,97 @@
+name: autoclip-local-worker
+
+services:
+  validator:
+    image: autoclip-video-validator:3.6.1
+    build:
+      context: ../../scripts/video-validator
+      dockerfile: Dockerfile
+    entrypoint: ["node", "/opt/validator/server.mjs"]
+    environment:
+      VIDEO_VALIDATOR_TOKEN_FILE: /run/secrets/video_validator_token
+      VIDEO_VALIDATION_ATTESTATION_KEY_FILE: /run/secrets/video_validation_attestation_key
+      VIDEO_VALIDATOR_PORT: "9782"
+    secrets: [video_validator_token, video_validation_attestation_key]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=96m,mode=1777
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 1.0
+    pids_limit: 48
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    networks: [validation]
+    restart: unless-stopped
+    stop_grace_period: 10s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9782/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging: &rotation
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  worker:
+    image: autoclip-video-worker:3.6.1
+    build:
+      context: ../..
+      dockerfile: deploy/local-worker/Dockerfile
+    environment:
+      VIDEO_WORKER_API_URL: ${VIDEO_WORKER_API_URL:?Defina a URL local da Edge Function video-worker-api}
+      VIDEO_WORKER_API_SECRET_FILE: /run/secrets/video_worker_api_secret
+      VIDEO_VALIDATOR_URL: http://validator:9782
+      VIDEO_VALIDATOR_TOKEN_FILE: /run/secrets/video_validator_token
+      VIDEO_WORKER_ALLOW_CLOUD: ${VIDEO_WORKER_ALLOW_CLOUD:-false}
+      VIDEO_WORKER_CONCURRENCY: "1"
+      VIDEO_WORKER_POLL_MS: "5000"
+      WORKER_INSTANCE_ID: ${WORKER_INSTANCE_ID:?Execute install.sh para gerar WORKER_INSTANCE_ID}
+      WORKER_VERSION: 3.6.1
+      WORKER_HEALTH_PORT: "9781"
+      NODE_OPTIONS: --max-old-space-size=768
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=128m,mode=1777
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 2.0
+    pids_limit: 64
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    secrets: [video_worker_api_secret, video_validator_token]
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks: [egress, validation]
+    ports:
+      - 127.0.0.1:${WORKER_HEALTH_HOST_PORT:-9781}:9781
+    depends_on:
+      validator:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 150s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9781/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    logging: *rotation
+
+networks:
+  egress:
+  validation:
+    internal: true
+
+secrets:
+  video_worker_api_secret:
+    file: ${VIDEO_WORKER_API_SECRET_FILE:?Defina o arquivo local da credencial específica do worker}
+  video_validator_token:
+    file: ${VIDEO_VALIDATOR_TOKEN_FILE:?Defina o arquivo local do token do validador no .env}
+  video_validation_attestation_key:
+    file: ${VIDEO_VALIDATION_ATTESTATION_KEY_FILE:?Defina o arquivo local da chave de atestação do validador}

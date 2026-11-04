@@ -29,6 +29,35 @@ export function zonedToUtc(local: string, tz: string): Date {
   return new Date(utc);
 }
 
+export type LocalDateTimeResolution = {
+  kind: "valid" | "ambiguous" | "nonexistent" | "invalid";
+  candidates: Date[];
+};
+
+/** Identifica horário local normal, repetido ou inexistente sem escolher silenciosamente um offset. */
+export function resolveLocalDateTime(local: string, tz: string): LocalDateTimeResolution {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
+  if (!match) return { kind: "invalid", candidates: [] };
+  const [, ys, ms, ds, hs, mins] = match;
+  const [y, m, d, h, minute] = [ys, ms, ds, hs, mins].map(Number);
+  const wall = Date.UTC(y, m - 1, d, h, minute);
+  const verify = new Date(wall);
+  if (verify.getUTCFullYear() !== y || verify.getUTCMonth() !== m - 1 || verify.getUTCDate() !== d || h > 23 || minute > 59) return { kind: "invalid", candidates: [] };
+  try {
+    const offsets = new Set<number>();
+    // Amostra os offsets ao redor da data para capturar os dois lados de uma transição DST.
+    for (let delta = -48; delta <= 48; delta += 6) offsets.add(tzOffsetMs(wall + delta * 3_600_000, tz));
+    const candidates = [...offsets]
+      .map((offset) => new Date(wall - offset))
+      .filter((candidate) => utcToZonedInput(candidate.toISOString(), tz) === local)
+      .sort((a, b) => a.getTime() - b.getTime());
+    if (candidates.length === 0) return { kind: "nonexistent", candidates: [] };
+    return { kind: candidates.length > 1 ? "ambiguous" : "valid", candidates };
+  } catch {
+    return { kind: "invalid", candidates: [] };
+  }
+}
+
 /** Converte um instante ISO para o formato de <input type="datetime-local"> no fuso `tz`. */
 export function utcToZonedInput(iso: string, tz: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {

@@ -25,11 +25,34 @@ test('INBOX: baixa, inicia, grava publish_id ANTES do upload e fica PROCESSING a
   });
   await processPublish(await claim(db), mkDeps(db, tk, clock));
 
-  assert.deepEqual(tk.calls, ['download', 'init', 'upload']); // INBOX não consulta creator_info
+  assert.deepEqual(tk.calls, ['download', 'download', 'init', 'upload']); // primeira leitura confere o hash; a segunda envia os bytes
   assert.equal(db.last().status, 'PROCESSING');
   assert.equal(db.last().remoteStatus, 'UPLOADED');
   assert.equal(db.job.remote_publish_id, 'pub1');
   assert.equal(tk.lastInit?.mode, 'INBOX');
+});
+
+test('bloqueia mídia sem atestado antes de chamar o TikTok', async () => {
+  const clock=mkClock(); const db=new FakeDb(clock,{media:{validation_status:'UNVERIFIED',checksum_sha256:null}}); const tk=mkTikTok();
+  await processPublish(await claim(db),mkDeps(db,tk,clock));
+  assert.equal(db.last().errorCode,'MEDIA_VALIDATION_REQUIRED');
+  assert.equal(tk.calls.includes('init'),false);
+});
+
+test('bloqueia objeto cujo hash ou tamanho mudou após a validação', async () => {
+  const clock=mkClock(); const db=new FakeDb(clock); const tk=mkTikTok(); const deps=mkDeps(db,tk,clock);
+  await processPublish(await claim(db),{...deps,storage:{...deps.storage,download:async()=>new Uint8Array(1024).fill(1)}});
+  assert.equal(db.last().errorCode,'MEDIA_INTEGRITY_MISMATCH');
+  assert.equal(tk.calls.includes('init'),false);
+  assert.equal(tk.calls.includes('upload'),false);
+});
+
+test('bloqueia vídeo sem atestado MP4/H.264 coerente antes de iniciar publicação', async () => {
+  const clock=mkClock(); const db=new FakeDb(clock,{media:{detected_video_codec:'mpeg4'}}); const tk=mkTikTok();
+  await processPublish(await claim(db),mkDeps(db,tk,clock));
+  assert.equal(db.last().errorCode,'VIDEO_VALIDATION_ATTESTATION_INVALID');
+  assert.equal(db.last().status,'FAILED');
+  assert.equal(tk.calls.includes('init'),false);
 });
 
 test('DIRECT: valida opções, aplica restrições do criador e envia post_info', async () => {
@@ -43,7 +66,7 @@ test('DIRECT: valida opções, aplica restrições do criador e envia post_info'
   });
   await processPublish(await claim(db), mkDeps(db, tk, clock));
 
-  assert.deepEqual(tk.calls.slice(0, 2), ['creator_info', 'download']);
+  assert.deepEqual(tk.calls.slice(0, 2), ['download', 'creator_info']);
   const post = (tk.lastInit as { postInfo: Record<string, unknown> }).postInfo;
   assert.equal(post.privacy_level, 'SELF_ONLY');
   assert.equal(post.disable_comment, true); // o criador desativou: prevalece sobre allow_comment=true
@@ -55,7 +78,7 @@ test('DIRECT: valida opções, aplica restrições do criador e envia post_info'
 test('DIRECT PHOTO: cria publicação de carrossel e grava publish_id antes da consulta de status', async () => {
   const clock = mkClock();
   const db = new FakeDb(clock, {
-    job: { ...DIRECT_JOB, post_type: 'PHOTO', media_asset_ids: ['media-1'] },
+    job: { ...DIRECT_JOB, post_type: 'PHOTO', media_asset_ids: ['media-1'], allow_duet: null, allow_stitch: null },
     media: { mime_type: 'image/jpeg', storage_key: 'ws-1/media-1/original.jpg', file_size_bytes: 1024, duration_seconds: null, width: 1080, height: 1350 },
     settings: { publish_mode: 'DIRECT' },
   });
@@ -73,6 +96,7 @@ test('SHOP: encaminha ao pipeline interno somente o job autorizado, nunca a stor
   const tk = mkTikTok();
   let received: unknown[] = [];
   await processPublish(await claim(db), mkDeps(db, tk, clock, {
+    shopEnabled: true,
     shop: {
       publish(job) {
         received = Array.from(arguments);
@@ -91,6 +115,7 @@ test('SHOP: publicação possivelmente concluída sem ID remoto confirmado fica 
   const db = new FakeDb(clock, { job: { shop_product_id: 'product-1', shop_anchor_title: 'Produto' } });
   const tk = mkTikTok();
   await processPublish(await claim(db), mkDeps(db, tk, clock, {
+    shopEnabled: true,
     shop: {
       publish: () => Promise.reject(new ShopPublishReconciliationError()),
       status: () => Promise.resolve({ status: 'PROCESSING' }),
@@ -99,6 +124,47 @@ test('SHOP: publicação possivelmente concluída sem ID remoto confirmado fica 
   assert.equal(db.job.status, 'UNKNOWN');
   assert.equal(db.last().errorCode, 'SHOP_PUBLISH_RECONCILIATION_REQUIRED');
   assert.equal(await db.claimPublishJob(), null);
+});
+
+test('Shop desabilitado por padrão: job agendado é bloqueado, tentativa devolvida e nenhum I/O ocorre', async () => {
+  const clock = mkClock();
+  const db = new FakeDb(clock, { job: { shop_product_id: 'product-preserved', shop_anchor_title: 'Produto' } });
+  const tk = mkTikTok();
+  const tokens: string[] = [];
+  const downloads: string[] = [];
+
+  await processPublish(await claim(db), mkDeps(db, tk, clock, { tokenCalls: tokens, downloads }));
+
+  assert.equal(db.job.status, 'BLOCKED_PERMISSION');
+  assert.equal(db.job.shop_product_id, 'product-preserved');
+  assert.equal(db.job.attempt_count, 0, 'attempt refunded; Shop job is not consumed');
+  assert.equal(db.last().errorCode, 'TIKTOK_SHOP_DISABLED');
+  assert.equal(db.last().event?.type, 'TIKTOK_SHOP_DISABLED');
+  assert.deepEqual(tokens, []);
+  assert.deepEqual(downloads, []);
+  assert.deepEqual(tk.calls, []);
+});
+
+test('Shop desabilitado: job em polling é bloqueado preservando remote ID sem status, refresh ou reenvio', async () => {
+  const clock = mkClock();
+  const db = new FakeDb(clock, { job: { status: 'PROCESSING', remote_publish_id: 'shop:remote-keep', shop_product_id: 'product-preserved' } });
+  const tk = mkTikTok();
+  const tokens: string[] = [];
+  const deps = mkDeps(db, tk, clock, {
+    tokenCalls: tokens,
+    shop: { publish: async () => { throw new Error('must not publish'); }, status: async () => { throw new Error('must not poll'); } },
+  });
+
+  const claimed = await db.claimPollingJob();
+  assert.ok(claimed);
+  await pollJob(claimed, deps);
+
+  assert.equal(db.job.status, 'BLOCKED_PERMISSION');
+  assert.equal(db.job.remote_publish_id, 'shop:remote-keep');
+  assert.equal(db.job.shop_product_id, 'product-preserved');
+  assert.equal(db.last().errorCode, 'TIKTOK_SHOP_DISABLED');
+  assert.deepEqual(tokens, []);
+  assert.deepEqual(tk.calls, []);
 });
 
 // ------------------------------------------------------------------ bloqueios (nada vai ao TikTok)

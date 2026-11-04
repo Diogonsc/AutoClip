@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Textarea } from "../components/ui/textarea";
+import { Checkbox } from "../components/ui/checkbox";
+import AccountGroupsModal from "../components/AccountGroupsModal";
 import { invokeFunction, unwrap } from "../lib/api";
 import {
   CAPTION_MAX,
@@ -38,7 +40,7 @@ import {
   normalizeHashtags,
 } from "../lib/channelDefaults";
 import { channelStatusLabel, channelTone, formatDateTime } from "../lib/format";
-import { useChannels } from "../lib/hooks";
+import { useAccountGroupMembers, useAccountGroups, useChannels } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import type { Channel } from "../lib/types";
 import Loading from "@/components/loading";
@@ -325,10 +327,17 @@ export default function ChannelsPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const channels = useChannels(ws.id);
+  const groups = useAccountGroups(ws.id);
+  const groupMembers = useAccountGroupMembers(ws.id);
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<Channel | null>(null);
   const [renaming, setRenaming] = useState<Channel | null>(null);
   const [countryFilter, setCountryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [groupFilter, setGroupFilter] = useState("");
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const result = params.get("tiktok");
 
@@ -395,6 +404,23 @@ export default function ChannelsPage() {
     onSuccess: refresh,
   });
 
+  const visibleChannels = (channels.data ?? []).filter((channel) => {
+    const needle = search.trim().toLocaleLowerCase("pt-BR");
+    return (
+      (!countryFilter || channel.country === countryFilter) &&
+      (!groupFilter || (groupMembers.data ?? []).some((member) => member.group_id === groupFilter && member.channel_id === channel.id)) &&
+      (!statusFilter || channel.connection_status === statusFilter) &&
+      (!needle ||
+        channel.display_name.toLocaleLowerCase("pt-BR").includes(needle) ||
+        (channel.provider_user_id ?? "").toLocaleLowerCase("pt-BR").includes(needle))
+    );
+  });
+
+  const toggleSelected = (id: string, checked: boolean) =>
+    setSelectedIds((current) =>
+      checked ? [...new Set([...current, id])] : current.filter((value) => value !== id),
+    );
+
   return (
     <>
       <PageHeader
@@ -451,8 +477,33 @@ export default function ChannelsPage() {
         </form>
       )}
 
+      <Toolbar>
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar por nome ou ID do TikTok…"
+          aria-label="Buscar canais"
+          className="w-full sm:w-72"
+        />
+        <SelectField
+          aria-label="Filtrar por conexão"
+          className="w-full sm:w-52"
+          value={statusFilter || ALL}
+          onValueChange={(value) => setStatusFilter(value === ALL ? "" : value)}
+          options={[
+            { value: ALL, label: "Todos os estados" },
+            ...Object.entries(channelStatusLabel).map(([value, label]) => ({ value, label })),
+          ]}
+        />
+        <SelectField
+          aria-label="Filtrar por grupo"
+          className="w-full sm:w-52"
+          value={groupFilter || ALL}
+          onValueChange={(value) => setGroupFilter(value === ALL ? "" : value)}
+          options={[{ value: ALL, label: "Todos os grupos" }, ...(groups.data ?? []).map((group) => ({ value: group.id, label: group.name }))]}
+        />
       {(channels.data ?? []).some((c) => c.country) && (
-        <Toolbar>
+        <>
           <SelectField
             aria-label="Filtrar por país"
             className="w-full sm:w-56"
@@ -469,7 +520,17 @@ export default function ChannelsPage() {
               ].map((code) => ({ value: code, label: countryName(code) })),
             ]}
           />
-        </Toolbar>
+        </>
+      )}
+      </Toolbar>
+
+      {canEdit && <div className="flex justify-end"><Button type="button" variant="outline" onClick={() => setGroupsOpen(true)}>Organizar grupos</Button></div>}
+
+      {selectedIds.length > 0 && (
+        <Notice tone="info">
+          {selectedIds.length} conta(s) selecionada(s). A seleção facilita a revisão em listas grandes; ações que alteram conexão continuam individuais para respeitar o OAuth oficial do TikTok.
+          <Button type="button" variant="outline" size="xs" className="ml-2" onClick={() => setSelectedIds([])}>Limpar seleção</Button>
+        </Notice>
       )}
 
       <ErrorBox
@@ -494,6 +555,13 @@ export default function ChannelsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    aria-label="Selecionar canais filtrados"
+                    checked={visibleChannels.length > 0 && visibleChannels.every((channel) => selectedIds.includes(channel.id))}
+                    onCheckedChange={(checked) => setSelectedIds(checked ? visibleChannels.map((channel) => channel.id) : [])}
+                  />
+                </TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Idioma / país</TableHead>
@@ -504,12 +572,15 @@ export default function ChannelsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {channels
-                .data!.filter(
-                  (c) => !countryFilter || c.country === countryFilter,
-                )
-                .map((c) => (
+              {visibleChannels.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell>
+                      <Checkbox
+                        aria-label={`Selecionar ${c.display_name}`}
+                        checked={selectedIds.includes(c.id)}
+                        onCheckedChange={(checked) => toggleSelected(c.id, checked === true)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {c.display_name}
                     </TableCell>
@@ -637,6 +708,7 @@ export default function ChannelsPage() {
           }
         />
       )}
+      {groupsOpen && <AccountGroupsModal groups={groups.data ?? []} members={groupMembers.data ?? []} channels={channels.data ?? []} selectedChannelIds={selectedIds} onClose={() => setGroupsOpen(false)} />}
     </>
   );
 }

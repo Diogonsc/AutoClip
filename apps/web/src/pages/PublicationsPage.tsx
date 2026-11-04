@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import JobDetail from "../components/JobDetail";
 import PublicationForm from "../components/PublicationForm";
+import BatchScheduler from "../components/BatchScheduler";
 import { Download, FileSpreadsheet, Send, Link2 } from "lucide-react";
 import { useConfirm } from "../components/confirm-provider";
 import { SelectField } from "../components/select-field";
@@ -88,6 +89,7 @@ export default function PublicationsPage() {
   const [filter, setFilter] = useState<"" | PublicationStatus>("");
   const [formJob, setFormJob] = useState<PublicationJob | "new" | null>(null);
   const [detail, setDetail] = useState<PublicationJob | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["jobs", ws.id] });
 
@@ -165,9 +167,10 @@ export default function PublicationsPage() {
           const channelName = value(row, "canal");
           const mediaName = value(row, "video");
           const channel = (channels.data ?? []).find((c) => c.display_name.toLocaleLowerCase("pt-BR") === channelName.toLocaleLowerCase("pt-BR"));
-          const asset = (media.data ?? []).find((m) => m.original_filename.toLocaleLowerCase("pt-BR") === mediaName.toLocaleLowerCase("pt-BR") && m.status === "READY");
+          const asset = (media.data ?? []).find((m) => m.original_filename.toLocaleLowerCase("pt-BR") === mediaName.toLocaleLowerCase("pt-BR") && m.status === "READY" && m.validation_status === "VALIDATED");
           if (!channel) throw new Error(`canal “${channelName}” não encontrado pelo nome exato`);
           if (!asset) throw new Error(`vídeo “${mediaName}” não encontrado ou não está pronto`);
+          if (!asset.mime_type.startsWith("video/")) throw new Error(`mídia “${mediaName}” não é um vídeo validado`);
           if (channel.connection_status !== "CONNECTED") throw new Error(`canal “${channelName}” não está conectado`);
           if (value(row, "legenda").length > 2200) throw new Error("legenda acima de 2200 caracteres");
           if (!bool(value(row, "direitos_audio_confirmados"), "direitos_audio_confirmados", line)) throw new Error("confirme os direitos do áudio (true) antes de agendar");
@@ -200,10 +203,28 @@ export default function PublicationsPage() {
       }
       if (issues.length) throw new Error(`Nenhuma linha foi importada. Corrija o CSV:\n${issues.slice(0, 12).join("\n")}${issues.length > 12 ? `\n… e mais ${issues.length - 12} erro(s).` : ""}`);
       if (!rowsToInsert.length) throw new Error("Nenhuma publicação válida encontrada.");
-      unwrap(await supabase.from("publication_jobs").insert(rowsToInsert));
-      setCsvMessage(`${rowsToInsert.length} publicação(ões) importada(s) e agendada(s).`);
-      await qc.invalidateQueries({ queryKey: ["jobs", ws.id] });
-    } catch (err) { setCsvError(err instanceof Error ? err.message : "Falha ao importar CSV."); }
+      // CSV e fluxo visual compartilham a mesma confirmação transacional no banco.
+      // A RPC revalida workspace, mídia, canal, duplicidade e quota antes de criar qualquer job.
+      const { data: batch, error: batchError } = await supabase.rpc("confirm_publication_batch", {
+        p_workspace: ws.id,
+        p_idempotency_key: crypto.randomUUID(),
+        p_items: rowsToInsert,
+        p_metadata: { strategy: "CSV", label: `CSV ${file.name}` },
+      });
+      if (batchError) throw batchError;
+      const count = (batch as { item_count?: number } | null)?.item_count ?? rowsToInsert.length;
+      setCsvMessage(`${count} publicação(ões) importada(s) e agendada(s).`);
+      // A RPC já confirmou de forma transacional. Uma falha ao atualizar o cache
+      // não pode transformar uma operação persistida em "importação falhou".
+      void qc.invalidateQueries({ queryKey: ["jobs", ws.id] }).catch((error: unknown) => {
+        console.error("CSV confirmado, mas a atualização do histórico falhou.", error);
+      });
+    } catch (err) {
+      const message = err && typeof err === "object" && "message" in err && typeof err.message === "string"
+        ? err.message
+        : "Falha ao importar CSV.";
+      setCsvError(message);
+    }
     finally { setCsvBusy(false); }
   }
 
@@ -217,6 +238,7 @@ export default function PublicationsPage() {
             <Button variant="outline" onClick={downloadCsvTemplate}><Download aria-hidden="true" /> Modelo CSV</Button>
             <input ref={csvInput} type="file" accept=".csv,text/csv" hidden onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void importCsv(file); }} />
             <Button variant="outline" disabled={csvBusy || channels.isLoading || media.isLoading || settings.isLoading} onClick={() => csvInput.current?.click()}><FileSpreadsheet aria-hidden="true" /> {csvBusy ? "Importando…" : "Importar CSV"}</Button>
+            <Button variant="outline" onClick={() => setBatchOpen(true)}>Agendamento em lote</Button>
             <Button onClick={() => setFormJob("new")}>Nova publicação</Button>
           </div>
         )}
@@ -406,6 +428,7 @@ export default function PublicationsPage() {
           onClose={() => setDetail(null)}
         />
       )}
+      {batchOpen && <BatchScheduler onClose={() => setBatchOpen(false)} />}
     </>
   );
 }

@@ -17,8 +17,8 @@ select w.id as workspace_id, gen_random_uuid() as channel_id, gen_random_uuid() 
 from public.workspaces w where w.owner_user_id = 'dddddddd-0000-0000-0000-000000000004';
 insert into public.channels (id, workspace_id, display_name)
 select channel_id, workspace_id, 'Canal teste' from safety_ctx;
-insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status)
-select media_id, workspace_id, 'teste.mp4', workspace_id::text || '/' || media_id::text || '/original.mp4', 'video/mp4', 1024, 'READY'
+insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status, validation_status, checksum_sha256, detected_mime_type, detected_video_codec, validated_at, validator_version)
+select media_id, workspace_id, 'teste.mp4', workspace_id::text || '/' || media_id::text || '/original.mp4', 'video/mp4', 1024, 'READY', 'VALIDATED', repeat('a',64), 'video/mp4', 'h264', now(), 'fixture'
 from safety_ctx;
 
 select throws_ok(

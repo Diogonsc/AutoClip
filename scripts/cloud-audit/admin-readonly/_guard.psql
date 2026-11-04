@@ -1,0 +1,58 @@
+\set ON_ERROR_STOP on
+\if :{?audit_local_test}
+\else
+  \set audit_local_test false
+\endif
+\if :audit_local_test
+  SELECT (current_database() ~ '^autoclip_audit_test_[a-f0-9]{8}$'
+    AND inet_server_addr() IS NULL
+    AND current_user='supabase_admin' AND session_user='supabase_admin'
+    AND current_setting('application_name')='autoclip_gate36_admin_readonly_test'
+    AND :'audit_role' ~ '^autoclip_cloud_auditor_test_[a-f0-9]{8}$') AS guard_ok
+  \gset
+  \if :guard_ok
+  \else
+    \echo 'ABORT: local test mode requires isolated local database/socket, fixture role, and test application_name.'
+    SELECT 1/0;
+  \endif
+\else
+  \if :{?cloud_admin_approved}
+  \else
+    \echo 'ABORT: cloud_admin_approved=true is required for a future owner-authorized read-only session.'
+    SELECT 1/0;
+  \endif
+  \if :cloud_admin_approved
+  \else
+    \echo 'ABORT: administrative read-only approval is false.'
+    SELECT 1/0;
+  \endif
+  \if :{?cloud_project_ref}
+  \else
+    \echo 'ABORT: cloud_project_ref is required.'
+    SELECT 1/0;
+  \endif
+  \if :{?audit_database}
+  \else
+    \echo 'ABORT: audit_database is required.'
+    SELECT 1/0;
+  \endif
+  \if :{?audit_role}
+  \else
+    \echo 'ABORT: audit_role is required.'
+    SELECT 1/0;
+  \endif
+  SELECT (:'cloud_project_ref'='djrwfvcxgpyknmizqumn'
+    AND :'audit_database'='postgres'
+    AND :'audit_role'='autoclip_cloud_auditor'
+    AND current_database()='postgres'
+    AND current_user='postgres'
+    AND session_user='postgres'
+    AND current_setting('application_name')='autoclip_gate36_admin_readonly'
+    AND EXISTS(SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)) AS guard_ok
+  \gset
+  \if :guard_ok
+  \else
+    \echo 'ABORT: session identity, database, project declaration, or encrypted transport check failed.'
+    SELECT 1/0;
+  \endif
+\endif

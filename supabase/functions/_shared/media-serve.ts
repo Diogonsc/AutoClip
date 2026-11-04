@@ -1,4 +1,5 @@
 import { verifyMediaToken } from './media-token.ts';
+import { copyToArrayBuffer } from './bytes.ts';
 
 const IMAGE_TYPES: Record<string, string> = {
   jpg: 'image/jpeg',
@@ -32,5 +33,5 @@ export async function handleMediaServe(req: Request, d: MediaServeDeps): Promise
     'Cache-Control': 'private, no-store',
     'X-Content-Type-Options': 'nosniff',
   };
-  return new Response(req.method === 'HEAD' ? null : bytes, { status: 200, headers });
+  return new Response(req.method === 'HEAD' ? null : copyToArrayBuffer(bytes), { status: 200, headers });
 }

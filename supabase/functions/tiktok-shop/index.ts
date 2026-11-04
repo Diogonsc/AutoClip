@@ -3,7 +3,9 @@
 import { env, envOptional } from "../_shared/env.ts";
 import { corsHeaders, isUuid, json, parseOrigins } from "../_shared/http.ts";
 import { rpcAsUser, serviceClient } from "../_shared/runtime.ts";
-import { decryptToken, encryptToken, importKey } from "../_shared/crypto.ts";
+import { importKey } from "../_shared/crypto.ts";
+import { freshShopToken } from "../_shared/tiktok-shop-tokens.ts";
+import { isTikTokShopEnabled, tikTokShopUnavailableResponse } from "../_shared/tiktok-shop-availability.ts";
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
 
@@ -38,33 +40,19 @@ async function shopRequest(path: string, token: string) {
 }
 
 async function freshToken(connection: Record<string, unknown>, connectionId: string) {
-  const key = await importKey(env("TOKEN_ENCRYPTION_KEY"));
-  const expiresAt = typeof connection.access_token_expires_at === "string" ? Date.parse(connection.access_token_expires_at) : 0;
-  if (expiresAt > Date.now() + 60_000 && typeof connection.encrypted_access_token === "string") return decryptToken(key, connection.encrypted_access_token, connectionId);
-  if (typeof connection.encrypted_refresh_token !== "string") throw new Error("A autorização do TikTok Shop expirou. Reconecte o canal.");
-  const refreshUrl = new URL("https://auth.tiktok-shops.com/api/v2/token/refresh");
-  refreshUrl.searchParams.set("app_key", env("TIKTOK_SHOP_APP_KEY"));
-  refreshUrl.searchParams.set("app_secret", env("TIKTOK_SHOP_APP_SECRET"));
-  refreshUrl.searchParams.set("refresh_token", await decryptToken(key, connection.encrypted_refresh_token, connectionId));
-  refreshUrl.searchParams.set("grant_type", "refresh_token");
-  const response = await fetch(refreshUrl);
-  const payload = await response.json().catch(() => null) as { code?: number; message?: string; data?: Record<string, unknown> } | null;
-  const data = payload?.data;
-  const access = typeof data?.access_token === "string" ? data.access_token : "";
-  if (!response.ok || payload?.code !== 0 || !access) throw new Error(payload?.message || "Não foi possível renovar a autorização TikTok Shop.");
-  const { data: updated, error: updateError } = await serviceClient().from("tiktok_shop_connections").update({
-    encrypted_access_token: await encryptToken(key, access, connectionId),
-    encrypted_refresh_token: typeof data?.refresh_token === "string" ? await encryptToken(key, data.refresh_token, connectionId) : connection.encrypted_refresh_token,
-    access_token_expires_at: typeof data?.access_token_expire_in === "number" ? new Date(data.access_token_expire_in * 1000).toISOString() : null,
-    refresh_token_expires_at: typeof data?.refresh_token_expire_in === "number" ? new Date(data.refresh_token_expire_in * 1000).toISOString() : null,
-  }).eq("id", connectionId).select("id").maybeSingle();
-  if (updateError || !updated) throw new Error("Não foi possível salvar a renovação do token TikTok Shop.");
-  return access;
+  return freshShopToken(
+    serviceClient() as unknown as import('../_shared/supabase-db.ts').SbClient,
+    connection,
+    connectionId,
+    await importKey(env("TOKEN_ENCRYPTION_KEY")),
+    env,
+  );
 }
 
 Deno.serve(async (req) => {
   const cors = corsHeaders(req.headers.get("origin"), parseOrigins(envOptional("WEB_URL")));
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (!isTikTokShopEnabled()) return tikTokShopUnavailableResponse(cors);
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405, cors);
   const authorization = req.headers.get("authorization");
   if (!authorization) return json({ error: "unauthorized" }, 401, cors);

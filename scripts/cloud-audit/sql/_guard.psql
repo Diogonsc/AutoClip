@@ -1,0 +1,71 @@
+\set ON_ERROR_STOP on
+\if :{?audit_local_test}
+\else
+  \echo 'ABORT: define audit_local_test=true only in the isolated local test, or provide explicit cloud approval variables.'
+  DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+\endif
+\if :audit_local_test
+  \echo 'LOCAL ISOLATED TEST MODE. This guard does not imply Cloud authorization.'
+  SELECT (current_database() ~ '^autoclip_audit_test_[a-f0-9]{8}$'
+    AND inet_server_addr() IS NULL AND current_user='supabase_admin') AS local_test_target
+\gset
+  \if :local_test_target
+  \else
+    \echo 'ABORT: local test mode is restricted to the isolated local Supabase database over its local socket.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+\else
+  \if :{?cloud_admin_approved}
+  \else
+    \echo 'ABORT: explicit cloud_admin_approved=true is required for future remote administration.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  \if :cloud_admin_approved
+  \else
+    \echo 'ABORT: remote administrative approval is false.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  \if :{?cloud_project_ref}
+  \else
+    \echo 'ABORT: explicit cloud_project_ref is required.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  SELECT (:'cloud_project_ref' = 'djrwfvcxgpyknmizqumn') AS approved_ref_matches
+\gset
+  \if :approved_ref_matches
+  \else
+    \echo 'ABORT: project ref does not match the approved AutoClip project.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  \if :{?audit_database}
+  \else
+    \echo 'ABORT: explicit audit_database=postgres is required for the approved Supabase Cloud target.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  SELECT (:'audit_database' = 'postgres') AS approved_database_matches
+\gset
+  \if :approved_database_matches
+  \else
+    \echo 'ABORT: administrative SQL is restricted to the Supabase postgres database.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+  SELECT (current_database() = 'postgres') AS actual_database_matches
+\gset
+  \if :actual_database_matches
+  \else
+    \echo 'ABORT: connected database is not the approved postgres database.'
+    DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+  \endif
+\endif
+\if :{?audit_role}
+\else
+  \echo 'ABORT: set audit_role explicitly.'
+  DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+\endif
+SELECT (:'audit_role' ~ '^autoclip_cloud_auditor(_test_[a-f0-9]{8})?$') AS audit_role_valid
+\gset
+\if :audit_role_valid
+\else
+  \echo 'ABORT: unexpected audit role name.'
+  DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
+\endif

@@ -1,0 +1,13 @@
+.git
+**/.env
+**/.env.*
+!**/.env.example
+**/secrets/
+node_modules
+**/node_modules
+apps/web/dist
+apps/web/test-results
+apps/web/playwright-report
+supabase/.temp
+supabase/.branches
+*.log

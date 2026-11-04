@@ -3,18 +3,77 @@ import { supabase } from "./supabase";
 import { toError, unwrap } from "./api";
 import type {
   BillingPlan,
+  AccountGroup,
+  AccountGroupMember,
   Channel,
   MediaAsset,
   Profile,
   PlatformFlags,
   PublicationJob,
+  PublicationBatch,
+  PublicationBatchSummary,
   PublicationStatus,
   SaasOverview,
   WorkspaceSettings,
-  TikTokShopConnection,
-  TikTokShopOrder,
-  TikTokShopProduct,
 } from "./types";
+
+export function useAccountGroups(workspaceId: string) {
+  return useQuery({
+    queryKey: ["account-groups", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("account_groups").select("*").eq("workspace_id", workspaceId).order("name")) as unknown as AccountGroup[],
+  });
+}
+
+export function useAccountGroupMembers(workspaceId: string) {
+  return useQuery({
+    queryKey: ["account-group-members", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("account_group_members").select("*").eq("workspace_id", workspaceId)) as unknown as AccountGroupMember[],
+  });
+}
+
+export function usePublicationBatches(workspaceId: string) {
+  return useQuery({
+    queryKey: ["publication-batches", workspaceId],
+    queryFn: async () =>
+      unwrap(await supabase.from("publication_batches").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }).limit(100)) as unknown as PublicationBatch[],
+  });
+}
+
+export interface PublicationBatchFilters {
+  search?: string;
+  channelId?: string;
+  status?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  batchId?: string;
+  groupId?: string;
+}
+
+export function usePublicationBatchesPage(workspaceId: string, page: number, pageSize: number, filters: PublicationBatchFilters = {}) {
+  const search = filters.search?.trim() ?? "";
+  return useQuery({
+    queryKey: ["publication-batches", workspaceId, page, pageSize, filters],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_publication_batches", {
+        p_workspace: workspaceId,
+        p_limit: pageSize,
+        p_offset: page * pageSize,
+        p_search: search || null,
+        p_channel: filters.channelId || null,
+        p_status: filters.status || null,
+        p_created_from: filters.createdFrom || null,
+        p_created_to: filters.createdTo || null,
+        p_batch: filters.batchId?.trim() || null,
+        p_group: filters.groupId || null,
+      });
+      if (error) throw toError(error);
+      const value = (data ?? {}) as { rows?: PublicationBatchSummary[]; total?: number };
+      return { rows: value.rows ?? [], total: value.total ?? 0 };
+    },
+  });
+}
 
 /** Owner da plataforma (SaaS). Só controla a visibilidade da UI; a Edge Function reautoriza no servidor. */
 export function usePlatformOwner(userId: string | undefined) {
@@ -77,7 +136,6 @@ export function useMedia(workspaceId: string) {
           .from("media_assets")
           .select("*")
           .eq("workspace_id", workspaceId)
-          .neq("status", "DELETED")
           .order("created_at", { ascending: false }),
       ) as unknown as MediaAsset[],
   });
@@ -147,30 +205,6 @@ export function useSaasOverview(workspaceId: string) {
     queryKey: ["saas-overview", workspaceId],
     queryFn: async () =>
       unwrap(await supabase.rpc("get_workspace_saas_overview", { p_workspace: workspaceId })) as unknown as SaasOverview,
-  });
-}
-
-export function useTikTokShopConnections(workspaceId: string) {
-  return useQuery({
-    queryKey: ["shop-connections", workspaceId],
-    queryFn: async () =>
-      unwrap(await supabase.rpc("list_tiktok_shop_connections", { p_workspace: workspaceId })) as unknown as TikTokShopConnection[],
-  });
-}
-
-export function useTikTokShopProducts(workspaceId: string) {
-  return useQuery({
-    queryKey: ["shop-products", workspaceId],
-    queryFn: async () =>
-      unwrap(await supabase.from("tiktok_shop_products").select("*").eq("workspace_id", workspaceId).order("synced_at", { ascending: false })) as unknown as TikTokShopProduct[],
-  });
-}
-
-export function useTikTokShopOrders(workspaceId: string) {
-  return useQuery({
-    queryKey: ["shop-orders", workspaceId],
-    queryFn: async () =>
-      unwrap(await supabase.from("tiktok_shop_orders").select("*").eq("workspace_id", workspaceId).order("ordered_at", { ascending: false }).limit(500)) as unknown as TikTokShopOrder[],
   });
 }
 

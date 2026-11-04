@@ -4,638 +4,101 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#050711" />
-    <meta
-      name="description"
-      content="AutoClip Information Security and Privacy Policy, version 3.0, effective 30 October 2026."
-    />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <title>Information Security &amp; Privacy Policy | AutoClip</title>
+    <meta name="description" content="AutoClip Information Security Policy version 1.2, approved on 2 November 2026 with documented operational limitations. Policy approval does not establish deployment of controls." />
+    <title>Information Security Policy v1.2 | AutoClip</title>
     <style>
-      :root {
-        color-scheme: light dark;
-        --bg: #f5f6f8;
-        --paper: #fff;
-        --ink: #18212f;
-        --muted: #526174;
-        --line: #d9dee7;
-        --accent: #c21845;
-        --soft: #fcebf0;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #10141b;
-          --paper: #191f29;
-          --ink: #edf1f7;
-          --muted: #b0bac9;
-          --line: #343d4b;
-          --accent: #ff7898;
-          --soft: #39202a;
-        }
-      }
-      * {
-        box-sizing: border-box;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font:
-          16px/1.7 system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-      }
-      header,
-      main,
-      footer {
-        width: min(100% - 2rem, 860px);
-        margin-inline: auto;
-      }
-      header {
-        padding: 2rem 0 1.25rem;
-      }
-      main {
-        background: var(--paper);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: clamp(1.25rem, 5vw, 3rem);
-      }
-      footer {
-        padding: 1.5rem 0 3rem;
-        color: var(--muted);
-        font-size: 0.92rem;
-      }
-      h1,
-      h2,
-      h3 {
-        line-height: 1.25;
-      }
-      h1 {
-        margin: 0 0 0.35rem;
-        font-size: clamp(2rem, 6vw, 2.7rem);
-        letter-spacing: -0.035em;
-      }
-      h2 {
-        margin-top: 2.4rem;
-        padding-top: 1.15rem;
-        border-top: 1px solid var(--line);
-        font-size: 1.55rem;
-      }
-      h3 {
-        margin-top: 1.6rem;
-        font-size: 1.1rem;
-      }
-      p,
-      ul,
-      ol {
-        color: var(--muted);
-      }
-      li + li {
-        margin-top: 0.45rem;
-      }
-      a {
-        color: var(--accent);
-        text-underline-offset: 0.18em;
-      }
-      a:focus-visible {
-        outline: 3px solid var(--accent);
-        outline-offset: 3px;
-        border-radius: 3px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1rem 0;
-        color: var(--muted);
-        font-size: 0.94rem;
-      }
-      th,
-      td {
-        padding: 0.75rem;
-        border: 1px solid var(--line);
-        vertical-align: top;
-        text-align: left;
-      }
-      th {
-        color: var(--ink);
-        background: var(--soft);
-      }
-      .brand {
-        font-weight: 750;
-        letter-spacing: 0.02em;
-        color: var(--ink);
-        text-decoration: none;
-      }
-      .topline,
-      .page-nav {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.55rem 1rem;
-      }
-      .topline {
-        justify-content: space-between;
-      }
-      .page-nav {
-        margin-top: 1.25rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--line);
-      }
-      .eyebrow {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      .updated {
-        display: inline-block;
-        margin: 0.9rem 0 0;
-        padding: 0.3rem 0.65rem;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        color: var(--muted);
-        font-size: 0.88rem;
-      }
-      .notice {
-        padding: 1rem 1.1rem;
-        border-left: 4px solid var(--accent);
-        background: var(--soft);
-        border-radius: 0 8px 8px 0;
-      }
-      .section-label {
-        margin: 0 0 0.35rem;
-        color: var(--accent);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-      }
-      .metadata {
-        display: grid;
-        grid-template-columns: minmax(10rem, 1fr) 2fr;
-        margin: 1.5rem 0 0;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        overflow: hidden;
-      }
-      .metadata dt,
-      .metadata dd {
-        margin: 0;
-        padding: 0.7rem 0.85rem;
-        border-bottom: 1px solid var(--line);
-      }
-      .metadata dt {
-        font-weight: 700;
-        color: var(--ink);
-        background: var(--soft);
-      }
-      .metadata dd {
-        color: var(--muted);
-      }
-      .metadata > :nth-last-child(-n + 2) {
-        border-bottom: 0;
-      }
-      @media (max-width: 600px) {
-        .metadata {
-          grid-template-columns: 1fr;
-        }
-        .metadata dt {
-          border-bottom: 0;
-        }
-        .metadata > :nth-last-child(2) {
-          border-bottom: 1px solid var(--line);
-        }
-      }
-      @media print {
-        :root {
-          color-scheme: light;
-          --bg: #fff;
-          --paper: #fff;
-          --ink: #111;
-          --muted: #333;
-          --line: #ccc;
-          --accent: #82102d;
-          --soft: #f8f2f4;
-        }
-        body {
-          font-size: 11pt;
-        }
-        main {
-          width: 100%;
-          border: 0;
-          padding: 0;
-        }
-        header,
-        footer {
-          width: 100%;
-        }
-        a {
-          color: inherit;
-        }
-      }
+      :root { color-scheme: light dark; --bg:#f5f6f8; --paper:#fff; --ink:#18212f; --muted:#526174; --line:#d9dee7; --accent:#9b1744; --soft:#fcebf0; }
+      @media (prefers-color-scheme: dark) { :root { --bg:#10141b; --paper:#191f29; --ink:#edf1f7; --muted:#b0bac9; --line:#343d4b; --accent:#ff7898; --soft:#39202a; } }
+      * { box-sizing:border-box; }
+      html { scroll-behavior:smooth; }
+      body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.7 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      a { color:var(--accent); text-underline-offset:.18em; }
+      a:focus-visible { outline:3px solid var(--accent); outline-offset:3px; border-radius:3px; }
+      .skip-link { position:absolute; left:-9999px; top:auto; }
+      .skip-link:focus { left:1rem; top:1rem; z-index:2; padding:.6rem .8rem; background:var(--paper); }
+      header,main,footer { width:min(100% - 2rem, 860px); margin-inline:auto; }
+      header { padding:1.5rem 0 1rem; }
+      .topline { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem 1rem; }
+      .brand { font-weight:750; color:var(--ink); text-decoration:none; }
+      nav { display:flex; flex-wrap:wrap; gap:.5rem 1rem; }
+      main { background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:clamp(1.1rem,5vw,3rem); }
+      h1,h2 { line-height:1.25; }
+      h1 { margin:.8rem 0 .5rem; font-size:clamp(1.8rem,5vw,2.6rem); letter-spacing:-.03em; }
+      h2 { margin-top:2.3rem; padding-top:1rem; border-top:1px solid var(--line); font-size:clamp(1.25rem,3vw,1.55rem); }
+      p,li { color:var(--muted); overflow-wrap:anywhere; }
+      li+li { margin-top:.4rem; }
+      .approval-notice { padding:1rem 1.1rem; border-left:4px solid var(--accent); background:var(--soft); border-radius:0 8px 8px 0; color:var(--ink); }
+      .document-metadata { padding:1rem 1rem 1rem 2.3rem; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+      .repository-reference { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.94em; }
+      footer { padding:1.5rem 0 3rem; color:var(--muted); font-size:.9rem; }
+      @media (max-width:600px) { body { font-size:15px; } header,main,footer { width:min(100% - 1rem,860px); } nav { width:100%; } nav a { padding:.25rem 0; } main { border-radius:10px; } }
+      @media print { :root { color-scheme:light; --bg:#fff; --paper:#fff; --ink:#111; --muted:#333; --line:#ccc; --accent:#82102d; --soft:#f8f2f4; } body { font-size:11pt; } main { width:100%; border:0; padding:0; } header,footer { width:100%; } nav,.skip-link { display:none; } a { color:inherit; } }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#policy-content">Skip to policy</a>
     <header>
       <div class="topline">
         <a class="brand" href="https://autocliptiktok.vercel.app/">AutoClip</a>
-        <nav class="page-nav" aria-label="Legal pages">
+        <nav aria-label="Legal documents">
           <a href="privacy-policy.html">Privacy Policy</a>
           <a href="terms-of-service.html">Terms of Service</a>
-          <a href="https://autocliptiktok.vercel.app/">Home</a>
         </nav>
       </div>
-      <p class="eyebrow">AutoClip / Security &amp; Privacy</p>
-      <h1>Information Security &amp; Privacy Policy</h1>
-      <p class="updated">
-        <strong>Version 3.0</strong> · Effective 30 October 2026 · Controlled
-        document
-      </p>
-      <dl class="metadata">
-        <dt>Document status</dt>
-        <dd>
-          Approved by the MEI owner on 30 October 2026; operational verification
-          items remain explicitly identified.
-        </dd>
-        <dt>Policy owner</dt>
-        <dd>Diogo Nascimento dos Santos — MEI owner / Incident Lead</dd>
-        <dt>Security contact</dt>
-        <dd>
-          <a href="mailto:diogos.nascimento@outlook.com"
-            >diogos.nascimento@outlook.com</a
-          >
-        </dd>
-        <dt>Legal entity</dt>
-        <dd>
-          56.151.919 Diogo Nascimento dos Santos (CNPJ 56.151.919/0001-30)
-        </dd>
-        <dt>Approver / approval date</dt>
-        <dd>Diogo Nascimento dos Santos — 30 October 2026</dd>
-        <dt>Review cadence</dt>
-        <dd>At least annually and after material security changes</dd>
-      </dl>
     </header>
-
-    <main>
-      <p class="section-label">
-        TikTok Shop Partner — Data Security &amp; Privacy Review
-      </p>
-      <p class="notice">
-        This policy distinguishes controls evidenced by reviewed repository code
-        from operational controls requiring configuration, testing, monitoring
-        or formal adoption. It is not a certification, independent penetration
-        test or statement of TikTok Shop approval.
-      </p>
-
-      <h2>1. Purpose and scope</h2>
-      <p>
-        This policy defines the security and privacy controls, responsibilities
-        and incident-response requirements for AutoClip, a multi-tenant
-        application that connects authorized TikTok and TikTok Shop accounts,
-        manages media and schedules or initiates publication workflows. It
-        applies to application code, Supabase services, storage, operational
-        accounts, third-party integrations and personnel administering the
-        service.
-      </p>
-
-      <h2>2. Governance and accountability</h2>
-      <p>
-        The AutoClip Owner is accountable for security decisions, access
-        management, incident coordination, vendor oversight, policy approval and
-        annual review. The Owner acts as Incident Lead, with authority to
-        suspend affected integrations, rotate secrets, approve external notices
-        and track remediation. A delegate must be designated for material
-        incidents when the Owner is unavailable.
-      </p>
-      <p>
-        Security reports may be directed to
-        <a href="mailto:diogos.nascimento@outlook.com"
-          >diogos.nascimento@outlook.com</a
-        >. The mailbox must be actively monitored as part of operational
-        adoption.
-      </p>
-
-      <h2>3. Identity, access control and tenant isolation</h2>
-      <ul>
-        <li>
-          Access to application data is based on authenticated identities,
-          workspace membership and assigned roles; SQL row-level security (RLS)
-          policies and role helpers are defined in repository migrations.
-        </li>
-        <li>
-          Backend-only operations use service credentials; such credentials must
-          never be embedded in browser-delivered code. Privileged database
-          functions must validate workspace membership and limit returned
-          fields.
-        </li>
-        <li>
-          The TikTok Shop connection listing function exposes a restricted
-          connection summary rather than encrypted access and refresh tokens.
-          Direct SELECT permission on the token-bearing connection table is
-          revoked from authenticated users in migration
-          <code>20261101000001</code>.
-        </li>
-        <li>
-          TikTok Shop publication code verifies the association between the
-          publication job, media asset, affiliate product, channel and workspace
-          before sending media.
-        </li>
-        <li>
-          Production authorization must be validated with negative tests for
-          cross-workspace access, owner-role changes and privilege escalation;
-          migrations alone do not prove runtime enforcement.
-        </li>
-      </ul>
-
-      <h2>4. Credential protection and OAuth</h2>
-      <ul>
-        <li>
-          OAuth access and refresh tokens are encrypted server-side using
-          AES-256-GCM with a random initialization vector and
-          connection-specific additional authenticated data, as implemented in
-          the shared crypto module.
-        </li>
-        <li>
-          OAuth callbacks use a one-time state consumption mechanism; the
-          relevant database function and deployed behavior must be periodically
-          tested.
-        </li>
-        <li>
-          TikTok Shop token refresh and callback handlers verify persistence
-          results before reporting success.
-        </li>
-        <li>
-          Secrets such as <code>TOKEN_ENCRYPTION_KEY</code>,
-          <code>WORKER_SECRET</code> and TikTok Shop app credentials must reside
-          in protected server-side secret stores with restricted access and a
-          documented rotation process.
-        </li>
-        <li>
-          Token exchange and refresh follow the provider integration contract;
-          URLs containing credentials or authorization codes must not be
-          recorded in application, proxy, analytics or infrastructure logs.
-        </li>
-      </ul>
-
-      <h2>5. Media handling and publication integrity</h2>
-      <ul>
-        <li>
-          Media assets are linked to workspace-scoped records. The TikTok Shop
-          publication service retrieves media through the job-associated asset
-          rather than accepting an arbitrary client-provided storage path.
-        </li>
-        <li>
-          Worker requests require an internal shared secret; worker secret
-          distribution and rotation must be controlled.
-        </li>
-        <li>
-          A publication-in-progress marker and conditional database update
-          reduce duplicate external publication on concurrent attempts or
-          retries. Interrupted publications require a reconciliation workflow
-          and operator review before any replay.
-        </li>
-        <li>
-          Media delivery uses signed URLs or signed proxy tokens where
-          configured; the public domain used for TikTok media retrieval must be
-          verified and HTTPS-enabled.
-        </li>
-        <li>
-          The service must apply retention and deletion rules to media, tokens,
-          job history and audit records, subject to legal obligations and
-          provider terms. Actual retention periods must be approved and
-          configured before they are represented as enforced.
-        </li>
-      </ul>
-
-      <h2>6. Logging, monitoring and vulnerability management</h2>
-      <p>
-        Security-relevant events should be recorded with UTC timestamps, actor
-        or service identity, workspace context, action, outcome and correlation
-        identifier, without plaintext tokens or secrets. Access to logs must be
-        limited to authorized operators. Monitor authentication anomalies,
-        authorization failures, unexpected token refreshes, worker errors,
-        publication reconciliation exceptions and suspected cross-tenant access.
-        Track findings by severity, owner, remediation and verification date.
-      </p>
-      <p>
-        Changes should undergo code review and automated checks where available.
-        Before deployment, execute application tests, database authorization
-        tests and integration tests in an appropriately isolated environment.
-        Production environment variables and provider dashboards require
-        separate review.
-      </p>
-
-      <h2>7. Privacy, minimization and data rights</h2>
-      <p>
-        Collect and process only information required to connect accounts,
-        identify authorized users and workspaces, manage media, synchronize
-        permitted affiliate product information, publish authorized content, and
-        maintain operational or security records. Access to account identifiers,
-        media and activity records must be limited to their intended purpose.
-        Requests for access, correction, export or deletion must be assessed
-        under applicable law and provider requirements. Account disconnection
-        should trigger revocation or invalidation of relevant credentials and
-        appropriate data lifecycle actions.
-      </p>
-      <p>
-        AutoClip must not sell user data or use TikTok/TikTok Shop data for
-        unrelated purposes without a valid legal basis and required permissions.
-        Data-sharing and subprocessor arrangements must be reviewed and
-        accurately disclosed in public privacy notices.
-      </p>
-
-      <h2>8. Incident response and breach notification (Q16)</h2>
-      <p>
-        The documented incident response process is maintained in
-        <code>docs/INCIDENT_RESPONSE_RUNBOOK.md</code>. The Incident Lead
-        coordinates identification, triage, containment, investigation,
-        notification, recovery and post-incident review. A suspected incident
-        includes unauthorized access or disclosure, token compromise,
-        cross-workspace access, malware, account compromise, data alteration or
-        material service disruption.
-      </p>
-      <ul>
-        <li>
-          Record the UTC discovery time, reporter, affected services, available
-          evidence and an incident ID in an access-controlled register.
-        </li>
-        <li>
-          Classify the incident as Critical, High, Medium or Low based on actual
-          or suspected exposure and impact.
-        </li>
-        <li>
-          Contain promptly by suspending affected workflows, revoking or
-          rotating credentials, restricting access and preserving relevant
-          evidence.
-        </li>
-        <li>
-          Assess affected tenants, data categories, accounts, geographic scope,
-          timing, root cause and applicable notification obligations.
-        </li>
-        <li>
-          Notify TikTok Shop through the applicable Partner Center or official
-          support channel without undue delay for material TikTok Shop
-          incidents, and notify customers, individuals, regulators or suppliers
-          when legally or contractually required. Apply any stricter contractual
-          or statutory deadlines.
-        </li>
-        <li>
-          Document recipients, basis, notification time, known facts, mitigation
-          steps, contact channel, recovery decision and corrective actions.
-        </li>
-        <li>
-          Perform a documented tabletop exercise at least annually and after
-          material changes to authentication, token handling or multi-tenant
-          access.
-        </li>
-      </ul>
-      <p>
-        <strong>Operational readiness requirement:</strong> the Owner must
-        actively monitor the security mailbox, maintain a protected incident
-        register, designate backup coverage and complete/document an initial
-        tabletop exercise. The existence of the runbook alone does not establish
-        that these activities have occurred. Q16 should be answered “Yes” only
-        after the process has been formally adopted and can be demonstrated.
-      </p>
-
-      <h2>9. Continuity, recovery and third-party dependencies</h2>
-      <p>
-        Maintain documented procedures to restore essential publication and
-        account-management functions after service disruption, including safe
-        retry handling and reconciliation of TikTok Shop publishing. Review
-        Supabase, hosting, storage and TikTok/TikTok Shop dependencies; preserve
-        backups where supported and test recovery according to approved recovery
-        objectives. Do not assume third-party availability or backups without
-        verification.
-      </p>
-
-      <h2>10. Evidence register and verification boundaries</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Evidence category</th>
-            <th>Artifact / qualification</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code>docs/INCIDENT_RESPONSE_RUNBOOK.md</code> — incident
-              ownership, triage, notifications, incident register and annual
-              exercise requirement.
-            </td>
-          </tr>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code>supabase/migrations/20261020000002_rls.sql</code> — core
-              workspace-scoped RLS policies and authorization helpers.
-            </td>
-          </tr>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code
-                >supabase/migrations/20261101000001_lock_down_tiktok_shop_tokens.sql</code
-              >
-              — connection table SELECT restriction and safe listing RPC.
-            </td>
-          </tr>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code
-                >supabase/migrations/20261101000002_shop_publish_reconciliation.sql</code
-              >
-              — publication reconciliation marker and index.
-            </td>
-          </tr>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code>supabase/functions/tiktok-shop-publish/index.ts</code> —
-              workspace/media/product association, worker authentication and
-              duplicate-publication guard.
-            </td>
-          </tr>
-          <tr>
-            <td>Repository evidence</td>
-            <td>
-              <code>supabase/functions/tiktok-shop/index.ts</code> and
-              <code>tiktok-shop-oauth-callback/index.ts</code> — OAuth token
-              handling and persistence checks.
-            </td>
-          </tr>
-          <tr>
-            <td>Reported remote status</td>
-            <td>
-              Project review reported migrations <code>20261101000001</code> and
-              <code>20261101000002</code> as applied remotely; not independently
-              verified in this policy.
-            </td>
-          </tr>
-          <tr>
-            <td>Not independently verified</td>
-            <td>
-              Production secrets, Vercel configuration, complete RLS integration
-              tests, incident mailbox monitoring, incident register operation
-              and initial tabletop exercise.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h2>11. Approval and review</h2>
-      <p>
-        This policy was formally approved by the MEI owner on 30 October 2026
-        and is effective from that date. Approval establishes organizational
-        requirements; it does not independently verify completion of the
-        operational controls identified in this document. Any statement in a
-        partner questionnaire must match actual practices at submission time.
-      </p>
-      <p>
-        <strong>Approved by:</strong> Diogo Nascimento dos Santos (MEI owner)<br /><strong
-          >Approval date:</strong
-        >
-        30 October 2026<br /><strong>Legal entity:</strong> 56.151.919 Diogo
-        Nascimento dos Santos<br /><strong>Next review:</strong> 30 October 2027
-      </p>
-      <p>
-        <strong>Change history:</strong> v3.0 — Added verified repository
-        references, TikTok Shop token-table lockdown, publication reconciliation
-        safeguards, documented incident runbook and explicit operational
-        readiness qualifications.
-      </p>
-      <h3>Publication and approval record</h3>
-      <p>
-        Approval decision: Confirmed by the legal entity owner on 30 October
-        2026. Effective date: 30 October 2026. This approval is recorded
-        electronically; no handwritten signature is represented or implied.
-      </p>
-      <p>
-        Publication status: Published at
-        <a href="https://autocliptiktok.vercel.app/security-policy.html"
-          >https://autocliptiktok.vercel.app/security-policy.html</a
-        >.
-      </p>
-      <p>
-        <strong>Document control:</strong> AutoClip Information Security &amp;
-        Privacy Policy, version 3.0; approved 30 October 2026; next scheduled
-        review 30 October 2027.
-      </p>
+    <main id="policy-content">
+      <p class="approval-notice"><strong>Version 1.2 — approved 2 November 2026 with documented operational limitations.</strong> Internal policy approval does not prove technical deployment or operational verification and does not constitute TikTok approval.</p>
+      <h1>AutoClip Information Security Policy</h1>
+<ul class="document-metadata">
+<li><strong>Document ID:</strong> AUTOCLIP-SEC-POL-1.2</li>
+<li><strong>Version:</strong> 1.2</li>
+<li><strong>Status:</strong> APPROVED WITH DOCUMENTED OPERATIONAL LIMITATIONS</li>
+<li><strong>Prepared:</strong> 2026-11-02</li>
+<li><strong>Accountable business operator:</strong> 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder; CNPJ 56.151.919/0001-30</li>
+<li><strong>Business name:</strong> AutoClip</li>
+<li><strong>Location:</strong> Rio de Janeiro/RJ, Brazil</li>
+<li><strong>Security contact:</strong> <a href="mailto:diogos.nascimento@outlook.com">diogos.nascimento@outlook.com</a></li>
+<li><strong>Approver:</strong> Titular do MEI — 56.151.919 DIOGO NASCIMENTO DOS SANTOS</li>
+<li><strong>Decision:</strong> APPROVED WITH DOCUMENTED OPERATIONAL LIMITATIONS</li>
+<li><strong>Approval date:</strong> 2026-11-02</li>
+<li><strong>Effective date:</strong> 2026-11-02</li>
+<li><strong>Publication/submission:</strong> Not authorized or verified</li>
+</ul>
+<p>AutoClip is the trade name used by the MEI holder identified above. This policy is the locally approved internal version 1.2, approved with documented operational limitations on 2026-11-02. It does not replace or amend <code>apps/web/public/security-policy.html</code> or historical PDFs until separately reconciled and authorized. Local policy sources contain conflicting version and approval statements; see <code>SECURITY_POLICY_PUBLIC_PAGE_RECONCILIATION.md</code>. The owner confirms regular review of the security contact mailbox, but this does not mean continuous or 24/7 monitoring, a response-time guarantee, or delegated coverage. Approval of this policy does not prove technical deployment or operational verification.</p>
+<h2>1. Purpose and scope</h2>
+<p>This policy sets security requirements for AutoClip application code, identities and access, databases, object storage, backend functions, workers, operational accounts, information, and service providers. It applies to development, test, staging, and production. Production and provider controls must be verified in their actual environments; local code or policy text alone is not proof of deployment.</p>
+<h2>2. Governance and responsibilities</h2>
+<p>The MEI holder is the accountable business operator and coordinates security incidents. The owner is responsible for approving this policy, authorizing changes within their authority, assigning any additional roles, and retaining review evidence. Engineering personnel and service providers must use information only for assigned purposes, protect credentials, follow least privilege, and report suspected incidents promptly through the listed security contact.</p>
+<p>The owner confirms regular review of <code><a href="mailto:diogos.nascimento@outlook.com">diogos.nascimento@outlook.com</a></code>. No 24/7 monitoring, response-time guarantee, designated delegate, or completed incident exercise is claimed. If the owner is unavailable, material incident handling and any applicable notice must follow the documented escalation and legal-review process; the absence of a delegate remains an operational gap.</p>
+<h2>3. Identity, authorization, and tenant boundaries</h2>
+<p>Access shall be based on authenticated identities, least privilege, role authorization, and workspace membership. Database row-level security (RLS), RPC authorization, backend checks, foreign keys, and Storage rules must consistently enforce workspace boundaries. Privileged server credentials must not be placed in browser-delivered code. Local migrations and tests provide evidence for parts of this design; active Cloud grants, policies, deployed function bodies, and runtime enforcement have not been established by this candidate.</p>
+<h2>4. Credential and OAuth protection</h2>
+<p>OAuth tokens shall be encrypted before persistence, accessible only to trusted server-side components, bound to the correct connection and workspace, and excluded from logs, client responses, telemetry, traces, and error messages. Rotation must use distributed coordination and version/attempt-aware conditional persistence so that stale workers cannot overwrite newer credentials. A timeout or other ambiguous provider result must not trigger an unsafe retry of a potentially invalidated refresh token; when the latest valid state cannot be established safely, the connection must require conservative reauthorization or intervention.</p>
+<p>TikTok Login Kit and TikTok Shop are separate products and authorization contracts. Their endpoints, token lifetimes, rotation and invalidation behavior must be confirmed independently. Local cryptography, lease/CAS code, and tests do not establish that these controls are deployed or that TikTok Shop follows the Login Kit contract. The evidence matrix records implementation and deployment limits.</p>
+<h2>5. Data and media protection</h2>
+<p>AutoClip shall collect and retain only data needed for user-requested account connection, workspace operation, media handling, scheduling, publication, security, and support. Access to media and publication metadata shall be workspace-scoped. Shop product/order fields and provider raw JSON require field-level minimization before the related processing is enabled or represented as complete.</p>
+<p>Media may be considered eligible for automatic deletion only after all of these conditions are met: publication is confirmed; at least 24 hours have elapsed as a safety window; no shared reference prevents deletion; no related operation is pending or in an unknown state; and the applicable safe-deletion checks pass. Eligibility is not the same as deletion. Automatic cleanup is not confirmed active or executed in production. Other data categories do not receive a retention period from this policy; their schedules remain pending approval and evidence.</p>
+<h2>6. Encryption and secure communications</h2>
+<p>Application and provider communications shall use approved HTTPS/TLS endpoints with certificate validation where applicable. Tokens must use authenticated encryption before persistence, with encryption keys stored separately in protected server-side configuration and access limited to authorized processes. The local application contains AES-GCM token-encryption code and synthetic tests; key provisioning, deployed code, database/Storage/backup encryption, actual TLS configuration, and provider settings require separate verification. Do not represent these local artifacts as proof of production configuration.</p>
+<h2>7. Secure development and vulnerability management</h2>
+<p>Security-sensitive changes should receive review, targeted negative tests, dependency checks, and isolated integration tests before release. Database changes require review of authorization, tenant isolation, privilege changes, locking, data preservation, compatibility, and recovery. Synthetic data shall be used in tests. Findings must be prioritized, assigned, tracked to resolution or accepted exception, and revalidated. Historical gate results are not current release evidence; current checks must be recorded with environment and command.</p>
+<h2>8. Logging and monitoring</h2>
+<p>Logs should support security investigation while minimizing personal information. Plaintext tokens, passwords, authorization codes, keys, full credential-bearing URLs, and media content must not be intentionally recorded. Access, retention, alerting, telemetry redaction, and operational log review must be verified in deployed services. The owner’s regular review of the security mailbox is owner-confirmed; it is not a claim of continuous log monitoring or 24/7 incident response.</p>
+<h2>9. Incident response</h2>
+<p>The MEI holder coordinates security incidents. Suspected unauthorized access, disclosure, loss, alteration, credential compromise, cross-workspace access, malware, or material availability events must be triaged, contained, investigated, and assessed for legal, contractual, and platform notification duties. Records must be sanitized and access-controlled; corrective actions must be tracked and reviewed.</p>
+<p>The owner confirms regular review of the security mailbox, without a guaranteed response time or continuous coverage. No delegate is confirmed and no tabletop exercise is claimed as completed. The local runbook describes steps but does not establish full operational readiness. Notification timing and recipients require assessment under applicable law, contract, and TikTok requirements.</p>
+<h2>10. Retention, deletion, backup, and recovery</h2>
+<p>Retention shall be defined by data category, purpose, and legal or contractual exception. No period is set here for accounts, tokens, publication history, logs, audit records, Shop data, or backups without supporting approval and evidence. Verified deletion requests must be scoped across relevant database, Storage, credentials, logs, and provider systems. Published content already sent to TikTok remains subject to TikTok’s controls.</p>
+<p>The media-deletion eligibility conditions in Section 5 are mandatory safeguards, not confirmation that automated cleanup is enabled. Backups must have documented coverage, access controls, and protection appropriate to their contents. The owner shall define recovery objectives (RPO/RTO) in a future approved operational plan. Restoration tests must run in isolated environments, record scope/results, correct failures, and be repeated after remediation. A prior local exercise did not demonstrate successful restoration; recovery capability is not established. No Cloud or production backup/recovery claim is made.</p>
+<h2>11. Third parties and privacy</h2>
+<p>Known project providers include Supabase, Vercel, and TikTok. Exact services, subprocessors, purposes, data categories, contractual terms, regions, backup/log locations, and transfer mechanisms remain to be verified. The project shall maintain a provider/subprocessor register and review it before enabling new processing. Do not confirm “United States” or any other Partner Center data-location answer based on provider name, hostname, or this policy.</p>
+<p>The operator’s controller or processor role must be determined for each processing activity, purpose, contract, and instruction. Applicable legal bases, LGPD duties, international transfers, and data-subject request deadlines require qualified legal review. This policy is not a legal opinion or certification and does not claim full LGPD compliance, ISO 27001, SOC 2, independent audit, or TikTok approval.</p>
+<h2>12. Review, exceptions, and approval</h2>
+<p>Review this policy at least annually and after a material change or incident. Exceptions must record scope, justification, risk, compensating controls, accountable approver, expiry, and remediation. The owner must reconcile the public-policy version conflict before updating any public version. Publication and TikTok submission require separate authorization. The <span class="repository-reference">Security Control Evidence Matrix</span> records local evidence, owner confirmations, deployment status, and outstanding verification; this policy’s requirements do not themselves prove adoption, deployment, or operation.</p>
+<p><strong>Approval record:</strong> Legal operator: 56.151.919 DIOGO NASCIMENTO DOS SANTOS (MEI holder) · Approver: MEI holder · Decision: APPROVED WITH DOCUMENTED OPERATIONAL LIMITATIONS · Approval/effective date: 2026-11-02 · Publication: not authorized or verified.</p>
+<h2>Version history</h2>
+<p>Draft 1.1 (2026-11-02): consolidated security and privacy requirements; approval/publication conflict unresolved. Draft 1.2 (2026-11-02): added owner-confirmed incident coordination and regular mailbox review; conditional media-deletion eligibility; OAuth rotation/concurrency requirements; known providers; backup/recovery requirements and limitations. Current status: <strong>APPROVED WITH DOCUMENTED OPERATIONAL LIMITATIONS</strong> (2026-11-02).</p>
     </main>
-    <footer>
-      © 2026 AutoClip · Information Security &amp; Privacy Policy · Version 3.0
-      · Controlled document
-    </footer>
+    <footer>AutoClip Information Security Policy v1.2 · Approved 2 November 2026 with documented operational limitations.</footer>
   </body>
 </html>

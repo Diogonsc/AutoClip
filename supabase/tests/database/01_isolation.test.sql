@@ -2,7 +2,7 @@
 -- Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(23);
 
 -- ---------------------------------------------------------------------
 -- Setup (como postgres): 3 usuários. O trigger cria um workspace para cada.
@@ -28,10 +28,14 @@ select ca, wa, 'Canal A' from ctx
 union all
 select cb, wb, 'Canal B' from ctx;
 
-insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status)
-select ma, wa, 'a.mp4', wa::text || '/' || ma::text || '/original.mp4', 'video/mp4', 1000, 'READY' from ctx;
+insert into public.media_assets (id, workspace_id, original_filename, storage_key, mime_type, file_size_bytes, status, validation_status, checksum_sha256, detected_mime_type, detected_video_codec, validated_at, validator_version)
+select ma, wa, 'a.mp4', wa::text || '/' || ma::text || '/original.mp4', 'video/mp4', 1000, 'READY', 'VALIDATED', repeat('a',64), 'video/mp4', 'h264', now(), 'fixture' from ctx;
 
 grant select on ctx to authenticated, anon;
+
+select ok(not has_table_privilege('authenticated','public.media_assets','INSERT'), 'cliente não pode criar mídias diretamente');
+select ok(not has_function_privilege('authenticated','public.complete_media_validation(uuid,bigint,text,text,integer,integer,numeric,text)','EXECUTE'), 'cliente não pode emitir atestado de validação');
+select ok((select not public from storage.buckets where id='media') and (select not public from storage.buckets where id='media-quarantine'), 'buckets final e quarentena são privados');
 
 -- ---------------------------------------------------------------------
 -- Como usuário A
@@ -77,6 +81,26 @@ select throws_ok(
 select throws_ok(
   $q$select * from public.claim_publication_jobs(1, 'x')$q$,
   '42501', null, 'Usuário não executa o claim da fila');
+
+select throws_ok(
+  format($q$insert into public.media_assets(workspace_id,original_filename,storage_key,mime_type,file_size_bytes,created_by) values(%L,'bypass.png',%L,'image/png',50,'aaaaaaaa-0000-0000-0000-000000000001')$q$,
+    (select wa from ctx), (select wa::text||'/'||gen_random_uuid()::text||'/original.png' from ctx)),
+  '42501', null, 'cliente não cria diretamente registros de mídia');
+select throws_ok(
+  format($q$update public.media_assets set validation_status='VALIDATED',checksum_sha256=%L where id=%L$q$, repeat('b',64), (select ma from ctx)),
+  '42501', null, 'cliente não grava atestado de validação');
+select ok((public.begin_media_upload((select wa from ctx),'pending.png','image/png',100)->>'media_id') is not null,
+  'upload inicia pelo RPC autorizado e permanece pendente');
+select is((select validation_status from public.media_assets where original_filename='pending.png'), 'PENDING',
+  'upload iniciado não se torna mídia aprovada');
+select throws_ok(
+  format($q$insert into public.publication_jobs(workspace_id,channel_id,media_asset_id,caption,scheduled_at,timezone,status,created_by,music_rights_confirmed)
+    values(%L,%L,(select id from public.media_assets where original_filename='pending.png'),'bypass',now()+interval '1 day','UTC','SCHEDULED','aaaaaaaa-0000-0000-0000-000000000001',true)$q$,
+    (select wa from ctx),(select ca from ctx)),
+  '23514', null, 'mídia pendente não pode ser agendada pelo backend');
+select throws_ok(
+  format($q$select public.finalize_media(%L::uuid,null,null,null)$q$,(select ma from ctx)),
+  '42501', null, 'cliente não pode executar a antiga RPC de promoção');
 
 -- ---------------------------------------------------------------------
 -- Como usuário C (VIEWER no workspace A)
