@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,7 +10,7 @@ export default defineConfig({
   // Development and preview servers are local-only unless an operator intentionally overrides them.
   server: { host: "127.0.0.1", port: 5173, strictPort: true },
   preview: { host: "127.0.0.1", port: 4173, strictPort: true },
-  test: { environment: "node" },
+  test: { environment: "node", exclude: [...configDefaults.exclude, "e2e/**"] },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),

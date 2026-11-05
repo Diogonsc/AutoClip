@@ -7,3 +7,14 @@ supabase/.temp/
 supabase/.branches/
 *.log
 .DS_Store
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/playwright/.cache/
+deploy/local-worker/.env
+deploy/local-worker/.env.*
+!deploy/local-worker/.env.example
+deploy/local-worker/.edge.env
+deploy/local-worker/.systemd/
+deploy/local-worker/secrets/
+# Local Supabase public CA file; referenced by path, not needed in repository.
+prod-ca-2021.crt

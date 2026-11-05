@@ -273,6 +273,20 @@ test('channel: connect checa acesso "edit" com o JWT do usuário e devolve a URL
   assert.equal(r.headers.get('access-control-allow-origin'), ORIGIN);
 });
 
+test('channel: cada pedido connect cria state para o channel_id recebido', async () => {
+  const { d, rec } = channelDeps();
+  const channelA = '11111111-1111-4111-8111-111111111111';
+  const channelB = '22222222-2222-4222-8222-222222222222';
+  const first = await handleChannel(call({ action: 'connect', channel_id: channelA }), d);
+  const second = await handleChannel(call({ action: 'connect', channel_id: channelB }), d);
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.deepEqual(
+    rec.rpcs.filter((rpc) => rpc.fn === 'create_oauth_state').map((rpc) => rpc.args.p_channel),
+    [channelA, channelB],
+  );
+});
+
 test('channel: sem permissão (42501) -> 403 e não cria state; JWT inválido -> 401', async () => {
   const mk = (code: string) =>
     channelDeps({ rpcAsUser: () => Promise.resolve({ data: null, error: { code, message: 'x' } }) });
@@ -389,7 +403,7 @@ async function oauthDeps(over: Partial<OAuthDeps> = {}) {
         s === 'good' ? { workspace_id: 'ws', channel_id: CH, required_scopes: ['video.upload'] } : null,
       );
     },
-    getChannel: () => Promise.resolve({ id: CH, provider_user_id: null }),
+    getChannel: () => Promise.resolve({ id: CH, workspace_id: 'ws', provider_user_id: null }),
     saveConnection: (a) => {
       saved.push(a);
       return Promise.resolve('ok');
@@ -406,10 +420,53 @@ async function oauthDeps(over: Partial<OAuthDeps> = {}) {
 const cb = (qs: string) => new Request(`https://proj.supabase.co/functions/v1/tiktok-oauth-callback?${qs}`);
 const loc = (r: Response) => r.headers.get('location');
 
-test('callback: só GET', async () => {
+test('callback: rejeita métodos sem suporte', async () => {
   const { d } = await oauthDeps();
-  const r = await handleCallback(new Request('https://x.test/cb', { method: 'POST' }), { oauth: d, webUrl: ORIGIN, log: () => {} });
+  const r = await handleCallback(new Request('https://x.test/cb', { method: 'PATCH' }), { oauth: d, webUrl: ORIGIN, log: () => {} });
   assert.equal(r.status, 405);
+});
+
+test('callback: POST retorna resultado controlado e habilita CORS somente para WEB_URL', async () => {
+  const { d, saved } = await oauthDeps();
+  const r = await handleCallback(new Request('https://x.test/cb', {
+    method: 'POST',
+    headers: { origin: ORIGIN, 'content-type': 'application/json' },
+    body: JSON.stringify({ code: 'abc', state: 'good' }),
+  }), { oauth: d, webUrl: ORIGIN, origins: [ORIGIN], log: () => {} });
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { result: 'connected' });
+  assert.equal(r.headers.get('access-control-allow-origin'), ORIGIN);
+  assert.equal(saved[0].channelId, CH);
+});
+
+test('callback: POST sem parâmetros retorna invalid_state sem redirecionamento silencioso', async () => {
+  const { d, saved } = await oauthDeps();
+  const r = await handleCallback(new Request('https://x.test/cb', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+  }), { oauth: d, webUrl: ORIGIN, log: () => {} });
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { result: 'invalid_state' });
+  assert.equal(saved.length, 0);
+});
+
+test('callback: state consumido uma vez impede processamento duplicado', async () => {
+  const consumed = new Set<string>();
+  const { d, saved } = await oauthDeps({
+    consumeState: (state) => {
+      if (consumed.has(state)) return Promise.resolve(null);
+      consumed.add(state);
+      return Promise.resolve({ workspace_id: 'ws', channel_id: CH, required_scopes: ['video.upload'] });
+    },
+  });
+  const makeRequest = () => new Request('https://x.test/cb', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code: 'abc', state: 'single-use' }),
+  });
+  const first = await handleCallback(makeRequest(), { oauth: d, webUrl: ORIGIN, log: () => {} });
+  const second = await handleCallback(makeRequest(), { oauth: d, webUrl: ORIGIN, log: () => {} });
+  assert.deepEqual(await first.json(), { result: 'connected' });
+  assert.deepEqual(await second.json(), { result: 'invalid_state' });
+  assert.equal(saved.length, 1);
 });
 
 test('callback: sucesso cifra os tokens com AAD = canal e redireciona para /canais', async () => {
@@ -459,7 +516,7 @@ test('callback: escopo obrigatório não concedido -> missing_scope e canal bloq
 });
 
 test('callback: outra conta TikTok -> account_mismatch; troca de code falha -> error', async () => {
-  const mism = await oauthDeps({ getChannel: () => Promise.resolve({ id: CH, provider_user_id: 'outra-conta' }) });
+  const mism = await oauthDeps({ getChannel: () => Promise.resolve({ id: CH, workspace_id: 'ws', provider_user_id: 'outra-conta' }) });
   const r1 = await handleCallback(cb('code=abc&state=good'), { oauth: mism.d, webUrl: ORIGIN, log: () => {} });
   assert.equal(loc(r1), `${ORIGIN}/canais?tiktok=account_mismatch`);
   assert.equal(mism.saved.length, 0);
@@ -469,6 +526,15 @@ test('callback: outra conta TikTok -> account_mismatch; troca de code falha -> e
   });
   const r2 = await handleCallback(cb('code=abc&state=good'), { oauth: fail.d, webUrl: ORIGIN, log: () => {} });
   assert.equal(loc(r2), `${ORIGIN}/canais?tiktok=error`);
+});
+
+test('callback: canal de outro workspace nunca recebe os tokens', async () => {
+  const { d, saved } = await oauthDeps({
+    getChannel: () => Promise.resolve({ id: CH, workspace_id: 'workspace-estrangeiro', provider_user_id: null }),
+  });
+  const r = await handleCallback(cb('code=abc&state=good'), { oauth: d, webUrl: ORIGIN, log: () => {} });
+  assert.equal(loc(r), `${ORIGIN}/canais?tiktok=invalid_state`);
+  assert.equal(saved.length, 0);
 });
 
 test('callback: conta já usada em outro canal -> duplicate', async () => {
@@ -482,6 +548,26 @@ test('callback: exceção inesperada vira redirect error (sem vazar detalhes)', 
   const r = await handleCallback(cb('code=abc&state=good'), { oauth: d, webUrl: ORIGIN, log: () => {} });
   assert.equal(r.status, 302);
   assert.equal(loc(r), `${ORIGIN}/canais?tiktok=error`);
+});
+
+test('callback: erros de troca não registram code, state nem texto bruto', async () => {
+  const logs: string[] = [];
+  const { d } = await oauthDeps({
+    consumeState: (state) => Promise.resolve(state === 'state-secret'
+      ? { workspace_id: 'ws', channel_id: CH, required_scopes: ['video.upload'] }
+      : null),
+    tiktok: { exchangeCode: () => Promise.reject(new Error('oauth-code-secret refresh-token-secret')) },
+  });
+  const r = await handleCallback(cb('code=oauth-code-secret&state=state-secret'), {
+    oauth: d,
+    webUrl: ORIGIN,
+    log: (message, data) => logs.push(JSON.stringify({ message, data })),
+  });
+  assert.equal(loc(r), `${ORIGIN}/canais?tiktok=error`);
+  const logText = logs.join('\n');
+  assert.equal(logText.includes('oauth-code-secret'), false);
+  assert.equal(logText.includes('state-secret'), false);
+  assert.equal(logText.includes('refresh-token-secret'), false);
 });
 
 test('callback: sem WEB_URL responde texto simples 200', async () => {

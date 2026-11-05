@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { utcToZonedInput, zonedToUtc } from './time';
+import { resolveLocalDateTime, utcToZonedInput, zonedToUtc } from './time';
 
 describe('zonedToUtc', () => {
   it('converte horário de Brasília (UTC-3) para UTC', () => {
@@ -36,5 +36,23 @@ describe('utcToZonedInput', () => {
     const iso = '2026-07-01T11:00:00.000Z';
     const local = utcToZonedInput(iso, 'Europe/London');
     expect(zonedToUtc(local, 'Europe/London').toISOString()).toBe(iso);
+  });
+});
+
+describe('resolveLocalDateTime', () => {
+  it('rejeita hora inexistente na transição de verão', () => {
+    expect(resolveLocalDateTime('2026-03-29T01:30', 'Europe/London').kind).toBe('nonexistent');
+  });
+  it('retorna as duas ocorrências de hora ambígua em ordem UTC', () => {
+    const result = resolveLocalDateTime('2026-10-25T01:30', 'Europe/London');
+    expect(result.kind).toBe('ambiguous');
+    expect(result.candidates.map((date) => date.toISOString())).toEqual([
+      '2026-10-25T00:30:00.000Z',
+      '2026-10-25T01:30:00.000Z',
+    ]);
+  });
+  it('identifica um fuso inválido e data malformada', () => {
+    expect(resolveLocalDateTime('2026-01-01T09:00', 'Not/A_Zone').kind).toBe('invalid');
+    expect(resolveLocalDateTime('2026-02-30T09:00', 'UTC').kind).toBe('invalid');
   });
 });

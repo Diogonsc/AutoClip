@@ -4,7 +4,7 @@
 //
 // Cada RPC aqui corresponde a uma função de 20261021000002_tiktok_integration.sql.
 import type { TokenStore } from './tokens.ts';
-import type { ChannelStatus, Channel, CreatorInfo, Db, FinishArgs, Job, Media, Settings } from './types.ts';
+import type { ChannelStatus, Channel, Connection, CreatorInfo, Db, FinishArgs, Job, Media, Settings } from './types.ts';
 
 interface SbResult<T = unknown> {
   data: T | null;
@@ -55,7 +55,7 @@ export function createDb(sb: SbClient): Db {
       return ok(
         await sb
           .from('media_assets')
-          .select('id, workspace_id, status, storage_key, mime_type, file_size_bytes, duration_seconds')
+          .select('id, workspace_id, status, storage_key, mime_type, file_size_bytes, duration_seconds, validation_status, checksum_sha256, detected_mime_type, detected_video_codec')
           .eq('id', mediaId)
           .maybeSingle(),
         'getMedia',
@@ -66,7 +66,7 @@ export function createDb(sb: SbClient): Db {
       if (!mediaIds.length) return [];
       return (ok(
         await sb.from('media_assets')
-          .select('id, workspace_id, status, storage_key, mime_type, file_size_bytes, duration_seconds, width, height')
+          .select('id, workspace_id, status, storage_key, mime_type, file_size_bytes, duration_seconds, width, height, validation_status, checksum_sha256, detected_mime_type, detected_video_codec')
           .in('id', mediaIds),
         'getMediaAssets',
       ) ?? []) as Media[];
@@ -144,7 +144,7 @@ export function createTokenStore(sb: SbClient): TokenStore {
         await sb
           .from('oauth_connections')
           .select(
-            'channel_id, workspace_id, encrypted_access_token, encrypted_refresh_token, access_token_expires_at, refresh_token_expires_at, granted_scopes',
+            'channel_id, workspace_id, encrypted_access_token, encrypted_refresh_token, access_token_expires_at, refresh_token_expires_at, granted_scopes, refresh_state, token_version',
           )
           .eq('channel_id', channelId)
           .maybeSingle(),
@@ -152,36 +152,38 @@ export function createTokenStore(sb: SbClient): TokenStore {
       );
     },
 
-    async saveTokens(a) {
-      ok(
-        await sb
-          .from('oauth_connections')
-          .update({
-            encrypted_access_token: a.encAccess,
-            encrypted_refresh_token: a.encRefresh,
-            access_token_expires_at: a.accessExp.toISOString(),
-            refresh_token_expires_at: a.refreshExp ? a.refreshExp.toISOString() : null,
-            granted_scopes: a.scopes,
-          })
-          .eq('channel_id', a.channelId),
-        'saveTokens',
-      );
-      // O worker decide pelos escopos do canal; mantém os dois em sincronia.
-      ok(await sb.from('channels').update({ granted_scopes: a.scopes }).eq('id', a.channelId), 'saveTokens.channel');
+    async acquireRefresh(a) {
+      const result = ok(await sb.rpc('acquire_tiktok_token_refresh', {
+        p_channel: a.channelId, p_workspace: a.workspaceId, p_attempt: a.attemptId,
+      }), 'acquireRefresh') as {
+        state?: string; token_version?: number; connection?: Connection;
+      } | null;
+      const state = result?.state;
+      if (state !== 'ACQUIRED' && state !== 'BUSY' && state !== 'REAUTH_REQUIRED' && state !== 'NOT_FOUND') {
+        throw new Error('acquireRefresh: resposta inválida');
+      }
+      return {
+        state,
+        ...(result?.connection ? { connection: result.connection } : {}),
+        ...(typeof result?.token_version === 'number' ? { token_version: result.token_version } : {}),
+      };
     },
 
-    async setChannelStatus(channelId, status, errorCode, errorMessage) {
-      ok(
-        await sb
-          .from('channels')
-          .update({
-            connection_status: status,
-            last_error_code: errorCode,
-            last_error_message: errorMessage ? errorMessage.slice(0, 500) : null,
-          })
-          .eq('id', channelId),
-        'setChannelStatus',
-      );
+    async completeRefresh(a) {
+      return ok(await sb.rpc('complete_tiktok_token_refresh', {
+        p_channel: a.channelId, p_workspace: a.workspaceId, p_attempt: a.attemptId,
+        p_token_version: a.tokenVersion, p_enc_access: a.encAccess, p_enc_refresh: a.encRefresh,
+        p_access_exp: a.accessExp.toISOString(), p_refresh_exp: a.refreshExp.toISOString(), p_scopes: a.scopes,
+      }), 'completeRefresh') === true;
     },
+
+    async failRefresh(a) {
+      return ok(await sb.rpc('fail_tiktok_token_refresh', {
+        p_channel: a.channelId, p_workspace: a.workspaceId, p_attempt: a.attemptId,
+        p_token_version: a.tokenVersion, p_error_code: a.code,
+      }), 'failRefresh') === true;
+    },
+
+
   };
 }

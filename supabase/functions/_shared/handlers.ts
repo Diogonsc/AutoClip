@@ -203,30 +203,52 @@ export interface CallbackHandlerDeps {
   oauth: OAuthDeps;
   /** WEB_URL: o resultado volta para o front como /canais?tiktok=<resultado>. */
   webUrl: string | undefined;
+  origins?: string[];
   log(msg: string, data?: unknown): void;
 }
 
 export async function handleCallback(req: Request, d: CallbackHandlerDeps): Promise<Response> {
-  if (req.method !== 'GET') return json({ error: 'method_not_allowed' }, 405);
+  const headers = corsHeaders(req.headers.get('origin'), d.origins ?? []);
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return json({ error: 'method_not_allowed' }, 405, headers);
+  }
 
-  const q = new URL(req.url).searchParams;
+  let params: { code?: string | null; state?: string | null; error?: string | null; scopes?: string | null };
+  if (req.method === 'GET') {
+    const q = new URL(req.url).searchParams;
+    params = { code: q.get('code'), state: q.get('state'), error: q.get('error'), scopes: q.get('scopes') };
+  } else {
+    const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+    const stringOrNull = (key: string): string | null =>
+      typeof body?.[key] === 'string' ? body[key] as string : null;
+    params = {
+      code: stringOrNull('code'),
+      state: stringOrNull('state'),
+      error: stringOrNull('error'),
+      scopes: stringOrNull('scopes'),
+    };
+  }
+
   let result: OAuthResult;
   try {
-    result = await handleOAuthCallback(
-      { code: q.get('code'), state: q.get('state'), error: q.get('error'), scopes: q.get('scopes') },
-      d.oauth,
-    );
-  } catch (e) {
-    d.log('callback.unexpected', { error: errMsg(e) });
+    result = await handleOAuthCallback(params, d.oauth);
+  } catch {
+    // Provider errors must not place OAuth codes or token material in logs.
+    d.log('callback.unexpected');
     result = 'error';
   }
+
+  if (req.method === 'POST') return json({ result }, 200, headers);
 
   const target = callbackRedirectUrl(d.webUrl, result);
   if (!target) {
     return new Response('Conexão processada. Pode fechar esta janela e voltar ao aplicativo.', {
       status: 200,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+      headers: { ...headers, 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
     });
   }
-  return redirect(target);
+  const response = redirect(target);
+  for (const [name, value] of Object.entries(headers)) response.headers.set(name, value);
+  return response;
 }

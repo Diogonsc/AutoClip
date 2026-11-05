@@ -57,3 +57,9 @@ verify_jwt = false # chamada pelo TikTok via domínio verificado; protegida por 
 
 [functions.media-cleanup]
 verify_jwt = false # tarefa interna; autenticada por x-worker-secret e jamais pelo navegador
+
+[functions.media-validate]
+verify_jwt = false # valida JWT, vínculo ao workspace e autoria antes de promover mídia
+
+[functions.video-worker-api]
+verify_jwt = false # HMAC dedicado + timestamp + nonce; credencial worker não é service_role

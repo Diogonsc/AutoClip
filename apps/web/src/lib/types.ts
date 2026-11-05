@@ -125,6 +125,52 @@ export interface Channel {
   created_at: string;
 }
 
+export interface AccountGroup {
+  id: string;
+  workspace_id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AccountGroupMember {
+  workspace_id: string;
+  group_id: string;
+  channel_id: string;
+  created_at: string;
+}
+
+export type BatchStrategy = "ALL_TO_ALL" | "SEQUENTIAL" | "BALANCED" | "CSV";
+
+export interface PublicationBatch {
+  id: string;
+  workspace_id: string;
+  created_by: string | null;
+  idempotency_key: string;
+  label: string | null;
+  strategy: BatchStrategy;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicationBatchSummary extends PublicationBatch {
+  total: number;
+  published: number;
+  failed: number;
+  cancelled: number;
+  awaiting: number;
+  completed: number;
+  scheduled: number;
+  processing: number;
+  unknown: number;
+  sent_to_inbox: number;
+  channels: string[];
+}
+
 export interface MediaAsset {
   id: string;
   workspace_id: string;
@@ -138,6 +184,15 @@ export interface MediaAsset {
   tags: string[];
   category: string | null;
   status: MediaStatus;
+  validation_status?: "PENDING" | "VALIDATING" | "VALIDATED" | "REJECTED" | "UNVERIFIED";
+  detected_mime_type?: string | null;
+  validated_at?: string | null;
+  validator_version?: string | null;
+  validation_error_code?: string | null;
+  storage_deleted_at?: string | null;
+  storage_deletion_reason?: string | null;
+  cleanup_locked_at?: string | null;
+  cleanup_last_error?: string | null;
   created_at: string;
 }
 
@@ -167,6 +222,7 @@ export interface PublicationJob {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  batch_id?: string | null;
   approval_required?: boolean;
   approval_status?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED";
   approved_at?: string | null;

@@ -10,7 +10,6 @@ import {
   Menu,
   PlayCircle,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   UsersRound,
   X,
@@ -33,11 +32,6 @@ const features = [
     icon: Layers3,
     title: "Fluxo de revisão simples",
     text: "Envie links de aprovação e mantenha clientes, criadores e equipe alinhados antes de publicar.",
-  },
-  {
-    icon: ShoppingBag,
-    title: "TikTok Shop integrado",
-    text: "Prepare vídeos com produtos afiliados e acompanhe o caminho para conteúdo com carrinho laranja.",
   },
   {
     icon: UsersRound,
@@ -72,7 +66,6 @@ const plans = [
       "Tudo do Essencial",
       "Aprovação de cliente",
       "Múltiplos canais",
-      "TikTok Shop e afiliados",
       "Relatórios operacionais",
     ],
     featured: true,
@@ -169,7 +162,7 @@ export default function LandingPage() {
             <span className="text-[#b4a0ff]">Cresça com método.</span>
           </h1>
           <p className="mt-7 max-w-xl text-lg leading-8 text-[#b9b5c9]">
-            AutoClip reúne planejamento, mídia, publicação e TikTok Shop em uma
+            AutoClip reúne planejamento, mídia e publicação em uma
             operação de conteúdo que seu time realmente consegue acompanhar.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
@@ -279,7 +272,7 @@ export default function LandingPage() {
               [
                 "04",
                 "Publique",
-                "Envie para TikTok, acompanhe o status e use o fluxo de Shop quando houver produto afiliado.",
+                "Envie vídeos e carrosséis ao TikTok e acompanhe o status da publicação.",
               ],
             ].map(([number, title, text]) => (
               <li
@@ -422,7 +415,7 @@ function HeroPanel() {
             AUTCLIP / CALENDÁRIO
           </span>
         </div>
-        <div className="mt-4 grid grid-cols-[1fr_11rem] gap-4">
+        <div className="mt-4 grid grid-cols-1 gap-4">
           <div className="grid gap-3">
             <div className="rounded-xl border border-white/8 bg-[#1d1b28] p-3">
               <div className="flex items-center justify-between">
@@ -443,15 +436,6 @@ function HeroPanel() {
                   </p>
                   <p className="m-0 text-xs text-[#8f78d0]">Hoje, 18:30</p>
                 </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-[#8f78d0]/25 bg-[#8f78d0]/10 p-3">
-              <p className="m-0 text-xs text-[#d8ceff]">TikTok Shop</p>
-              <p className="mt-2 text-sm font-medium text-white">
-                Produto afiliado vinculado
-              </p>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full w-4/5 rounded-full bg-[#8f78d0]" />
               </div>
             </div>
           </div>

@@ -271,14 +271,22 @@ export function createTikTokApi(fetchImpl?: typeof fetch, opts: ApiOptions = {})
     return json ?? {};
   }
 
-  function toTokenResult(j: Json): TokenResult {
+  function toTokenResult(j: Json, requireRotation = false): TokenResult {
     const accessToken = str(j.access_token);
     if (!accessToken) throw new TikTokError('MALFORMED', 'missing_access_token', 'Resposta de token sem access_token.');
+    const expiresIn = typeof j.expires_in === 'number' && Number.isFinite(j.expires_in) ? j.expires_in : 0;
+    const refreshExpiresIn = typeof j.refresh_expires_in === 'number' && Number.isFinite(j.refresh_expires_in)
+      ? j.refresh_expires_in
+      : null;
+    const refreshToken = str(j.refresh_token);
+    if (expiresIn <= 0 || (requireRotation && (!refreshToken || refreshExpiresIn === null || refreshExpiresIn <= 0))) {
+      throw new TikTokError('MALFORMED', 'incomplete_token_response', 'Resposta de token incompleta.');
+    }
     return {
       accessToken,
-      refreshToken: str(j.refresh_token),
-      expiresIn: typeof j.expires_in === 'number' ? j.expires_in : 86_400,
-      refreshExpiresIn: typeof j.refresh_expires_in === 'number' ? j.refresh_expires_in : null,
+      refreshToken,
+      expiresIn,
+      refreshExpiresIn,
       openId: str(j.open_id),
       scopes: str(j.scope)
         .split(',')
@@ -296,7 +304,7 @@ export function createTikTokApi(fetchImpl?: typeof fetch, opts: ApiOptions = {})
           code,
           grant_type: 'authorization_code',
           redirect_uri: redirectUri,
-        }),
+        }), true,
       );
     },
 
@@ -307,7 +315,7 @@ export function createTikTokApi(fetchImpl?: typeof fetch, opts: ApiOptions = {})
           client_secret: cfg.clientSecret,
           grant_type: 'refresh_token',
           refresh_token: refreshToken,
-        }),
+        }), true,
       );
     },
 

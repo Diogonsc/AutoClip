@@ -27,6 +27,8 @@ export interface WorkerDeps {
   storage: { download(key: string): Promise<Uint8Array>; signedUrl(key: string, expiresInSeconds: number): Promise<string>; verifiedHost?: string | null };
   tiktok: Pick<TikTokApi, 'queryCreatorInfo' | 'initVideoPost' | 'initPhotoPost' | 'uploadVideo' | 'fetchPublishStatus'>;
   ensureToken(channelId: string, opts?: { force?: boolean }): Promise<string>;
+  /** False when omitted. This is configured only by the trusted server runtime. */
+  shopEnabled?: boolean;
   shop?: {
     publish(job: Job): Promise<{ videoId: string }>;
     status(videoId: string): Promise<{ status: string; reason?: string }>;
@@ -34,6 +36,22 @@ export interface WorkerDeps {
   now(): Date;
   sleep(ms: number): Promise<void>;
   log(msg: string, data?: unknown): void;
+}
+
+function isShopJob(job: Job): boolean {
+  return Boolean(job.shop_product_id || job.shop_video_id || job.remote_publish_id?.startsWith('shop:'));
+}
+
+async function blockDisabledShopJob(job: Job, d: WorkerDeps, refundAttempt: boolean): Promise<void> {
+  await d.db.finishJob({
+    jobId: job.id,
+    status: 'BLOCKED_PERMISSION',
+    errorCode: 'TIKTOK_SHOP_DISABLED',
+    errorMessage: 'TikTok Shop está indisponível neste lançamento. O job foi preservado e não será processado.',
+    result: 'BLOCKED',
+    refundAttempt,
+    event: { type: 'TIKTOK_SHOP_DISABLED', payload: { preserved: true } },
+  });
 }
 
 /** A API Shop pode ter aceitado a publicação, mas o ID remoto não foi persistido. */
@@ -202,6 +220,11 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
   let idSaved = false;
 
   try {
+    // Guard before settings, token, storage, or external API access.
+    if (isShopJob(job) && d.shopEnabled !== true) {
+      await blockDisabledShopJob(job, d, true);
+      return;
+    }
     // Defesa: job reivindicado já com publish_id (ex.: reagendado após bloqueio).
     // Nunca inicia outro envio: primeiro reconcilia o anterior.
     if (job.remote_publish_id) {
@@ -267,7 +290,28 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
       return;
     }
     const mediaList = orderedMedia as NonNullable<typeof orderedMedia[number]>[];
+    if (mediaList.some((m) => m.validation_status !== 'VALIDATED' || !m.checksum_sha256)) {
+      await fin({ status: 'BLOCKED_PERMISSION', errorCode: 'MEDIA_VALIDATION_REQUIRED', errorMessage: 'Uma ou mais mídias ainda não passaram pela validação segura. O job permanece bloqueado e sua reserva é preservada.', result: 'BLOCKED' });
+      return;
+    }
+    if (postType === 'VIDEO' && mediaList.some((m) => m.mime_type !== 'video/mp4' || m.detected_mime_type !== 'video/mp4' || m.detected_video_codec !== 'h264')) {
+      await fin({ status: 'FAILED', errorCode: 'VIDEO_VALIDATION_ATTESTATION_INVALID', errorMessage: 'O vídeo não possui atestado MP4/H.264 compatível; publicação bloqueada.', result: 'FAILED' });
+      return;
+    }
+    if (postType === 'PHOTO' && mediaList.some((m) => !['image/jpeg','image/png','image/webp'].includes(m.mime_type) || m.detected_mime_type !== m.mime_type)) {
+      await fin({ status: 'FAILED', errorCode: 'PHOTO_VALIDATION_ATTESTATION_INVALID', errorMessage: 'Uma imagem não possui atestado binário compatível; publicação bloqueada.', result: 'FAILED' });
+      return;
+    }
     const media = mediaList[0];
+    for (const asset of mediaList) {
+      const bytes = await d.storage.download(asset.storage_key);
+      const digest = await crypto.subtle.digest('SHA-256', Uint8Array.from(bytes).buffer as ArrayBuffer);
+      const actualHash = [...new Uint8Array(digest)].map((v) => v.toString(16).padStart(2, '0')).join('');
+      if (actualHash !== asset.checksum_sha256 || bytes.byteLength !== asset.file_size_bytes) {
+        await fin({ status: 'FAILED', errorCode: 'MEDIA_INTEGRITY_MISMATCH', errorMessage: 'A mídia não corresponde ao arquivo validado; publicação bloqueada.', result: 'FAILED' });
+        return;
+      }
+    }
     if (postType === 'PHOTO') {
       if (mediaList.length > 35 || mediaList.some((m) => !['image/jpeg', 'image/png', 'image/webp'].includes(m.mime_type) || m.file_size_bytes > 20 * 1024 * 1024 || (m.width != null && (m.width < 360 || m.width > 4096)) || (m.height != null && (m.height < 360 || m.height > 4096)))) {
         await fin({ status: 'FAILED', errorCode: 'INVALID_PHOTO_SET', errorMessage: 'O carrossel precisa ter de 1 a 35 imagens compatíveis.', result: 'FAILED' });
@@ -454,6 +498,10 @@ export async function processPublish(job: Job, d: WorkerDeps): Promise<void> {
 export async function pollJob(job: Job, d: WorkerDeps): Promise<void> {
   const fin = (a: Omit<FinishArgs, 'jobId'>) => d.db.finishJob({ jobId: job.id, ...a });
   const remoteId = job.remote_publish_id;
+  if (isShopJob(job) && d.shopEnabled !== true) {
+    await blockDisabledShopJob(job, d, false);
+    return;
+  }
   if (!remoteId) {
     await fin({ status: 'UNKNOWN', errorCode: 'NO_PUBLISH_ID', errorMessage: 'Job sem publish_id para conferir.', result: 'UNKNOWN' });
     return;
@@ -622,6 +670,10 @@ export async function runWorker(
   while (inBudget() && polled < (o.maxPolls ?? 50)) {
     const job = await d.db.claimPollingJob(o.workerId);
     if (!job) break;
+    if (isShopJob(job) && d.shopEnabled !== true) {
+      await blockDisabledShopJob(job, d, false);
+      continue;
+    }
     if (!inBudget()) {
       await d.db.finishJob({
         jobId: job.id,
@@ -641,6 +693,10 @@ export async function runWorker(
   while (inBudget()) {
     const job = await d.db.claimPublishJob(o.workerId);
     if (!job) break;
+    if (isShopJob(job) && d.shopEnabled !== true) {
+      await blockDisabledShopJob(job, d, true);
+      continue;
+    }
     if (!inBudget()) {
       await d.db.finishJob({
         jobId: job.id,

@@ -2,9 +2,11 @@
 
 ## Owner and authority
 
-The AutoClip Owner is the Incident Lead and has authority to declare an incident, suspend affected integrations, rotate secrets and tokens, engage service providers, approve external notices, and close an incident. The security contact is `diogos.nascimento@outlook.com`.
+Owner-provided identity for drafting: AutoClip is the trade name of 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil. Contact: diogos.nascimento@outlook.com. The owner confirms regular review of this security mailbox; this owner attestation is not independent verification and does not establish 24/7 coverage or a response-time commitment. No CPF or full residential address is included. The MEI holder is the accountable business operator; controller/processor roles depend on the incident-related processing activity.
 
-The Owner must monitor this mailbox and record each suspected incident in the incident register below. If the Owner is unavailable, do not close a material incident until a designated delegate has reviewed the record.
+This runbook assigns the AutoClip Owner as Incident Lead, with authority to declare an incident, suspend affected integrations, rotate secrets and tokens, engage service providers, approve external notices, and close an incident. The security contact is `diogos.nascimento@outlook.com`.
+
+The Owner is required to monitor this mailbox and record each suspected incident in the incident register below. This is a procedural requirement. The owner confirms regular review, while response coverage, a delegate, and incident-register operation have not been verified. If the Owner is unavailable, do not close a material incident until a designated delegate has reviewed the record.
 
 ## What must be reported
 

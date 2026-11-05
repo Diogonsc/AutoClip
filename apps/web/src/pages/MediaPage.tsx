@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../auth/AuthProvider";
 import { useCurrentWorkspace, useWorkspace } from "../auth/WorkspaceProvider";
 import { Library, Upload } from "lucide-react";
 import { useConfirm } from "../components/confirm-provider";
@@ -42,7 +41,7 @@ import Loading from "@/components/loading";
 const ALL = "__all__";
 const MAX_BYTES = 50 * 1024 * 1024; // limite do plano Free do Supabase
 const EXT_BY_MIME: Record<string, string> = {
-  "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
+  "video/mp4": "mp4",
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
 };
 
@@ -51,33 +50,6 @@ interface VideoMeta {
   width: number;
   height: number;
 }
-
-function readVideoMeta(file: File): Promise<VideoMeta | null> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement("video");
-    const finish = (r: VideoMeta | null) => {
-      URL.revokeObjectURL(url);
-      resolve(r);
-    };
-    const timer = window.setTimeout(() => finish(null), 8000);
-    video.preload = "metadata";
-    video.onloadedmetadata = () => {
-      window.clearTimeout(timer);
-      finish({
-        duration: video.duration,
-        width: video.videoWidth,
-        height: video.videoHeight,
-      });
-    };
-    video.onerror = () => {
-      window.clearTimeout(timer);
-      finish(null);
-    };
-    video.src = url;
-  });
-}
-
 
 function readImageMeta(file: File): Promise<VideoMeta | null> {
   return new Promise((resolve) => {
@@ -91,7 +63,6 @@ function readImageMeta(file: File): Promise<VideoMeta | null> {
 
 export default function MediaPage() {
   const ws = useCurrentWorkspace();
-  const { user } = useAuth();
   const { canEdit, canAdmin } = useWorkspace();
   const qc = useQueryClient();
   const confirm = useConfirm();
@@ -111,7 +82,7 @@ export default function MediaPage() {
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const ext = EXT_BY_MIME[file.type];
-      if (!ext) throw new ApiError("Formato não suportado. Use MP4, MOV, WebM, JPEG, PNG ou WebP.");
+      if (!ext) throw new ApiError("Formato não suportado. Use MP4 H.264, JPEG, PNG ou WebP.");
       const isImage = file.type.startsWith("image/");
       if (isImage && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new ApiError("Fotos devem ser JPEG, PNG ou WebP.");
       if (file.size > (isImage ? 20 * 1024 * 1024 : MAX_BYTES))
@@ -119,60 +90,53 @@ export default function MediaPage() {
           `Arquivo acima do limite permitido (${formatBytes(isImage ? 20 * 1024 * 1024 : MAX_BYTES)}).`,
         );
 
-      const id = crypto.randomUUID();
-      const key = `${ws.id}/${id}/original.${ext}`;
-      const meta = isImage ? await readImageMeta(file) : await readVideoMeta(file);
-      if (isImage && (!meta || meta.width < 360 || meta.height < 360 || meta.width > 4096 || meta.height > 4096)) throw new ApiError("A imagem precisa ter dimensões entre 360 e 4096 pixels por lado.");
-
-      unwrap(
-        await supabase.from("media_assets").insert({
-          id,
-          workspace_id: ws.id,
-          original_filename: file.name,
-          storage_key: key,
-          mime_type: file.type,
-          file_size_bytes: file.size,
-          created_by: user!.id,
-        }),
-      );
-
+      if (isImage) {
+        const meta = await readImageMeta(file);
+        if (!meta || meta.width < 360 || meta.height < 360 || meta.width > 4096 || meta.height > 4096) throw new ApiError("A imagem precisa ter dimensões entre 360 e 4096 pixels por lado.");
+      }
+      const started = unwrap(await supabase.rpc("begin_media_upload", {
+        p_workspace: ws.id,
+        p_filename: file.name,
+        p_mime: file.type,
+        p_size: file.size,
+      })) as { media_id: string; quarantine_key: string };
+      const { media_id: id, quarantine_key: key } = started;
+      let uploaded = false;
       try {
         const up = await supabase.storage
-          .from("media")
+          .from("media-quarantine")
           .upload(key, file, { contentType: file.type, upsert: false });
         if (up.error) throw new ApiError(`Falha no envio: ${up.error.message}`);
-
-        const fin = await supabase.rpc("finalize_media", {
-          p_media_id: id,
-          p_duration: meta?.duration ?? null,
-          p_width: meta?.width ?? null,
-          p_height: meta?.height ?? null,
-        });
-        if (fin.error) throw toError(fin.error);
-        const result = fin.data as unknown as MediaAsset;
-        if (result.status !== "READY")
-          throw new ApiError(
-            "O arquivo não foi encontrado no armazenamento após o envio.",
-          );
+        uploaded = true;
+        const validation = await supabase.functions.invoke("media-validate", { body: { media_id: id } });
+        if (validation.error) {
+          const body = await validation.error.context?.json?.().catch(() => null);
+          throw new ApiError(`O servidor não aceitou este arquivo${body?.error ? ` (${body.error})` : ""}.`);
+        }
+        if (validation.data?.status === "VALIDATING") {
+          const deadline = Date.now() + 120_000;
+          while (Date.now() < deadline) {
+            await new Promise((resolve) => window.setTimeout(resolve, 1000));
+            const row = await supabase.from("media_assets").select("status,validation_status,validation_error_code").eq("id", id).single();
+            if (row.error) throw new ApiError("Não foi possível acompanhar a validação do vídeo.");
+            if (row.data.status === "READY" && row.data.validation_status === "VALIDATED") break;
+            if (row.data.status === "FAILED" || row.data.validation_status === "REJECTED") throw new ApiError(`O servidor rejeitou o vídeo${row.data.validation_error_code ? ` (${row.data.validation_error_code})` : ""}.`);
+          }
+          const check = await supabase.from("media_assets").select("status,validation_status").eq("id", id).single();
+          if (check.data?.status !== "READY" || check.data?.validation_status !== "VALIDATED") {
+            throw new ApiError("O vídeo continua em validação. Ele permanece privado e indisponível para agendamento; atualize a biblioteca em instantes.");
+          }
+        } else if (validation.data?.status !== "READY") throw new ApiError("O servidor não aprovou este arquivo para uso.");
       } catch (cause) {
         const reason =
           cause instanceof Error
             ? cause.message
             : "Falha ao finalizar o upload.";
-        const removed = await supabase.storage.from("media").remove([key]);
-        if (removed.error) {
-          throw new ApiError(
-            `${reason} O arquivo pode ter ficado no armazenamento; o registro foi mantido para permitir a limpeza: ${removed.error.message}`,
-          );
-        }
-        const deleted = await supabase
-          .from("media_assets")
-          .delete()
-          .eq("id", id);
-        if (deleted.error) {
-          throw new ApiError(
-            `${reason} O objeto foi removido, mas não foi possível limpar o registro: ${deleted.error.message}`,
-          );
+        // Depois que o upload foi aceito, timeout/rede não pode apagar objeto
+        // que o worker esteja validando. A fila é idempotente e com lease.
+        if (!uploaded) {
+          await supabase.storage.from("media-quarantine").remove([key]);
+          await supabase.rpc("fail_media_upload", { p_media_id: id, p_code: "UPLOAD_OR_VALIDATION_FAILED" });
         }
         throw cause instanceof Error ? cause : new ApiError(reason);
       }
@@ -214,37 +178,11 @@ export default function MediaPage() {
     mutationFn: async (a: MediaAsset) => {
       // A FK impede excluir mídia ainda usada por publicações, antes de apagar o objeto do Storage.
       unwrap(await supabase.from("media_assets").delete().eq("id", a.id));
+      if (a.status !== "READY") return;
       const rm = await supabase.storage.from("media").remove([a.storage_key]);
       if (rm.error) {
-        const restored = await supabase.from("media_assets").insert({
-          id: a.id,
-          workspace_id: a.workspace_id,
-          original_filename: a.original_filename,
-          storage_key: a.storage_key,
-          mime_type: a.mime_type,
-          file_size_bytes: a.file_size_bytes,
-          tags: a.tags,
-          category: a.category,
-          created_by: user!.id,
-        });
-        if (restored.error) {
-          throw toError({
-            message: `Não foi possível remover o arquivo nem restaurar o registro: ${rm.error.message}; ${restored.error.message}`,
-          });
-        }
-        const finalized = await supabase.rpc("finalize_media", {
-          p_media_id: a.id,
-          p_duration: a.duration_seconds,
-          p_width: a.width,
-          p_height: a.height,
-        });
-        if (finalized.error) {
-          throw toError({
-            message: `O arquivo não foi removido e o registro restaurado precisa ser finalizado: ${rm.error.message}; ${finalized.error.message}`,
-          });
-        }
         throw toError({
-          message: `Não foi possível remover o arquivo. O registro foi restaurado para permitir nova tentativa: ${rm.error.message}`,
+          message: `O registro foi removido, mas o objeto pode permanecer órfão e requer limpeza administrativa: ${rm.error.message}`,
         });
       }
     },
@@ -263,6 +201,10 @@ export default function MediaPage() {
   }
 
   const all = media.data ?? [];
+  const storedBytes = all
+    .filter((asset) => asset.status !== "DELETED")
+    .reduce((total, asset) => total + asset.file_size_bytes, 0);
+  const deletedCount = all.filter((asset) => asset.status === "DELETED").length;
   const allTags = [...new Set(all.flatMap((m) => m.tags))].sort();
   const visible = all.filter(
     (m) =>
@@ -281,7 +223,7 @@ export default function MediaPage() {
               <input
                 ref={fileInput}
                 type="file"
-                accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp"
+                accept="video/mp4,image/jpeg,image/png,image/webp"
                 hidden
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -302,7 +244,10 @@ export default function MediaPage() {
       />
 
       <Notice tone="neutral">
-        Vídeos MP4, MOV e WebM; fotos JPEG, PNG e WebP. Até {formatBytes(MAX_BYTES)} por arquivo. Para carrossel, selecione imagens ao criar a publicação.
+        Imagens JPEG, PNG e WebP (até 20 MB) e vídeos MP4 H.264 (até 50 MB) passam por validação binária no servidor antes do agendamento. MOV, WebM e outros codecs não são aceitos nesta versão.
+      </Notice>
+      <Notice tone="info">
+        Armazenamento atual: <strong>{formatBytes(storedBytes)}</strong>. {deletedCount > 0 ? `${deletedCount} arquivo(s) foram removidos do Storage e permanecem no histórico.` : "Arquivos removidos automaticamente continuam visíveis no histórico."}
       </Notice>
       <ErrorBox error={uploadError} />
       <ErrorBox error={media.error ?? remove.error} />
@@ -361,6 +306,14 @@ export default function MediaPage() {
                         {m.category}
                       </div>
                     )}
+                    {m.status === "DELETED" && (
+                      <div className="text-xs font-normal text-muted-foreground">
+                        Removido {formatDateTime(m.storage_deleted_at)}{m.storage_deletion_reason ? ` · ${m.storage_deletion_reason}` : ""}
+                      </div>
+                    )}
+                    {m.cleanup_locked_at && m.status === "READY" && (
+                      <div className="text-xs font-normal text-warning">Em revisão para retenção; novos agendamentos são bloqueados temporariamente.</div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge tone={mediaTone(m.status)}>
@@ -395,7 +348,7 @@ export default function MediaPage() {
                           Ver
                         </Button>
                       )}
-                      {canEdit && (
+                      {canEdit && m.status !== "DELETED" && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -404,7 +357,7 @@ export default function MediaPage() {
                           Editar
                         </Button>
                       )}
-                      {(canAdmin || (canEdit && m.status !== "READY")) && (
+                      {m.status !== "DELETED" && (canAdmin || (canEdit && m.status !== "READY")) && (
                         <Button
                           variant="destructive"
                           size="sm"

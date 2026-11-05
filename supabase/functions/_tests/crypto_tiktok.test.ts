@@ -241,6 +241,16 @@ test('token: form-urlencoded, rotação e erro no topo do JSON', async () => {
   );
 });
 
+test('OAuth authorization-code exchange rejects credentials without refresh token and expiry', async () => {
+  const cfg = { clientKey: 'ck', clientSecret: 'cs' };
+  const missingRefresh = api(() => json({ open_id: 'o', scope: 'user.info.basic', access_token: 'a', expires_in: 7200 }));
+  await assert.rejects(() => missingRefresh.api.exchangeCode(cfg, 'code', 'https://app.invalid/callback'),
+    (e: unknown) => e instanceof TikTokError && e.kind === 'MALFORMED');
+  const missingExpiry = api(() => json({ open_id: 'o', scope: 'user.info.basic', access_token: 'a', expires_in: 7200, refresh_token: 'r' }));
+  await assert.rejects(() => missingExpiry.api.exchangeCode(cfg, 'code', 'https://app.invalid/callback'),
+    (e: unknown) => e instanceof TikTokError && e.kind === 'MALFORMED');
+});
+
 test('uploadVideo: Content-Range correto e validação de status', async () => {
   const bytes = new Uint8Array(10);
   const seen: string[] = [];
