@@ -14,7 +14,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button";
 
 const features = [
@@ -87,50 +87,80 @@ const plans = [
 
 export default function LandingPage() {
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const close = () => setOpen(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#0c0c12] text-[#f4f4fb]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(143,120,208,.23),transparent_26%),radial-gradient(circle_at_88%_14%,rgba(89,65,140,.22),transparent_28%),linear-gradient(180deg,#0c0c12_0%,#101019_100%)]" />
-      <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
+    <div className="landing-page min-h-screen overflow-x-hidden">
+      <a className="landing-skip-link" href="#landing-main">
+        Pular para o conteúdo
+      </a>
+      <div
+        aria-hidden="true"
+        className="landing-backdrop pointer-events-none fixed inset-0"
+      />
+      <header className="landing-header relative z-20 mx-auto flex min-h-16 max-w-7xl items-center justify-between border-b px-5 lg:px-8">
         <Link
           to="/"
           className="flex items-center gap-2.5 text-inherit no-underline"
           onClick={close}
+          aria-label="AutoClip, página inicial"
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0] text-[#130f20] shadow-[0_0_28px_rgba(143,120,208,.38)]">
-            <Clapperboard className="size-5" />
+          <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0] text-[#130f20]">
+            <Clapperboard className="size-5" aria-hidden="true" />
           </span>
           <span className="font-heading text-lg font-semibold tracking-tight">
             AutoClip
           </span>
         </Link>
-        <nav className="hidden items-center gap-7 text-sm text-[#c7c2d7] md:flex">
+        <nav
+          aria-label="Navegação principal"
+          className="hidden items-center gap-6 text-sm text-[#c7c2d7] lg:flex"
+        >
           <a href="#recursos">Recursos</a>
           <a href="#como-funciona">Como funciona</a>
           <a href="#planos">Planos</a>
           <a href="#contato">Contato</a>
         </nav>
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Button variant="ghost" asChild>
             <Link to="/login">Entrar</Link>
           </Button>
-          <Button asChild>
+          <Button className="landing-primary-cta" asChild>
             <Link to="/cadastro">
-              Começar agora <ArrowRight className="ml-2 size-4" />
+              Criar conta <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
+        <button
+          ref={menuButtonRef}
+          type="button"
+          className="landing-menu-button grid size-11 place-items-center rounded-lg border border-white/10 text-white transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b4a0ff] lg:hidden"
           onClick={() => setOpen(!open)}
-          aria-label="Abrir menu"
+          aria-label={open ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={open}
+          aria-controls="landing-mobile-navigation"
         >
-          {open ? <X /> : <Menu />}
-        </Button>
-        {open && (
-          <nav className="absolute top-16 right-5 left-5 grid gap-2 rounded-2xl border border-white/10 bg-[#171620] p-4 shadow-2xl md:hidden">
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
+        <nav
+          id="landing-mobile-navigation"
+          aria-label="Navegação móvel"
+          hidden={!open}
+          className="landing-mobile-navigation absolute top-[calc(100%-0.25rem)] right-5 left-5 z-30 gap-1 rounded-2xl border border-white/10 bg-[#171620] p-4 shadow-2xl lg:hidden"
+        >
             <a href="#recursos" onClick={close}>
               Recursos
             </a>
@@ -144,37 +174,42 @@ export default function LandingPage() {
               Contato
             </a>
             <Button asChild className="mt-2">
-              <Link to="/cadastro">Começar agora</Link>
+              <Link to="/cadastro" onClick={close}>
+                Criar conta
+              </Link>
             </Button>
-          </nav>
-        )}
+        </nav>
       </header>
 
-      <section className="relative mx-auto grid max-w-7xl gap-14 px-5 pt-16 pb-24 lg:grid-cols-[1.04fr_.96fr] lg:px-8 lg:pt-28 lg:pb-36">
+      <main id="landing-main" tabIndex={-1}>
+      <section className="relative mx-auto grid max-w-7xl gap-10 px-5 pt-12 pb-16 sm:gap-12 sm:pt-16 sm:pb-20 lg:grid-cols-[1.04fr_.96fr] lg:gap-14 lg:px-8 lg:pt-28 lg:pb-36">
         <div className="max-w-2xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#8f78d0]/30 bg-[#8f78d0]/10 px-3 py-1.5 text-sm text-[#d8ceff]">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#8f78d0]/30 bg-[#8f78d0]/10 px-3 py-1.5 text-xs font-medium tracking-wide text-[#d8ceff] sm:text-sm">
             <Sparkles className="size-3.5" /> Conteúdo em movimento, operação
             sob controle
           </div>
-          <h1 className="font-heading text-5xl font-semibold leading-[1.03] tracking-[-.055em] text-white sm:text-6xl lg:text-7xl">
-            Publique melhor.
-            <br />
-            <span className="text-[#b4a0ff]">Cresça com método.</span>
+          <h1 className="max-w-[15ch] font-heading text-[clamp(2.3rem,4vw,3.75rem)] font-semibold leading-[1.04] tracking-[-.045em] text-white md:max-w-[20ch]">
+            Gerencie <span className="text-[#b4a0ff]">várias contas TikTok.</span>{" "}
+            Agende tudo em um só lugar.
           </h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-[#b9b5c9]">
-            AutoClip reúne planejamento, mídia e publicação em uma
-            operação de conteúdo que seu time realmente consegue acompanhar.
+          <p className="landing-hero-copy mt-6 max-w-xl text-base leading-7 sm:text-lg sm:leading-8">
+            Organize seus vídeos e carrosséis, planeje publicações em lote e
+            acompanhe cada etapa do agendamento em uma única plataforma.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Button size="lg" asChild>
+          <div className="mt-8 flex flex-col gap-3 min-[480px]:flex-row">
+            <Button
+              size="lg"
+              className="landing-primary-cta w-full min-[480px]:w-auto"
+              asChild
+            >
               <Link to="/cadastro">
-                Experimentar a plataforma <ArrowRight className="ml-2 size-4" />
+                Criar conta <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+              className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10 min-[480px]:w-auto"
               asChild
             >
               <a href="#como-funciona">
@@ -182,7 +217,7 @@ export default function LandingPage() {
               </a>
             </Button>
           </div>
-          <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#a9a4b7]">
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#c7c2d7]">
             <span className="flex items-center gap-2">
               <Check className="size-4 text-[#8f78d0]" /> Organize antes de
               publicar
@@ -216,7 +251,7 @@ export default function LandingPage() {
             {features.map(({ icon: Icon, title, text }) => (
               <article
                 key={title}
-                className="rounded-2xl border border-white/8 bg-[#15151e]/80 p-6 transition hover:-translate-y-1 hover:border-[#8f78d0]/35"
+                className="landing-feature-card rounded-2xl border border-white/8 bg-[#15151e]/80 p-6 transition hover:-translate-y-1 hover:border-[#8f78d0]/35"
               >
                 <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
                   <Icon className="size-5" />
@@ -368,7 +403,7 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
               <Link to="/cadastro">
-                Começar agora <ArrowRight className="ml-2 size-4" />
+                Criar conta <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
             <Button
@@ -382,6 +417,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
       <footer className="relative border-t border-white/8">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-[#9691a5] sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <span>
@@ -396,69 +432,107 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </main>
+    </div>
   );
 }
 
 function HeroPanel() {
   return (
-    <div className="relative mx-auto w-full max-w-xl self-center">
-      <div className="absolute -inset-8 rounded-full bg-[#8f78d0]/15 blur-3xl" />
-      <div className="relative overflow-hidden rounded-[1.6rem] border border-white/12 bg-[#15151e] p-4 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/8 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-[#ef647d]" />
-            <span className="size-2.5 rounded-full bg-[#f0d2a3]" />
-            <span className="size-2.5 rounded-full bg-[#67cba0]" />
-          </div>
-          <span className="rounded-md bg-white/5 px-2 py-1 text-[10px] text-[#aaa5b8]">
-            AUTCLIP / CALENDÁRIO
+    <figure className="landing-preview relative mx-auto w-full max-w-xl self-center">
+      <div
+        className="absolute -inset-5 rounded-full bg-[#8f78d0]/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div className="relative overflow-hidden rounded-[1.4rem] border border-white/12 bg-[#13131c] p-3 shadow-[0_24px_80px_rgba(0,0,0,.38)] sm:p-4">
+        <figcaption className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#8f78d0]/25 bg-[#8f78d0]/10 px-3 py-2 text-xs font-medium text-[#e0d7ff]">
+          <span className="flex items-center gap-2">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Prévia ilustrativa
           </span>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4">
-          <div className="grid gap-3">
-            <div className="rounded-xl border border-white/8 bg-[#1d1b28] p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#a9a4b7]">
-                  Publicação agendada
-                </span>
-                <span className="rounded-full bg-[#67cba0]/15 px-2 py-0.5 text-[10px] text-[#67cba0]">
-                  Pronta
-                </span>
-              </div>
-              <div className="mt-3 flex gap-3">
-                <div className="grid size-10 place-items-center rounded-lg bg-[#8f78d0]/20">
-                  <Clapperboard className="size-5 text-[#b4a0ff]" />
-                </div>
-                <div>
-                  <p className="m-0 text-sm font-medium text-white">
-                    Rotina que escala
-                  </p>
-                  <p className="m-0 text-xs text-[#8f78d0]">Hoje, 18:30</p>
-                </div>
-              </div>
+          <span className="text-[11px] font-normal text-[#c7c2d7]">
+            Dados demonstrativos
+          </span>
+        </figcaption>
+        <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#8f78d0] text-[#130f20]">
+              <Clapperboard className="size-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="m-0 truncate text-sm font-semibold text-white">
+                Calendário de conteúdo
+              </p>
+              <p className="m-0 text-xs text-[#aaa5b8]">
+                Workspace demonstrativo
+              </p>
             </div>
           </div>
-          <div className="rounded-xl border border-white/8 bg-[#11111a] p-3">
-            <p className="text-xs text-[#9691a5]">Esta semana</p>
-            <p className="mt-1 font-heading text-2xl font-semibold text-white">
-              12{" "}
-              <span className="text-sm font-normal text-[#9691a5]">
-                publicações
+          <span className="shrink-0 rounded-md border border-white/10 px-2 py-1 text-[10px] text-[#c7c2d7]">
+            SEMANA
+          </span>
+        </div>
+        <div className="grid gap-3 pt-3 sm:grid-cols-[8rem_1fr]">
+          <div className="hidden content-start gap-1 sm:grid">
+            <span className="rounded-md bg-[#8f78d0]/15 px-2.5 py-2 text-xs font-medium text-[#d8ceff]">
+              Calendário
+            </span>
+            <span className="rounded-md px-2.5 py-2 text-xs text-[#aaa5b8]">
+              Canais
+            </span>
+            <span className="rounded-md px-2.5 py-2 text-xs text-[#aaa5b8]">
+              Biblioteca
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between rounded-lg border border-white/8 bg-[#1b1a25] px-3 py-2">
+              <span className="text-xs font-medium text-white">
+                Próximas publicações
               </span>
-            </p>
-            <div className="mt-4 flex h-16 items-end gap-1.5">
-              {[35, 55, 42, 76, 60, 88, 70].map((h, i) => (
-                <span
-                  key={i}
-                  className="w-full rounded-t bg-[#8f78d0]"
-                  style={{ height: `${h}%`, opacity: 0.35 + i * 0.08 }}
-                />
-              ))}
+              <CalendarClock className="size-4 text-[#b4a0ff]" aria-hidden="true" />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-lg border border-white/8 bg-[#191821] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[11px] text-[#c7c2d7]">
+                    Canal A · Vídeo
+                  </span>
+                  <span
+                    className="size-2 shrink-0 rounded-full bg-[#8f78d0]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="mb-0 mt-3 text-sm font-medium text-white">
+                  Conteúdo agendado
+                </p>
+                <p className="mb-0 mt-1 text-xs text-[#aaa5b8]">
+                  Data e horário definidos
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/8 bg-[#191821] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[11px] text-[#c7c2d7]">
+                    Canal B · Carrossel
+                  </span>
+                  <span
+                    className="size-2 shrink-0 rounded-full bg-[#67cba0]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="mb-0 mt-3 text-sm font-medium text-white">
+                  Em revisão
+                </p>
+                <p className="mb-0 mt-1 text-xs text-[#aaa5b8]">
+                  Aguardando aprovação
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs text-[#aaa5b8]">
+              <Layers3 className="size-4 text-[#b4a0ff]" aria-hidden="true" />
+              Planejamento por canal e formato
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </figure>
   );
 }

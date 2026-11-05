@@ -194,6 +194,99 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Tokens e interações exclusivos da landing, sem alterar as superfícies do app. */
+.landing-page {
+  --landing-background: #0c0c12;
+  --landing-background-secondary: #101019;
+  --landing-surface: #15151e;
+  --landing-border: rgb(255 255 255 / 9%);
+  --landing-text: #f4f4fb;
+  --landing-text-secondary: #b9b5c9;
+  --landing-primary: #8f78d0;
+  --landing-primary-hover: #a18be4;
+  --landing-focus: #c9baff;
+
+  position: relative;
+  isolation: isolate;
+  background-color: var(--landing-background);
+  color: var(--landing-text);
+}
+
+.landing-backdrop {
+  background-image:
+    radial-gradient(circle at 12% 0%, rgb(143 120 208 / 15%), transparent 26%),
+    radial-gradient(circle at 88% 14%, rgb(89 65 140 / 13%), transparent 28%),
+    linear-gradient(180deg, var(--landing-background), var(--landing-background-secondary));
+}
+
+.landing-header {
+  border-color: var(--landing-border);
+  background: color-mix(in srgb, var(--landing-background) 82%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.landing-page .landing-primary-cta {
+  background-color: var(--landing-primary);
+  color: #130f20;
+}
+
+.landing-page .landing-primary-cta:hover {
+  background-color: var(--landing-primary-hover);
+}
+
+.landing-hero-copy {
+  color: var(--landing-text-secondary);
+}
+
+.landing-preview > .relative {
+  border-color: var(--landing-border);
+  background-color: var(--landing-surface);
+}
+
+.landing-mobile-navigation > a {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: 0.5rem;
+  padding-inline: 0.75rem;
+}
+
+.landing-mobile-navigation > a:hover {
+  background: rgb(255 255 255 / 6%);
+}
+
+.landing-page a:focus-visible,
+.landing-page button:focus-visible,
+.landing-page main:focus-visible {
+  outline: 3px solid var(--landing-focus);
+  outline-offset: 3px;
+}
+
+.landing-skip-link {
+  position: absolute;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-160%);
+  border-radius: 0.5rem;
+  background: var(--landing-text);
+  padding: 0.75rem 1rem;
+  color: var(--landing-background);
+  font-weight: 600;
+}
+
+.landing-skip-link:focus {
+  transform: translateY(0);
+}
+
+.landing-mobile-navigation:not([hidden]) {
+  display: grid;
+}
+
+.landing-preview {
+  color: var(--landing-text);
+}
+
 @media (max-width: 1080px) {
   html {
     font-size: 93.75%;
@@ -242,5 +335,24 @@ html {
 
   ::-webkit-scrollbar-track {
     padding: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing-page) {
+    scroll-behavior: auto !important;
+  }
+
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .landing-page .landing-feature-card:hover {
+    transform: none !important;
   }
 }
