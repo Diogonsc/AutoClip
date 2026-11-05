@@ -4,46 +4,19 @@ import {
   BadgeCheck,
   CalendarClock,
   Check,
+  CheckCircle2,
   Clapperboard,
-  FileVideo,
+  Clock3,
+  Image as ImageIcon,
   Layers3,
   Menu,
   PlayCircle,
-  ShieldCheck,
   Sparkles,
   UsersRound,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button";
-
-const features = [
-  {
-    icon: CalendarClock,
-    title: "Publique no momento certo",
-    text: "Organize vídeos, carrosséis e aprovações em um calendário claro para o seu time.",
-  },
-  {
-    icon: FileVideo,
-    title: "Biblioteca que acompanha o ritmo",
-    text: "Centralize mídia, legendas e versões para encontrar o conteúdo certo sem perder tempo.",
-  },
-  {
-    icon: Layers3,
-    title: "Fluxo de revisão simples",
-    text: "Envie links de aprovação e mantenha clientes, criadores e equipe alinhados antes de publicar.",
-  },
-  {
-    icon: UsersRound,
-    title: "Um espaço por operação",
-    text: "Separe canais, membros e permissões por workspace, sem abrir mão da visibilidade.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Feito para publicar com segurança",
-    text: "Estados de aprovação, registros de eventos e revalidações protegem cada agendamento.",
-  },
-];
 
 const plans = [
   {
@@ -243,25 +216,170 @@ export default function LandingPage() {
               Da ideia à publicação, sem perder o fio.
             </h2>
             <p className="mt-4 text-[#aaa5b8]">
-              Cada recurso existe para reduzir o atrito entre produzir, revisar,
-              aprovar e colocar conteúdo no ar.
+              Organize canais, planeje lotes e acompanhe o andamento das
+              publicações em uma visão feita para o trabalho do dia a dia.
             </p>
           </div>
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, text }) => (
-              <article
-                key={title}
-                className="landing-feature-card rounded-2xl border border-white/8 bg-[#15151e]/80 p-6 transition hover:-translate-y-1 hover:border-[#8f78d0]/35"
-              >
-                <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
-                  <Icon className="size-5" />
+
+          <div className="landing-bento-grid mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <article className="landing-bento-card landing-bento-accounts flex flex-col p-5 sm:p-6 lg:col-span-2 lg:row-span-2">
+              <div className="landing-demo-label" aria-label="Prévia ilustrativa, dados demonstrativos">
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Prévia ilustrativa · dados demonstrativos
+              </div>
+              <div className="landing-mini-window mt-5">
+                <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <UsersRound aria-hidden="true" className="size-4 text-[#b4a0ff]" />
+                    Canais e grupos
+                  </div>
+                  <span className="landing-mini-tag">Workspace</span>
+                </div>
+                <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div className="space-y-2.5">
+                    {[
+                      ["Canal 01", "Conectado"],
+                      ["Canal 02", "Conectado"],
+                      ["Canal 03", "Aguardando autorização"],
+                    ].map(([name, status]) => (
+                      <div key={name} className="flex min-w-0 items-center gap-3 rounded-xl border border-white/7 bg-white/[.025] px-3 py-2.5">
+                        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-[#34294d] text-xs font-semibold text-[#d5c9ff]">{name.slice(-2)}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-white">{name}</span>
+                        <span className="max-w-[8rem] truncate text-right text-xs text-[#aaa5b8]">{status}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-xl border border-[#8f78d0]/20 bg-[#8f78d0]/8 p-3 sm:min-w-36">
+                    <span className="flex items-center gap-2 text-xs font-medium text-[#d5c9ff]">
+                      <Layers3 aria-hidden="true" className="size-4" /> Grupo
+                    </span>
+                    <p className="mt-2 text-sm text-white">Campanha A</p>
+                    <p className="mt-1 text-xs text-[#aaa5b8]">Canais selecionados</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-auto flex items-start gap-3 pt-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
+                  <UsersRound aria-hidden="true" className="size-4" />
                 </span>
-                <h3 className="mt-5 font-heading text-lg font-medium text-white">
-                  {title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">{text}</p>
-              </article>
-            ))}
+                <div>
+                  <h3 className="font-heading text-lg font-medium text-white">
+                    Todas as suas contas. Uma única operação.
+                  </h3>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-[#aaa5b8]">
+                    Organize seus canais TikTok e trabalhe com grupos de contas
+                    em um ambiente centralizado.
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <article className="landing-bento-card p-5 sm:p-6 lg:col-span-2">
+              <div className="landing-demo-label" aria-label="Prévia ilustrativa, dados demonstrativos">
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Prévia ilustrativa · dados demonstrativos
+              </div>
+              <div className="landing-mini-window mt-5 space-y-2 p-3">
+                {[
+                  ["Canal 01", "Vídeo preparado", "Horário definido"],
+                  ["Canal 02", "Carrossel revisado", "Aguardando confirmação"],
+                  ["Canal 03", "Vídeo preparado", "Horário definido"],
+                ].map(([channel, media, timing]) => (
+                  <div key={channel} className="grid grid-cols-[minmax(0,.8fr)_minmax(0,1fr)] gap-2 rounded-lg border border-white/7 bg-white/[.025] px-3 py-2.5 text-xs sm:grid-cols-3">
+                    <span className="truncate font-medium text-white">{channel}</span>
+                    <span className="truncate text-[#c9c3d5]">{media}</span>
+                    <span className="col-span-2 flex items-center gap-1.5 truncate text-[#aaa5b8] sm:col-span-1">
+                      <CalendarClock aria-hidden="true" className="size-3.5 shrink-0 text-[#b4a0ff]" />
+                      {timing}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
+                  <CalendarClock aria-hidden="true" className="size-4" />
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-medium text-white">
+                    Planeje várias publicações de uma só vez.
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">
+                    Prepare conteúdos para diferentes contas e horários, revise
+                    as configurações e confirme seus agendamentos.
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <article className="landing-bento-card p-5 sm:p-6">
+              <div className="landing-demo-label" aria-label="Prévia ilustrativa, dados demonstrativos">
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Prévia ilustrativa · dados demonstrativos
+              </div>
+              <div className="landing-mini-window mt-5 grid grid-cols-2 gap-2 p-3">
+                <div className="landing-media-tile">
+                  <Clapperboard aria-hidden="true" className="size-5 text-[#c9baff]" />
+                  <span>Vídeo</span>
+                </div>
+                <div className="landing-media-tile landing-media-tile-photo">
+                  <ImageIcon aria-hidden="true" className="size-5 text-[#d6c6ff]" />
+                  <span>Fotos</span>
+                </div>
+                <div className="col-span-2 rounded-lg border border-white/7 bg-white/[.025] px-3 py-2 text-xs leading-5 text-[#aaa5b8]">
+                  Fotos / carrossel exigem Direct Post e permissões do TikTok.
+                  Inbox neste fluxo aceita apenas vídeos.
+                </div>
+              </div>
+              <div className="mt-5 flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
+                  <Clapperboard aria-hidden="true" className="size-4" />
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-medium text-white">
+                    Seu conteúdo, organizado para publicar.
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">
+                    Prepare vídeos e publicações de fotos nos fluxos compatíveis
+                    com os formatos e modos suportados.
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <article className="landing-bento-card p-5 sm:p-6">
+              <div className="landing-demo-label" aria-label="Prévia ilustrativa, dados demonstrativos">
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Prévia ilustrativa · dados demonstrativos
+              </div>
+              <div className="landing-mini-window mt-5 space-y-2 p-3">
+                <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-white/7 bg-white/[.025] px-3 py-2.5">
+                  <CheckCircle2 aria-hidden="true" className="size-4 shrink-0 text-emerald-300" />
+                  <span className="truncate text-xs text-[#e4e0ed]">Publicação concluída</span>
+                </div>
+                <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-white/7 bg-white/[.025] px-3 py-2.5">
+                  <Clock3 aria-hidden="true" className="size-4 shrink-0 text-[#c9baff]" />
+                  <span className="truncate text-xs text-[#e4e0ed]">Agendamento</span>
+                </div>
+                <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-white/7 bg-white/[.025] px-3 py-2.5">
+                  <BadgeCheck aria-hidden="true" className="size-4 shrink-0 text-amber-200" />
+                  <span className="truncate text-xs text-[#e4e0ed]">Precisa de atenção</span>
+                </div>
+              </div>
+              <div className="mt-5 flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
+                  <CheckCircle2 aria-hidden="true" className="size-4" />
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-medium text-white">
+                    Acompanhe cada etapa da publicação.
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">
+                    Visualize agendamentos, publicações concluídas e itens que
+                    precisam de atenção.
+                  </p>
+                </div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
@@ -270,62 +388,93 @@ export default function LandingPage() {
         id="como-funciona"
         className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8"
       >
-        <div className="grid gap-12 lg:grid-cols-[.85fr_1.15fr]">
-          <div>
-            <p className="text-sm font-medium text-[#b4a0ff]">COMO FUNCIONA</p>
-            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Seu próximo post não deveria depender de planilhas e mensagens
-              soltas.
-            </h2>
-            <p className="mt-5 text-[#aaa5b8]">
-              Dê contexto para cada publicação e deixe que o AutoClip cuide do
-              caminho operacional.
-            </p>
-            <Button className="mt-7" variant="outline" asChild>
-              <Link to="/cadastro">
-                Criar meu workspace <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-          </div>
-          <ol className="grid gap-4">
-            {[
-              [
-                "01",
-                "Centralize",
-                "Envie mídia, organize legendas e mantenha o material disponível para quem precisa criar.",
-              ],
-              [
-                "02",
-                "Planeje",
-                "Defina canal, data, formato e responsável com uma visão única do calendário.",
-              ],
-              [
-                "03",
-                "Revise",
-                "Peça aprovação antes do agendamento e mantenha o histórico da decisão registrado.",
-              ],
-              [
-                "04",
-                "Publique",
-                "Envie vídeos e carrosséis ao TikTok e acompanhe o status da publicação.",
-              ],
-            ].map(([number, title, text]) => (
-              <li
-                key={number}
-                className="grid grid-cols-[3.5rem_1fr] gap-4 rounded-2xl border border-white/8 bg-[#12121a] p-5"
-              >
-                <span className="font-heading text-lg text-[#8f78d0]">
-                  {number}
-                </span>
-                <div>
-                  <h3 className="font-medium text-white">{title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-[#aaa5b8]">
-                    {text}
-                  </p>
+        <div className="text-center">
+          <p className="text-sm font-medium text-[#b4a0ff]">COMO FUNCIONA</p>
+          <h2 className="mx-auto mt-3 max-w-3xl font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
+            Da organização ao acompanhamento, em um fluxo claro.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-[#aaa5b8]">
+            Uma visão demonstrativa de como contas, conteúdos e agendamentos se
+            conectam na operação.
+          </p>
+        </div>
+        <ol className="landing-flow-grid mt-12 grid gap-4 md:grid-cols-3">
+          {[
+            {
+              number: "01",
+              title: "Conecte e organize contas",
+              text: "Conecte seus canais TikTok e reúna os que trabalham juntos em grupos.",
+              visual: (
+                <div className="landing-flow-visual">
+                  <span className="landing-demo-label">
+                    <Sparkles aria-hidden="true" className="size-3.5" />
+                    Demonstração
+                  </span>
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/8 bg-white/[.025] p-3">
+                    <span aria-hidden="true" className="grid size-9 place-items-center rounded-full bg-[#34294d] text-xs text-[#d5c9ff]">01</span>
+                    <span className="flex-1 text-sm text-white">Canal TikTok</span>
+                    <BadgeCheck aria-hidden="true" className="size-4 text-emerald-300" />
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-[#8f78d0]/20 bg-[#8f78d0]/8 p-3 text-xs text-[#d5c9ff]">
+                    <UsersRound aria-hidden="true" className="size-4" /> Grupo de contas
+                  </div>
                 </div>
-              </li>
-            ))}
-          </ol>
+              ),
+            },
+            {
+              number: "02",
+              title: "Prepare conteúdos e horários",
+              text: "Escolha a mídia, defina as contas e organize quando cada publicação deve acontecer.",
+              visual: (
+                <div className="landing-flow-visual">
+                  <span className="landing-demo-label">
+                    <Sparkles aria-hidden="true" className="size-3.5" />
+                    Demonstração
+                  </span>
+                  <div className="mt-4 grid grid-cols-[2.5rem_1fr] items-center gap-3 rounded-xl border border-white/8 bg-white/[.025] p-3">
+                    <span className="grid size-10 place-items-center rounded-lg bg-[#8f78d0]/14 text-[#c9baff]"><Clapperboard aria-hidden="true" className="size-5" /></span>
+                    <span className="min-w-0"><span className="block truncate text-sm text-white">Conteúdo selecionado</span><span className="mt-1 block text-xs text-[#aaa5b8]">Conta · horário · formato</span></span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-[#c9c3d5]"><CalendarClock aria-hidden="true" className="size-4 text-[#b4a0ff]" /> Revisão antes de confirmar</div>
+                </div>
+              ),
+            },
+            {
+              number: "03",
+              title: "Confirme e acompanhe",
+              text: "Revise o agendamento e acompanhe os estados no histórico de publicações.",
+              visual: (
+                <div className="landing-flow-visual">
+                  <span className="landing-demo-label">
+                    <Sparkles aria-hidden="true" className="size-3.5" />
+                    Demonstração
+                  </span>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[.025] p-3 text-xs text-[#e4e0ed]"><CheckCircle2 aria-hidden="true" className="size-4 text-emerald-300" /> Estado atualizado</div>
+                    <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[.025] p-3 text-xs text-[#e4e0ed]"><Clock3 aria-hidden="true" className="size-4 text-[#c9baff]" /> Próxima etapa visível</div>
+                  </div>
+                </div>
+              ),
+            },
+          ].map(({ number, title, text, visual }) => (
+            <li key={number} className="landing-flow-card rounded-2xl border border-white/8 bg-[#12121a] p-5 sm:p-6">
+              {visual}
+              <div className="mt-6 flex items-start gap-3">
+                <span aria-hidden="true" className="font-heading text-sm font-semibold text-[#b4a0ff]">{number}</span>
+                <div>
+                  <h3 className="font-heading text-lg font-medium text-white">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">{text}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-9 text-center">
+          <Button variant="outline" asChild>
+            <Link to="/cadastro">
+              Criar meu workspace <ArrowRight className="ml-2 size-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
