@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clapperboard,
   Clock3,
+  ChevronDown,
   Image as ImageIcon,
   Layers3,
   Menu,
@@ -18,43 +19,56 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button";
 
-const plans = [
+const faqs = [
   {
-    name: "Essencial",
-    description: "Para quem está organizando a primeira operação de conteúdo.",
-    price: "Em breve",
-    items: [
-      "1 workspace",
-      "Biblioteca de mídia",
-      "Calendário de publicações",
-      "1 canal TikTok",
-    ],
-    featured: false,
+    question: "O que é o AutoClip?",
+    answer:
+      "É uma plataforma para organizar canais TikTok, preparar conteúdos, planejar publicações e acompanhar seus estados em um workspace.",
   },
   {
-    name: "Pro",
-    description: "Para criadores e times que publicam com consistência.",
-    price: "Em breve",
-    items: [
-      "Tudo do Essencial",
-      "Aprovação de cliente",
-      "Múltiplos canais",
-      "Relatórios operacionais",
-    ],
-    featured: true,
+    question: "Posso conectar várias contas TikTok?",
+    answer:
+      "O AutoClip permite conectar canais ao workspace. A quantidade permitida depende dos limites aplicáveis ao plano e ao workspace; consulte a área Plano e consumo após entrar.",
   },
   {
-    name: "Scale",
-    description: "Para operações, agências e equipes que precisam de controle.",
-    price: "Sob consulta",
-    items: [
-      "Tudo do Pro",
-      "Workspaces e membros",
-      "Papéis e permissões",
-      "Onboarding dedicado",
-      "Suporte prioritário",
-    ],
-    featured: false,
+    question: "É possível agendar publicações em lote?",
+    answer:
+      "Sim. Você pode montar um lote para canais e mídias, revisar as linhas e confirmar o agendamento. A confirmação depende da elegibilidade dos canais, das mídias e da quota disponível.",
+  },
+  {
+    question: "O AutoClip aceita vídeos e carrosséis?",
+    answer:
+      "O fluxo suporta vídeos e publicações de fotos. Fotos ou carrosséis exigem o modo Direct Post e as permissões necessárias do TikTok; no fluxo Inbox, o AutoClip aceita apenas vídeos.",
+  },
+  {
+    question: "Qual é a diferença entre Direct Post e Inbox?",
+    answer:
+      "No Direct Post, o AutoClip solicita a publicação pela integração do TikTok, sujeita às permissões, capacidades da conta, opções de visibilidade disponíveis e regras da plataforma. No Inbox, o conteúdo é enviado como rascunho para você concluir no TikTok.",
+  },
+  {
+    question: "Preciso autorizar minhas contas TikTok?",
+    answer:
+      "Sim. Para conectar um canal, você precisa autorizar a conta pelo fluxo de autorização do TikTok e conceder as permissões solicitadas para os recursos que pretende usar.",
+  },
+  {
+    question: "Como acompanho minhas publicações?",
+    answer:
+      "A área de histórico mostra estados como agendada, em processamento, publicada, enviada ao Inbox, com falha ou aguardando alguma ação. O resultado também depende das respostas e capacidades do TikTok.",
+  },
+  {
+    question: "Como funcionam os planos e limites?",
+    answer:
+      "Os limites de contas e publicações são aplicados por workspace e podem variar conforme o plano. Preços e condições comerciais ainda não estão confirmados para divulgação nesta página; não há promessa de teste grátis.",
+  },
+  {
+    question: "O AutoClip publica automaticamente em todos os casos?",
+    answer:
+      "Não. Uma publicação pode depender de autorização, permissões, capacidades da conta, configurações do workspace, validação da mídia e regras do TikTok. No Inbox, você finaliza a publicação no aplicativo TikTok.",
+  },
+  {
+    question: "Como posso começar?",
+    answer:
+      "Use o botão Criar conta para abrir o cadastro. Depois de criar a conta, talvez seja necessário confirmar seu e-mail antes de entrar, conforme a configuração de autenticação.",
   },
 ];
 
@@ -483,56 +497,57 @@ export default function LandingPage() {
         className="relative border-y border-white/7 bg-[#13131c]"
       >
         <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm font-medium text-[#b4a0ff]">PLANOS</p>
-            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Cresça no seu ritmo.
-            </h2>
-            <p className="mt-4 text-[#aaa5b8]">
-              Escolha uma base para sua operação. Os valores finais serão
-              divulgados no lançamento comercial.
+          <div className="mx-auto max-w-3xl rounded-3xl border border-white/8 bg-[#171620] p-6 text-center shadow-[0_18px_50px_rgba(0,0,0,.18)] sm:p-10">
+            <p className="text-sm font-medium text-[#b4a0ff]">
+              PLANOS E DISPONIBILIDADE
             </p>
+            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
+              Condições claras, sem preços improvisados.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl leading-7 text-[#aaa5b8]">
+              Os preços e as condições comerciais ainda não estão confirmados
+              para divulgação pública. O AutoClip aplica limites de contas e
+              publicações por workspace, que podem ser consultados na área
+              Plano e consumo após entrar.
+            </p>
+            <p className="mt-3 text-sm text-[#c0bbd0]">
+              Criar uma conta não representa uma promessa de período gratuito
+              ou de assinatura comercial.
+            </p>
+            <Button className="landing-primary-cta mt-7" size="lg" asChild>
+              <Link to="/cadastro">
+                Criar conta <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
           </div>
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <article
-                key={plan.name}
-                className={`rounded-2xl border p-7 ${plan.featured ? "border-[#8f78d0] bg-[#211b34] shadow-[0_18px_50px_rgba(0,0,0,.25)]" : "border-white/8 bg-[#171620]"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading text-xl font-semibold text-white">
-                    {plan.name}
-                  </h3>
-                  {plan.featured && (
-                    <span className="rounded-full bg-[#8f78d0] px-2.5 py-1 text-xs font-medium text-[#160f2a]">
-                      Mais completo
-                    </span>
-                  )}
-                </div>
-                <p className="mt-3 min-h-12 text-sm leading-6 text-[#aaa5b8]">
-                  {plan.description}
-                </p>
-                <p className="mt-7 font-heading text-3xl font-semibold text-white">
-                  {plan.price}
-                </p>
-                <ul className="mt-7 grid gap-3 text-sm text-[#d0cbdc]">
-                  {plan.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <BadgeCheck className="mt-0.5 size-4 shrink-0 text-[#b4a0ff]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="mt-8 w-full"
-                  variant={plan.featured ? "default" : "outline"}
-                  asChild
-                >
-                  <Link to="/cadastro">Quero conhecer</Link>
-                </Button>
-              </article>
-            ))}
-          </div>
+        </div>
+      </section>
+
+      <section
+        id="faq"
+        className="relative mx-auto max-w-4xl px-5 py-24 lg:px-8"
+      >
+        <div className="text-center">
+          <p className="text-sm font-medium text-[#b4a0ff]">PERGUNTAS FREQUENTES</p>
+          <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
+            O que você precisa saber antes de começar.
+          </h2>
+        </div>
+        <div className="mt-10 divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/8 bg-[#15151e]">
+          {faqs.map(({ question, answer }) => (
+            <details key={question} className="landing-faq-item group px-5 sm:px-6">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 font-medium text-white marker:hidden">
+                <span>{question}</span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-[#b4a0ff] transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <p className="max-w-3xl pb-5 pr-7 text-sm leading-6 text-[#b9b5c9]">
+                {answer}
+              </p>
+            </details>
+          ))}
         </div>
       </section>
 
@@ -541,44 +556,52 @@ export default function LandingPage() {
         className="relative mx-auto max-w-5xl px-5 py-24 text-center lg:px-8"
       >
         <div className="rounded-3xl border border-[#8f78d0]/25 bg-[linear-gradient(135deg,rgba(143,120,208,.2),rgba(31,25,48,.9))] px-6 py-14 sm:px-12">
-          <Sparkles className="mx-auto size-6 text-[#b4a0ff]" />
+          <Sparkles aria-hidden="true" className="mx-auto size-6 text-[#b4a0ff]" />
           <h2 className="mt-5 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-            Conteúdo é criatividade. A operação pode ser simples.
+            Mais organização para suas contas TikTok. Menos trabalho repetitivo.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-[#c0bbd0]">
-            Crie seu workspace e veja como o AutoClip pode dar previsibilidade
-            para a sua rotina de publicação.
+            Centralize seus canais, prepare publicações e acompanhe seus
+            agendamentos em um único lugar.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex justify-center">
             <Button size="lg" asChild>
               <Link to="/cadastro">
                 Criar conta <ArrowRight className="ml-2 size-4" />
               </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/15 bg-transparent text-white hover:bg-white/10"
-              asChild
-            >
-              <a href="mailto:contato@autoclip.app">Falar com a equipe</a>
             </Button>
           </div>
         </div>
       </section>
       </main>
       <footer className="relative border-t border-white/8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-[#9691a5] sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <span>
-            © {new Date().getFullYear()} AutoClip. Todos os direitos reservados.
-          </span>
-          <div className="flex flex-wrap gap-5">
-            <a href="/privacy-policy.html">Privacidade</a>
-            <a href="/terms-of-service.html">Termos de uso</a>
-            <a href="/data-deletion.html">Exclusão de dados</a>
-            <a href="/security-policy.html">Security Policy / Segurança</a>
-            <Link to="/login">Entrar</Link>
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-[#9691a5] sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto] lg:items-start lg:px-8">
+          <div className="max-w-xs">
+            <Link to="/" className="inline-flex items-center gap-2.5 text-inherit no-underline" aria-label="AutoClip, página inicial">
+              <span className="grid size-9 place-items-center rounded-xl bg-[#8f78d0] text-[#130f20]">
+                <Clapperboard aria-hidden="true" className="size-4" />
+              </span>
+              <span className="font-heading text-base font-semibold text-white">AutoClip</span>
+            </Link>
+            <p className="mt-3 leading-6">Organização de canais e publicações TikTok em um só lugar.</p>
           </div>
+          <nav aria-label="Navegação do rodapé" className="grid content-start gap-3 sm:grid-cols-2">
+            <a href="#recursos">Recursos</a>
+            <a href="#como-funciona">Como funciona</a>
+            <a href="#planos">Planos e disponibilidade</a>
+            <a href="#faq">Perguntas frequentes</a>
+          </nav>
+          <nav aria-label="Documentos e conta" className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <a href="/terms-of-service.html">Termos de uso</a>
+            <a href="/privacy-policy.html">Privacidade</a>
+            <a href="/security-policy.html">Segurança</a>
+            <a href="/data-deletion.html">Exclusão de dados</a>
+            <a href="mailto:diogos.nascimento@outlook.com?subject=Contato%20de%20privacidade%20%E2%80%94%20AutoClip">Contato de privacidade</a>
+            <Link to="/login">Entrar</Link>
+          </nav>
+        </div>
+        <div className="border-t border-white/6 px-5 py-4 text-center text-xs text-[#777285]">
+          © {new Date().getFullYear()} AutoClip. Todos os direitos reservados.
         </div>
       </footer>
     </div>

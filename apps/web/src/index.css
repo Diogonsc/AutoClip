@@ -257,6 +257,7 @@ html {
 
 .landing-page a:focus-visible,
 .landing-page button:focus-visible,
+.landing-page summary:focus-visible,
 .landing-page main:focus-visible {
   outline: 3px solid var(--landing-focus);
   outline-offset: 3px;
@@ -370,6 +371,14 @@ html {
   border-radius: 1rem;
   background: rgb(8 8 13 / 38%);
   padding: 0.85rem;
+}
+
+.landing-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-faq-item[open] summary {
+  color: #e8e1ff;
 }
 
 @media (prefers-reduced-motion: reduce) {
