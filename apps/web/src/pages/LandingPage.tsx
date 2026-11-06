@@ -249,7 +249,7 @@ export default function LandingPage() {
                   </div>
                   <span className="landing-mini-tag">Workspace</span>
                 </div>
-                <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="grid gap-3 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div className="space-y-2.5">
                     {[
                       ["Canal 01", "Conectado"],

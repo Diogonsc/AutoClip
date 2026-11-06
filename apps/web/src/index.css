@@ -230,6 +230,10 @@ html {
   color: #130f20;
 }
 
+.landing-page [data-slot="button"] {
+  min-height: 44px;
+}
+
 .landing-page .landing-primary-cta:hover {
   background-color: var(--landing-primary-hover);
 }
