@@ -198,7 +198,7 @@ export default function LandingPage() {
             description="Prepare conteúdos para diferentes canais e horários. Revise cada linha antes de confirmar o agendamento em lote."
             eyebrow="02 / PLANEJAMENTO"
             reverse
-            title="Planeje várias publicações sem repetir o mesmo trabalho."
+            title="Agende em lote. Revise com clareza."
             visual={<BatchVisual />}
           />
         </section>
@@ -322,7 +322,7 @@ function ProductPreview() {
   const rows = [
     { format: "Vídeo", channel: "Conta de exemplo A", time: "Horário definido", status: "Preparado" },
     { format: "Fotos", channel: "Conta de exemplo B", time: "Revisão necessária", status: "Em revisão" },
-    { format: "Vídeo", channel: "Conta de exemplo C", time: "Próxima etapa", status: "Agendado" },
+    { format: "Vídeo", channel: "Conta de exemplo C", time: "Próxima etapa", status: "Próxima etapa" },
   ];
 
   return (
@@ -365,12 +365,12 @@ function ProductPreview() {
               </div>
               <span>Visão demonstrativa</span>
             </div>
-            <div className="lp-agenda-table">
+          <div aria-label="Itens demonstrativos de publicação" className="lp-agenda-table">
               {rows.map((row, index) => (
                 <div className="lp-agenda-row" key={row.channel}>
                   <span aria-hidden="true" className="lp-agenda-order">0{index + 1}</span>
                   <div className="lp-agenda-content">
-                    <strong>{row.format}</strong>
+                    <strong>{row.format === "Fotos" ? "Fotos e carrossel" : "Vídeo"}</strong>
                     <span>{row.channel}</span>
                   </div>
                   <span className="lp-agenda-time"><Clock3 aria-hidden="true" /> {row.time}</span>
@@ -424,11 +424,11 @@ function AccountsVisual() {
         <span>Canais do workspace</span>
         <span>Exemplo</span>
       </div>
-      <div className="lp-accounts-list">
+      <div aria-label="Canais de exemplo" className="lp-accounts-list">
         {[
-          ["Conta de exemplo A", "No grupo"],
-          ["Conta de exemplo B", "No grupo"],
-          ["Conta de exemplo C", "Individual"],
+          ["Conta de exemplo A", "Grupo de exemplo"],
+          ["Conta de exemplo B", "Grupo de exemplo"],
+          ["Conta de exemplo C", "Sem grupo"],
         ].map(([name, group], index) => (
           <div className="lp-account-line" key={name}>
             <span className="lp-account-avatar">{String.fromCharCode(65 + index)}</span>
@@ -461,20 +461,20 @@ function BatchVisual() {
       <div className="lp-batch-toolbar">
         <div>
           <p className="lp-micro-label">LOTE DEMONSTRATIVO</p>
-          <strong>Revisão antes do agendamento</strong>
+          <strong>Revise o lote antes de agendar</strong>
         </div>
         <span className="lp-batch-toolbar-icon"><CalendarDays aria-hidden="true" /></span>
       </div>
       <div className="lp-batch-list">
         {items.map(([format, channel, action], index) => (
           <div className="lp-batch-line" key={channel}>
-            <span className="lp-batch-number">0{index + 1}</span>
+            <span aria-hidden="true" className="lp-batch-number">0{index + 1}</span>
             <span className="lp-batch-format">
               {format === "Vídeo" ? <Video aria-hidden="true" /> : <FileImage aria-hidden="true" />}
               {format}
             </span>
             <span className="lp-batch-channel">{channel}</span>
-            <span className="lp-batch-action">{action}</span>
+            <span className="lp-batch-action"><span aria-hidden="true" />{action}</span>
           </div>
         ))}
       </div>
@@ -495,14 +495,14 @@ function FormatsVisual() {
       </div>
       <div className="lp-media-options">
         <div className="lp-media-option lp-video-option">
-          <span aria-hidden="true"><Video /></span>
-          <div><strong>Vídeos</strong><small>Preparação e agendamento</small></div>
-          <ArrowUpRight aria-hidden="true" />
+          <span aria-hidden="true" className="lp-media-art lp-media-art-video"><Video /></span>
+          <div><strong>Vídeos</strong><small>Prepare e organize cada publicação.</small></div>
+          <span aria-hidden="true" className="lp-format-indicator">01</span>
         </div>
         <div className="lp-media-option lp-photo-option">
-          <span aria-hidden="true"><FileImage /></span>
-          <div><strong>Fotos e carrosséis</strong><small>Quando Direct Post e permissões permitem</small></div>
-          <ArrowUpRight aria-hidden="true" />
+          <span aria-hidden="true" className="lp-media-art lp-media-art-photos"><FileImage /></span>
+          <div><strong>Fotos e carrosséis</strong><small>Quando Direct Post e permissões permitem.</small></div>
+          <span aria-hidden="true" className="lp-format-indicator">02</span>
         </div>
       </div>
     </div>
