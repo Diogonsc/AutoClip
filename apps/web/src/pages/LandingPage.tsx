@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowUpRight,
+  CircleAlert,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -322,7 +323,7 @@ function ProductPreview() {
   const rows = [
     { format: "Vídeo", channel: "Conta de exemplo A", time: "Horário definido", status: "Preparado" },
     { format: "Fotos", channel: "Conta de exemplo B", time: "Revisão necessária", status: "Em revisão" },
-    { format: "Vídeo", channel: "Conta de exemplo C", time: "Próxima etapa", status: "Próxima etapa" },
+    { format: "Vídeo", channel: "Conta de exemplo C", time: "Data a definir", status: "Planejada" },
   ];
 
   return (
@@ -347,9 +348,8 @@ function ProductPreview() {
             <p className="lp-micro-label">CANAIS</p>
             {["Conta de exemplo A", "Conta de exemplo B", "Conta de exemplo C"].map((channel, index) => (
               <div className="lp-channel-row" key={channel}>
-                <span className="lp-channel-avatar">{String.fromCharCode(65 + index)}</span>
+                <span aria-hidden="true" className="lp-channel-avatar">{String.fromCharCode(65 + index)}</span>
                 <span>{channel}</span>
-                <span aria-label="Conectado na demonstração" className="lp-status-dot" />
               </div>
             ))}
             <div className="lp-group-row">
@@ -365,9 +365,9 @@ function ProductPreview() {
               </div>
               <span>Visão demonstrativa</span>
             </div>
-          <div aria-label="Itens demonstrativos de publicação" className="lp-agenda-table">
+            <div aria-label="Itens demonstrativos de publicação" className="lp-agenda-table" role="list">
               {rows.map((row, index) => (
-                <div className="lp-agenda-row" key={row.channel}>
+                <div className="lp-agenda-row" key={row.channel} role="listitem">
                   <span aria-hidden="true" className="lp-agenda-order">0{index + 1}</span>
                   <div className="lp-agenda-content">
                     <strong>{row.format === "Fotos" ? "Fotos e carrossel" : "Vídeo"}</strong>
@@ -375,7 +375,13 @@ function ProductPreview() {
                   </div>
                   <span className="lp-agenda-time"><Clock3 aria-hidden="true" /> {row.time}</span>
                   <span className={`lp-agenda-state lp-agenda-state-${index}`}>
-                    {index === 0 ? <CheckCircle2 aria-hidden="true" /> : <span aria-hidden="true" className="lp-state-mark" />}
+                    {index === 0 ? (
+                      <CheckCircle2 aria-hidden="true" />
+                    ) : index === 1 ? (
+                      <Clock3 aria-hidden="true" />
+                    ) : (
+                      <ArrowRight aria-hidden="true" />
+                    )}
                     {row.status}
                   </span>
                 </div>
@@ -424,13 +430,13 @@ function AccountsVisual() {
         <span>Canais do workspace</span>
         <span>Exemplo</span>
       </div>
-      <div aria-label="Canais de exemplo" className="lp-accounts-list">
+      <div aria-label="Canais de exemplo" className="lp-accounts-list" role="list">
         {[
           ["Conta de exemplo A", "Grupo de exemplo"],
           ["Conta de exemplo B", "Grupo de exemplo"],
           ["Conta de exemplo C", "Sem grupo"],
         ].map(([name, group], index) => (
-          <div className="lp-account-line" key={name}>
+          <div className="lp-account-line" key={name} role="listitem">
             <span className="lp-account-avatar">{String.fromCharCode(65 + index)}</span>
             <span className="lp-account-name">{name}</span>
             <span className="lp-account-group">{group}</span>
@@ -465,9 +471,9 @@ function BatchVisual() {
         </div>
         <span className="lp-batch-toolbar-icon"><CalendarDays aria-hidden="true" /></span>
       </div>
-      <div className="lp-batch-list">
+      <div aria-label="Etapas do lote demonstrativo" className="lp-batch-list" role="list">
         {items.map(([format, channel, action], index) => (
-          <div className="lp-batch-line" key={channel}>
+          <div className="lp-batch-line" key={channel} role="listitem">
             <span aria-hidden="true" className="lp-batch-number">0{index + 1}</span>
             <span className="lp-batch-format">
               {format === "Vídeo" ? <Video aria-hidden="true" /> : <FileImage aria-hidden="true" />}
@@ -525,7 +531,7 @@ function StatusVisual() {
         {steps.map(([title, note], index) => (
           <li key={title}>
             <span aria-hidden="true" className={`lp-status-icon lp-status-icon-${index}`}>
-              {index === 0 ? <CalendarDays /> : index === 1 ? <Clock3 /> : <CheckCircle2 />}
+              {index === 0 ? <CalendarDays /> : index === 1 ? <Clock3 /> : <CircleAlert />}
             </span>
             <span><strong>{title}</strong><small>{note}</small></span>
           </li>
