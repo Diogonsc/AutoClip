@@ -1,4 +1,4 @@
-# AutoClipe — Fase 3.5: homologação E2E local
+# AutoClip — Fase 3.5: homologação E2E local
 
 **Status:** parcialmente homologada. Execução local em 2026-11-01. Nenhum banco remoto, OAuth TikTok, publicação, deploy ou exclusão em produção foi acessado.
 

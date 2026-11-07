@@ -2,7 +2,7 @@
 
 ## Decisão
 
-**Estratégia escolhida: compatibilidade transitória fail-closed.** A migration 09 mantém `public.resolve_unknown_job(uuid,text)` como stub `SECURITY INVOKER`, com `search_path` vazio e sem acesso a tabelas. A chamada legada sempre retorna SQLSTATE `0A000` e mensagem para atualizar/recarregar o AutoClipe. O stub não cria `request_id`, não delega para a RPC nova e não altera job, quota ou auditoria.
+**Estratégia escolhida: compatibilidade transitória fail-closed.** A migration 09 mantém `public.resolve_unknown_job(uuid,text)` como stub `SECURITY INVOKER`, com `search_path` vazio e sem acesso a tabelas. A chamada legada sempre retorna SQLSTATE `0A000` e mensagem para atualizar/recarregar o AutoClip. O stub não cria `request_id`, não delega para a RPC nova e não altera job, quota ou auditoria.
 
 A RPC nova `resolve_unknown_job(uuid,text,uuid)` continua sendo a única que executa a transição e mantém autorização OWNER/ADMIN do workspace ou serviço interno, validação do request ID, idempotência e isolamento. O teste pgTAP verifica que o cliente legado recebe o erro controlado e que o job continua `UNKNOWN` sem linha de resolução.
 

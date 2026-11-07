@@ -24,7 +24,7 @@ This inventory records repository artifacts and their declared metadata. Filesys
 
 ## Business identity regularization — 2026-11-02
 
-The owner supplied CCMEI-derived identity for candidate drafting: AutoClipe is the trade name of 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil; contact: diogos.nascimento@outlook.com. The CCMEI itself, CPF and full residential address are not included. The legal operator is the accountable business operator; controller/processor status remains activity-specific. MEI/CNAE suitability for intended SaaS activities is a separate accounting review. Candidate documents have been updated, but no policy approval, publication, contact monitoring, data residency or operational configuration was established.
+The owner supplied CCMEI-derived identity for candidate drafting: AutoClip is the trade name of 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil; contact: diogos.nascimento@outlook.com. The CCMEI itself, CPF and full residential address are not included. The legal operator is the accountable business operator; controller/processor status remains activity-specific. MEI/CNAE suitability for intended SaaS activities is a separate accounting review. Candidate documents have been updated, but no policy approval, publication, contact monitoring, data residency or operational configuration was established.
 
 ## Version comparison evidence
 
@@ -65,7 +65,7 @@ At start, branch was `main`; the worktree contained extensive tracked modificati
 
 ## Gate de aprovação documental — 2026-11-02
 
-Foi criado `OWNER_POLICY_DECISION_PACK.md` e atualizado `OWNER_POLICY_APPROVAL_RECORD.md`; nenhum campo decisório foi preenchido. Cinco PDFs derivados das candidatas foram gerados em `output/pdf/DRAFT_AutoClipe_*.pdf`, com banner DRAFT. Não alteram nem substituem HTML/PDF históricos. A cópia sanitizada Q4 não foi gerada; o original permanece intocado e restrito.
+Foi criado `OWNER_POLICY_DECISION_PACK.md` e atualizado `OWNER_POLICY_APPROVAL_RECORD.md`; nenhum campo decisório foi preenchido. Cinco PDFs derivados das candidatas foram gerados em `output/pdf/DRAFT_AutoClip_*.pdf`, com banner DRAFT. Não alteram nem substituem HTML/PDF históricos. A cópia sanitizada Q4 não foi gerada; o original permanece intocado e restrito.
 
 
 ## Information Security Policy Draft 1.2 — 2026-11-02

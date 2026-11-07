@@ -1,10 +1,10 @@
-# Owner Policy Approval Record — AutoClipe
+# Owner Policy Approval Record — AutoClip
 
 **Status:** One policy approval recorded locally; remaining document decisions are pending. No handwritten signature or publication authorization is recorded.
 
 ## Business identity used for these drafts
 
-- Trade name: AutoClipe.
+- Trade name: AutoClip.
 - Legal operator: 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder.
 - CNPJ: 56.151.919/0001-30.
 - Municipality/state/country: Rio de Janeiro/RJ, Brazil.
@@ -28,7 +28,7 @@ The MEI holder is the accountable business operator. Whether the operator acts a
 
 ## Candidate review copies
 
-The following local PDFs are review copies generated from their Markdown sources and visibly marked `DRAFT — PENDING OWNER APPROVAL`: `output/pdf/DRAFT_AutoClipe_Information_Security_Policy_Draft_1.2.pdf`; `output/pdf/DRAFT_AutoClipe_Personal_Information_Protection_Standard_v1.2.pdf`; `output/pdf/DRAFT_AutoClipe_Access_Control_Policy.pdf`; `output/pdf/DRAFT_AutoClipe_Privacy_Policy.pdf`; `output/pdf/DRAFT_AutoClipe_Terms_of_Service.pdf`. They do not constitute approval, publication, or external submission. After a real approval, update the approved source, render a versioned PDF, validate extracted text and every rendered page, record source/PDF hashes, and obtain separate publication/submission authorization as specified in `FINAL_ATTACHMENT_MAPPING.md`.
+The following local PDFs are review copies generated from their Markdown sources and visibly marked `DRAFT — PENDING OWNER APPROVAL`: `output/pdf/DRAFT_AutoClip_Information_Security_Policy_Draft_1.2.pdf`; `output/pdf/DRAFT_AutoClip_Personal_Information_Protection_Standard_v1.2.pdf`; `output/pdf/DRAFT_AutoClip_Access_Control_Policy.pdf`; `output/pdf/DRAFT_AutoClip_Privacy_Policy.pdf`; `output/pdf/DRAFT_AutoClip_Terms_of_Service.pdf`. They do not constitute approval, publication, or external submission. After a real approval, update the approved source, render a versioned PDF, validate extracted text and every rendered page, record source/PDF hashes, and obtain separate publication/submission authorization as specified in `FINAL_ATTACHMENT_MAPPING.md`.
 
 ## Approval fields (complete only when a decision is made)
 
@@ -47,12 +47,12 @@ Do not enter a signature or private approval evidence in the public repository. 
 
 - Document: `AUTOCLIP_SECURITY_POLICY_v1.2.md`
 - Legal operator: 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder; CNPJ 56.151.919/0001-30.
-- Trade name: AutoClipe.
+- Trade name: AutoClip.
 - Decision supplied by owner: **APPROVED WITH DOCUMENTED OPERATIONAL LIMITATIONS**.
 - Decision/approval date: 2026-11-02.
 - Effective date recorded in the approved document: 2026-11-02.
 - Exact approved Markdown SHA-256: `a7dd38ebed4d39907fe75a1991ed4d29955d673f20341122ede6c6196c68eaf0`.
-- Generated PDF SHA-256: `250dc7e766286b439f2b2ce33011e3148fcd3645731f3ee900a4e3ec87ff29d6` (`output/pdf/AutoClipe_Information_Security_Policy_v1.2_APPROVED.pdf`).
+- Generated PDF SHA-256: `250dc7e766286b439f2b2ce33011e3148fcd3645731f3ee900a4e3ec87ff29d6` (`output/pdf/AutoClip_Information_Security_Policy_v1.2_APPROVED.pdf`).
 - Preserved Draft 1.2 source SHA-256: `4c323e9a73921999df0d9b18f21561b1938672fbb0db695b60d89edd4c2c1a0d` at `archive/AUTOCLIP_SECURITY_POLICY_DRAFT_1.2_APPROVED_SOURCE.md`.
 - Approval authorizes this local formalization only. Publication and TikTok submission remain unauthorized.
 - Approval records organizational requirements; it does **not** attest implementation or deployment. Outstanding items include production OAuth/log controls, providers/regions/transfers, media cleanup, category retention, RPO/RTO and successful restoration, and operational incident coverage.

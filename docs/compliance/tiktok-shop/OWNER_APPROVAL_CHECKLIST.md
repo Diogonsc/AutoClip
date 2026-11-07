@@ -4,7 +4,7 @@
 
 ## Business identity supplied for drafting
 
-- Trade name: AutoClipe.
+- Trade name: AutoClip.
 - Legal name: 56.151.919 DIOGO NASCIMENTO DOS SANTOS; MEI holder and accountable business operator.
 - CNPJ: 56.151.919/0001-30.
 - Municipality/state/country: Rio de Janeiro/RJ, Brazil.
@@ -45,7 +45,7 @@ Do not fill or sign this record on behalf of the owner. Do not commit signatures
 - [ ] Approve the conditional 24-hour media-deletion eligibility safeguards; verify no production activation is claimed.
 - [ ] Approve the end-of-contract deletion/retention wording, backup exceptions and provider-side limitations.
 - [ ] Define backup coverage and future RPO/RTO, then test restoration in isolation and repeat after remediation.
-- [ ] Confirm whether AutoClipe holds any certification; do not claim provider certifications as AutoClipe certifications.
+- [ ] Confirm whether AutoClip holds any certification; do not claim provider certifications as AutoClip certifications.
 - [ ] Review/redact Q4 screenshot copy for incidental identifiers without altering its content or status.
 - [ ] Approve the reviewer comment only after the actual attachment set and questionnaire answers are final.
 - [ ] Separately confirm the historical incident/complaint answers, DPO status, data locations and data deletion scope.

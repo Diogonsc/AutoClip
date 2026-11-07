@@ -1,4 +1,4 @@
-# AutoClipe — Personal Information Protection Standard
+# AutoClip — Personal Information Protection Standard
 
 **Document status:** Draft for owner and privacy/legal review. This document is not effective until formally approved.
 **Version:** 1.2-draft
@@ -7,23 +7,23 @@
 **Approval date / effective date:** Not approved; to be completed only after owner approval
 **Next review:** One year after approval, and after a material incident or processing change.
 
-> This standard defines AutoClipe's intended requirements for protecting personal information. Its existence does not prove that every requirement is implemented, deployed, monitored, legally approved, or independently audited. Current evidence and open gaps are listed in `SECURITY_CONTROL_EVIDENCE_MATRIX.md` and `COMPLIANCE_GAPS_AND_ACTIONS.md`.
+> This standard defines AutoClip's intended requirements for protecting personal information. Its existence does not prove that every requirement is implemented, deployed, monitored, legally approved, or independently audited. Current evidence and open gaps are listed in `SECURITY_CONTROL_EVIDENCE_MATRIX.md` and `COMPLIANCE_GAPS_AND_ACTIONS.md`.
 
 ## 1. Document Control
 
-**Business identity:** AutoClipe is the trade name of **56.151.919 DIOGO NASCIMENTO DOS SANTOS**, an individual micro-entrepreneur (MEI) registered in Brazil (CNPJ **56.151.919/0001-30**), based in Rio de Janeiro/RJ. The business is operated by the MEI holder. Contact: **diogos.nascimento@outlook.com**. This contact is owner-provided; mailbox monitoring has not been independently verified.
+**Business identity:** AutoClip is the trade name of **56.151.919 DIOGO NASCIMENTO DOS SANTOS**, an individual micro-entrepreneur (MEI) registered in Brazil (CNPJ **56.151.919/0001-30**), based in Rio de Janeiro/RJ. The business is operated by the MEI holder. Contact: **diogos.nascimento@outlook.com**. This contact is owner-provided; mailbox monitoring has not been independently verified.
 
-AutoClipe is the service name, not a separate legal entity. The MEI holder is the accountable business operator. Controller/processor roles must be determined for each processing activity and contractual relationship; this standard does not designate the operator as controller for every data flow. The business opening date recorded in the owner-provided CCMEI is 30 July 2024. No CPF or residential street address is included.
+AutoClip is the service name, not a separate legal entity. The MEI holder is the accountable business operator. Controller/processor roles must be determined for each processing activity and contractual relationship; this standard does not designate the operator as controller for every data flow. The business opening date recorded in the owner-provided CCMEI is 30 July 2024. No CPF or residential street address is included.
 
 The project owner shall approve the document, confirm the responsible legal entity/operator, set the effective date, designate operational owners, and retain the approval record in a controlled evidence location. Only the approved version may be represented externally as an effective organizational standard. Revision history shall identify the version, date, approver, and substantive changes. No signature or approval is implied by this draft.
 
 ## 2. Purpose
 
-This standard establishes requirements for collecting, using, protecting, retaining, and disposing of personal information processed by AutoClipe. It supports the protection of account holders, workspace members, TikTok and TikTok Shop account holders, and other people whose information may appear in content or permitted platform data. It is an internal control document, not a certification or legal opinion.
+This standard establishes requirements for collecting, using, protecting, retaining, and disposing of personal information processed by AutoClip. It supports the protection of account holders, workspace members, TikTok and TikTok Shop account holders, and other people whose information may appear in content or permitted platform data. It is an internal control document, not a certification or legal opinion.
 
 ## 3. Scope
 
-The standard applies to AutoClipe application code, databases, authentication, object storage, Edge Functions, workers, source repositories, operational accounts, support processes, and third-party services used to operate the service. It applies to production, staging, development, and test environments; synthetic data shall be used in tests unless an approved exception is documented. The checkout and billing flow is outside the current deployment scope; this does not authorize collecting payment-card information.
+The standard applies to AutoClip application code, databases, authentication, object storage, Edge Functions, workers, source repositories, operational accounts, support processes, and third-party services used to operate the service. It applies to production, staging, development, and test environments; synthetic data shall be used in tests unless an approved exception is documented. The checkout and billing flow is outside the current deployment scope; this does not authorize collecting payment-card information.
 
 ## 4. Roles and Responsibilities
 
@@ -37,7 +37,7 @@ The MEI holder is the accountable business operator. The privacy and security co
 
 ## 5. Personal Information Inventory
 
-The local schema and application source indicate that AutoClipe may process:
+The local schema and application source indicate that AutoClip may process:
 
 | Category | Examples in local design | Protection requirement |
 |---|---|---|
@@ -54,7 +54,7 @@ The inventory is based on local migrations and code only. It does not prove that
 
 ## 6. Data Collection and Processing Principles
 
-AutoClipe shall collect only information necessary for the requested account, workspace, scheduling, publishing, support, security, and legal purposes. Processing shall be purpose-limited, access-controlled, accurate where practicable, and retained only according to an approved schedule. Production data shall not be used for development or testing without a documented, approved de-identification process. The project shall maintain a data-flow and subprocessor inventory and update it before introducing a new category or purpose.
+AutoClip shall collect only information necessary for the requested account, workspace, scheduling, publishing, support, security, and legal purposes. Processing shall be purpose-limited, access-controlled, accurate where practicable, and retained only according to an approved schedule. Production data shall not be used for development or testing without a documented, approved de-identification process. The project shall maintain a data-flow and subprocessor inventory and update it before introducing a new category or purpose.
 
 ## 7. Lawful Processing and Privacy Commitments
 

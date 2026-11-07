@@ -1,4 +1,4 @@
-# Checklist de encerramento de segurança Cloud — AutoClipe
+# Checklist de encerramento de segurança Cloud — AutoClip
 
 Este checklist não autoriza alterações. Um item só pode ser marcado **APROVADO** quando houver evidência rastreável do ambiente remoto correto e da janela indicada. Testes locais são **VALIDADO LOCALMENTE**, não aprovam controles Cloud.
 

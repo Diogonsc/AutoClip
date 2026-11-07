@@ -19,7 +19,7 @@
 
 - Verify requester identity proportionately and create a minimal case record.
 - Identify all affected workspace, account, OAuth credentials, Storage objects, jobs and logs.
-- Distinguish disconnect/revoke, AutoClipe account deletion, media cleanup and deletion of content already sent to TikTok.
+- Distinguish disconnect/revoke, AutoClip account deletion, media cleanup and deletion of content already sent to TikTok.
 - Block unsafe media deletion while jobs are pending/unknown or references are shared.
 - Use dry-run and synthetic staging evidence before any approved destructive operation.
 - Record legal holds, provider-side limitations, backup expiry and completion status.
@@ -46,4 +46,4 @@ No deletion, cleanup or recovery operation was executed in this gate.
 
 ## Business identity/contact note — 2026-11-02
 
-The owner supplied the MEI identity and contact for candidate documentation: AutoClipe trade name; 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder; CNPJ 56.151.919/0001-30; Rio de Janeiro/RJ, Brazil; diogos.nascimento@outlook.com. This does not establish a monitored request mailbox, an approved retention schedule, published operator identity, data region, or completed deletion workflow. The public `data-deletion.html` source already contains the supplied email but does not identify the legal operator; it was not changed or remotely verified.
+The owner supplied the MEI identity and contact for candidate documentation: AutoClip trade name; 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder; CNPJ 56.151.919/0001-30; Rio de Janeiro/RJ, Brazil; diogos.nascimento@outlook.com. This does not establish a monitored request mailbox, an approved retention schedule, published operator identity, data region, or completed deletion workflow. The public `data-deletion.html` source already contains the supplied email but does not identify the legal operator; it was not changed or remotely verified.

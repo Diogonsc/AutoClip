@@ -8,7 +8,7 @@ Dear TikTok Shop Review Team,
 
 Thank you for reviewing our submission and explaining that the information provided was not sufficient to verify our data-protection status.
 
-We have prepared an AutoClipe Personal Information Protection Standard describing our intended governance and safeguards for personal information, including access control, workspace segregation, OAuth credential protection, incident response, data retention, deletion, and third-party services. We are reviewing the document against the controls that are actually implemented and deployed before providing it as an effective standard.
+We have prepared an AutoClip Personal Information Protection Standard describing our intended governance and safeguards for personal information, including access control, workspace segregation, OAuth credential protection, incident response, data retention, deletion, and third-party services. We are reviewing the document against the controls that are actually implemented and deployed before providing it as an effective standard.
 
 For this resubmission, we intend to provide the owner-approved version of that standard and the specific evidence corresponding to the data-protection question in the Partner Center review. We will ensure that any “Yes” response reflects controls that are in place and supported by evidence. We have not attached or submitted material through this message, and we will not represent local test results as proof of production deployment.
 
@@ -17,7 +17,7 @@ Could you please confirm whether the relevant item requires the approved Persona
 After the owner completes the review and submits the applicable evidence through the Partner Center, we would appreciate a re-evaluation of the application.
 
 Kind regards,
-AutoClipe Project Owner
+AutoClip Project Owner
 [CONTACT DETAILS TO BE CONFIRMED BY PROJECT OWNER]
 
 ## Sending checklist

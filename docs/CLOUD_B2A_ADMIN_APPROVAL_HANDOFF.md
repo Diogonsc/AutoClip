@@ -1,10 +1,10 @@
-# AutoClipe — handoff administrativo Cloud B.2-A
+# AutoClip — handoff administrativo Cloud B.2-A
 
 **Status:** preparação local; nenhuma conexão Cloud ou operação remota foi executada.
 
 ## Alvo confirmado e campos pendentes
 
-- Project Ref: `djrwfvcxgpyknmizqumn` (projeto principal único do AutoClipe).
+- Project Ref: `djrwfvcxgpyknmizqumn` (projeto principal único do AutoClip).
 - Database: `postgres`.
 - Role temporária: `autoclip_cloud_auditor`.
 - Operador responsável: **PENDENTE**.

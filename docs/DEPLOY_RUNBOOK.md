@@ -1,4 +1,4 @@
-# AutoClipe — runbook para implantação futura
+# AutoClip — runbook para implantação futura
 
 **Estado atual:** somente preparação. Nenhum deploy ou alteração remota foi executada na Fase 3.4. A homologação visual e TikTok real permanecem bloqueadas; não tratar este documento como autorização de lançamento.
 

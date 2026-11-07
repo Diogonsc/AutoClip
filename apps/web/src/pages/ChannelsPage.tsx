@@ -450,7 +450,7 @@ export default function ChannelsPage() {
       </Notice>
       <Notice tone="neutral">
         O status da VPN é independente por canal e apenas informativo. Conecte a
-        VPN pelo cliente corporativo no dispositivo; o AutoClipe não coleta
+        VPN pelo cliente corporativo no dispositivo; o AutoClip não coleta
         credenciais nem verifica ou altera a conexão. As publicações continuam
         usando o fluxo oficial do TikTok.
       </Notice>
