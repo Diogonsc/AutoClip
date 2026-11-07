@@ -20,14 +20,14 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const faqs = [
   {
-    question: "O que é o AutoClip?",
+    question: "O que é o AutoClipe?",
     answer:
       "É uma plataforma para organizar canais TikTok, preparar conteúdos, planejar publicações e acompanhar seus estados em um workspace.",
   },
   {
     question: "Posso conectar várias contas TikTok?",
     answer:
-      "O AutoClip permite conectar canais ao workspace. A quantidade permitida depende dos limites aplicáveis ao plano e ao workspace; consulte a área Plano e consumo após entrar.",
+      "O AutoClipe permite conectar canais ao workspace. A quantidade permitida depende dos limites aplicáveis ao plano e ao workspace; consulte a área Plano e consumo após entrar.",
   },
   {
     question: "É possível agendar publicações em lote?",
@@ -35,14 +35,14 @@ const faqs = [
       "Sim. Você pode montar um lote para canais e mídias, revisar as linhas e confirmar o agendamento. A confirmação depende da elegibilidade dos canais, das mídias e da quota disponível.",
   },
   {
-    question: "O AutoClip aceita vídeos e carrosséis?",
+    question: "O AutoClipe aceita vídeos e carrosséis?",
     answer:
-      "O fluxo suporta vídeos e publicações de fotos. Fotos ou carrosséis exigem o modo Direct Post e as permissões necessárias do TikTok; no fluxo Inbox, o AutoClip aceita apenas vídeos.",
+      "O fluxo suporta vídeos e publicações de fotos. Fotos ou carrosséis exigem o modo Direct Post e as permissões necessárias do TikTok; no fluxo Inbox, o AutoClipe aceita apenas vídeos.",
   },
   {
     question: "Qual é a diferença entre Direct Post e Inbox?",
     answer:
-      "No Direct Post, o AutoClip solicita a publicação pela integração do TikTok, sujeita às permissões, capacidades da conta, opções de visibilidade disponíveis e regras da plataforma. No Inbox, o conteúdo é enviado como rascunho para você concluir no TikTok.",
+      "No Direct Post, o AutoClipe solicita a publicação pela integração do TikTok, sujeita às permissões, capacidades da conta, opções de visibilidade disponíveis e regras da plataforma. No Inbox, o conteúdo é enviado como rascunho para você concluir no TikTok.",
   },
   {
     question: "Preciso autorizar minhas contas TikTok?",
@@ -60,7 +60,7 @@ const faqs = [
       "Os limites de contas e publicações são aplicados por workspace e podem variar conforme o plano. Preços e condições comerciais ainda não estão confirmados para divulgação nesta página; não há promessa de teste grátis.",
   },
   {
-    question: "O AutoClip publica automaticamente em todos os casos?",
+    question: "O AutoClipe publica automaticamente em todos os casos?",
     answer:
       "Não. Uma publicação pode depender de autorização, permissões, capacidades da conta, configurações do workspace, validação da mídia e regras do TikTok. No Inbox, você finaliza a publicação no aplicativo TikTok.",
   },
@@ -98,7 +98,7 @@ export default function LandingPage() {
       <header className="lp-header">
         <div className="lp-container lp-header-inner">
           <Link
-            aria-label="AutoClip, página inicial"
+            aria-label="AutoClipe, página inicial"
             className="lp-brand"
             onClick={closeMenu}
             to="/"
@@ -106,7 +106,7 @@ export default function LandingPage() {
             <span aria-hidden="true" className="lp-brand-mark">
               <Clapperboard />
             </span>
-            <span>AutoClip</span>
+            <span>AutoClipe</span>
           </Link>
 
           <nav aria-label="Navegação principal" className="lp-desktop-nav">
@@ -220,7 +220,7 @@ export default function LandingPage() {
             </div>
             <p className="lp-format-note">
               Fotos e carrosséis exigem Direct Post e permissões do TikTok. No
-              fluxo Inbox, o AutoClip aceita vídeos e você conclui a publicação
+              fluxo Inbox, o AutoClipe aceita vídeos e você conclui a publicação
               no aplicativo TikTok.
             </p>
           </div>
@@ -273,7 +273,7 @@ export default function LandingPage() {
                 nem assinatura.
               </p>
               <Link className="lp-text-link" to="/cadastro">
-                Conhecer o AutoClip <ArrowRight aria-hidden="true" />
+                Conhecer o AutoClipe <ArrowRight aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -546,9 +546,9 @@ function LandingFooter() {
     <footer className="lp-footer">
       <div className="lp-container lp-footer-main">
         <div className="lp-footer-brand-block">
-          <Link aria-label="AutoClip, página inicial" className="lp-brand" to="/">
+          <Link aria-label="AutoClipe, página inicial" className="lp-brand" to="/">
             <span aria-hidden="true" className="lp-brand-mark"><Clapperboard /></span>
-            <span>AutoClip</span>
+            <span>AutoClipe</span>
           </Link>
           <p>Organize canais e publicações TikTok em um só lugar.</p>
         </div>
@@ -568,7 +568,7 @@ function LandingFooter() {
         </nav>
         <div className="lp-footer-column lp-footer-contact">
           <h2>Privacidade</h2>
-          <a href="mailto:diogos.nascimento@outlook.com?subject=Contato%20de%20privacidade%20%E2%80%94%20AutoClip">
+          <a href="mailto:diogos.nascimento@outlook.com?subject=Contato%20de%20privacidade%20%E2%80%94%20AutoClipe">
             Contato de privacidade <ArrowUpRight aria-hidden="true" />
           </a>
           <Link to="/login">Entrar</Link>
@@ -576,7 +576,7 @@ function LandingFooter() {
       </div>
       <div className="lp-footer-bottom">
         <div className="lp-container">
-          <span>© {new Date().getFullYear()} AutoClip. Todos os direitos reservados.</span>
+          <span>© {new Date().getFullYear()} AutoClipe. Todos os direitos reservados.</span>
           <span>Feito para uma operação TikTok mais organizada.</span>
         </div>
       </div>

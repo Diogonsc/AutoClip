@@ -34,7 +34,7 @@ function AuthShell({
           <span className="grid size-10 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Clapperboard className="size-5" aria-hidden="true" />
           </span>
-          <strong className="font-heading text-xl">AutoClip</strong>
+          <strong className="font-heading text-xl">AutoClipe</strong>
         </div>
         <Card className="w-full">
           <CardHeader>
