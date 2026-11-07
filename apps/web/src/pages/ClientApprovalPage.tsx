@@ -38,7 +38,7 @@ export default function ClientApprovalPage() {
   }
   if (loading) return <div className="grid min-h-screen place-items-center p-6"><Loading /></div>;
   return <main className="mx-auto grid min-h-screen max-w-3xl content-start gap-5 p-4 py-10 sm:p-8">
-    <header className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground"><ShieldCheck /></span><div><h1 className="m-0 text-2xl font-semibold">Aprovação de publicação</h1><p className="m-0 text-sm text-muted-foreground">Prévia compartilhada pelo AutoClip</p></div></header>
+    <header className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground"><ShieldCheck /></span><div><h1 className="m-0 text-2xl font-semibold">Aprovação de publicação</h1><p className="m-0 text-sm text-muted-foreground">Prévia compartilhada pelo AutoClipe</p></div></header>
     {error && <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">{error}</div>}
     {done && <div role="status" className="rounded-lg border border-green-600/30 bg-green-600/5 p-4 text-sm">{done}</div>}
     {data && <>
