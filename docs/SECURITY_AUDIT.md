@@ -1,4 +1,4 @@
-# AutoClip — auditoria de segurança local
+# AutoClipe — auditoria de segurança local
 
 **Data:** 2026-11-01
 **Alcance:** migrations aplicadas no Supabase local, RPCs de lote, Storage, OAuth e validações do worker. Sem acesso remoto, teste de penetração ou publicação.

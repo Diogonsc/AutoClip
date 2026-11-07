@@ -1,4 +1,4 @@
-# AutoClip — decisão local GO/NO-GO para auditoria metadata-only
+# AutoClipe — decisão local GO/NO-GO para auditoria metadata-only
 
 **Estado: NO-GO para conexão Cloud até aprovação administrativa específica.** Este Marco B.1 prepara o pacote e não autoriza a execução. Nenhum contato Cloud foi feito.
 

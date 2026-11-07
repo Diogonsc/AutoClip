@@ -1,4 +1,4 @@
-# AutoClip — arquitetura SaaS e operação
+# AutoClipe — arquitetura SaaS e operação
 
 ## Auditoria de base (2026-10-31)
 
@@ -58,7 +58,7 @@ O `pg_cron` só chama a função a cada 15 minutos quando ao menos um workspace 
 
 ## Custos e limites de infraestrutura
 
-No plano gratuito, os principais vetores são Storage/egress, banco, invocações e tempo das Edge Functions. O AutoClip reduz transferência pela Vercel ao fazer upload direto ao Supabase Storage, usa URLs assinadas curtas, processa a fila e limpeza em lotes, pagina listas e evita polling de arquivos no frontend. O painel expõe `storage_bytes` e `deleted_storage_bytes` como métricas internas calculadas — não são uma fatura do Supabase.
+No plano gratuito, os principais vetores são Storage/egress, banco, invocações e tempo das Edge Functions. O AutoClipe reduz transferência pela Vercel ao fazer upload direto ao Supabase Storage, usa URLs assinadas curtas, processa a fila e limpeza em lotes, pagina listas e evita polling de arquivos no frontend. O painel expõe `storage_bytes` e `deleted_storage_bytes` como métricas internas calculadas — não são uma fatura do Supabase.
 
 Para vídeos, não mude o método oficial atual sem um teste: upload de arquivo tende a transferir bytes via worker; `PULL_FROM_URL` exige domínio HTTPS verificado e hoje é usado para carrosséis. Um domínio próprio não é exigido em desenvolvimento, mas é uma dependência do TikTok para o fluxo de fotos em produção.
 
@@ -142,7 +142,7 @@ O agendador guarda as opções por item no rascunho: privacidade, permitir comen
 
 O modo Direct/Inbox permanece uma configuração do workspace e não pode ser alterado por item. Fotos/carrosséis exigem Direct Post; a Content Posting API usada neste projeto aceita comentários e declarações comerciais para fotos, enquanto duetos/stitch são enviados somente em vídeo. Inbox não recebe campos de Direct Post. A RPC `confirm_publication_batch` verifica tipos, privacidade em relação às capacidades armazenadas, campos obrigatórios por tipo de mídia, modo de publicação e consentimento de áudio para vídeos; o worker continua sendo a autoridade para capacidades atuais e permissões do TikTok.
 
-A API de publicação comum usada pelo AutoClip não expõe a declaração de conteúdo gerado por IA encontrada no fluxo separado de TikTok Shop; por isso o editor não oferece esse controle em publicações comuns. Não há seleção de modo de publicação por linha. Se o app ainda não foi auditado, a prévia limita Direct Post à privacidade `SELF_ONLY`, conforme o bloqueio operacional existente. A repetição continua sendo apenas um rascunho: não persiste jobs nem reserva quota até a confirmação explícita.
+A API de publicação comum usada pelo AutoClipe não expõe a declaração de conteúdo gerado por IA encontrada no fluxo separado de TikTok Shop; por isso o editor não oferece esse controle em publicações comuns. Não há seleção de modo de publicação por linha. Se o app ainda não foi auditado, a prévia limita Direct Post à privacidade `SELF_ONLY`, conforme o bloqueio operacional existente. A repetição continua sendo apenas um rascunho: não persiste jobs nem reserva quota até a confirmação explícita.
 
 Validação local desta fase: `npm --prefix apps/web run typecheck`, Vitest, build, `supabase db reset --local`, `supabase test db` e `bash scripts/test_local_concurrency.sh`. A homologação visual autenticada e consultas reais de capacidades dependem de sessão e contas autorizadas do TikTok; não são simuladas por estes testes.
 

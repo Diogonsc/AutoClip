@@ -16,7 +16,7 @@ O token expira (1 h), só serve imagens (jpg/png/webp) e nunca vídeos.
 1. `supabase db push` e `supabase functions deploy media-serve publication-worker`.
 2. Segredos: `supabase secrets set MEDIA_PROXY_SECRET=$(openssl rand -hex 32) TIKTOK_VERIFIED_MEDIA_HOST=autocliptiktok.vercel.app`.
 3. Deploy da Vercel (o rewrite `/m/:token` vai junto).
-4. Portal TikTok → app AutoClip → aba **Sandbox** → Content Posting API → **Verify domains** →
+4. Portal TikTok → app AutoClipe → aba **Sandbox** → Content Posting API → **Verify domains** →
    **URL prefix** `https://autocliptiktok.vercel.app/` → baixe o arquivo de assinatura e coloque em
    `apps/web/public/` (mesmo nome, na raiz) → deploy → **Verify**.
 5. No Sandbox, adicione sua conta em **Target Users** (só ela pode postar) e conecte o canal.

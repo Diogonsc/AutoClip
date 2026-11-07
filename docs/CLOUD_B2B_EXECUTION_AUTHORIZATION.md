@@ -1,4 +1,4 @@
-# AutoClip — Marco B.2-B: ficha de autorização e execução controlada
+# AutoClipe — Marco B.2-B: ficha de autorização e execução controlada
 
 **Estado nesta revisão: preparação somente. Nenhum acesso ao Supabase Cloud foi realizado e nenhum gate foi executado.** A aprovação deste documento não é implícita; cada gate requer autorização nova após o resultado do anterior.
 

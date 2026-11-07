@@ -2,7 +2,7 @@
 
 > **Escopo temporal:** este documento consolida o Gate 3.11 e a evidência histórica fornecida pelo proprietário. O inventário estático e o pacote read-only preparados no Gate 3.12 estão documentados separadamente nos [artefatos Gate 3.12](GATE_3_12_COMPONENT_INVENTORY.md); eles não são execução Cloud nem alteram os estados remotos abaixo.
 
-**Projeto:** AutoClip · **Project Ref:** `djrwfvcxgpyknmizqumn` · **Database:** `postgres`
+**Projeto:** AutoClipe · **Project Ref:** `djrwfvcxgpyknmizqumn` · **Database:** `postgres`
 
 **Resultado do Gate 3.11:** contenção NOLOGIN confirmada por evidência do proprietário e diagnóstico independente; auditoria Cloud abrangente e homologação de produção permanecem pendentes.
 

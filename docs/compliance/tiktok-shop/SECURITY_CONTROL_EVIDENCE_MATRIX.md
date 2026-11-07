@@ -1,4 +1,4 @@
-# Security Control Evidence Matrix — AutoClip / TikTok Shop
+# Security Control Evidence Matrix — AutoClipe / TikTok Shop
 
 **Review date:** 2026-11-02. **Scope:** local repository, tests and previously recorded Gate evidence only. No Cloud or public-site availability check was performed in this task.
 
@@ -55,7 +55,7 @@ Supporting regularization artifacts are linked in `DOCUMENT_INVENTORY_AND_VERSIO
 
 ## Questionnaire evidence addendum — 2026-11-02
 
-The owner-provided local attachment `output/pdf/AutoClip_Q4_Revised_Evidence.pdf` was discovered and visually reviewed. It includes screenshots reporting account-level MFA/2FA for GitHub, Supabase and Vercel, plus a workstation-control transcription. This changes the MFA evidence from “not located” to **PARTIAL USER-PROVIDED EVIDENCE**; no actual account was accessed, no screenshot authenticity was independently established, and coverage of all privileged accounts remains unknown. The report itself says formal approval and workstation checks are pending, and incidental identifiers remain in the exhibits. Keep the original private and do not submit without owner review and a transparent redacted copy.
+The owner-provided local attachment `output/pdf/AutoClipe_Q4_Revised_Evidence.pdf` was discovered and visually reviewed. It includes screenshots reporting account-level MFA/2FA for GitHub, Supabase and Vercel, plus a workstation-control transcription. This changes the MFA evidence from “not located” to **PARTIAL USER-PROVIDED EVIDENCE**; no actual account was accessed, no screenshot authenticity was independently established, and coverage of all privileged accounts remains unknown. The report itself says formal approval and workstation checks are pending, and incidental identifiers remain in the exhibits. Keep the original private and do not submit without owner review and a transparent redacted copy.
 
 Question-specific assessments are in `QUESTION_BY_QUESTION_REVIEW.md`. In particular, the Q1 PDF is explicitly approval/publishing-pending, Q5 lacks an approved published access-control policy attachment, and Q8 contains a recorded initial remediation but not proof of ongoing cadence or deployed versions. These are evidence-status updates, not Partner Center answer changes.
 

@@ -1,4 +1,4 @@
-# AutoClip — baseline de desempenho SQL (local)
+# AutoClipe — baseline de desempenho SQL (local)
 
 **Data:** 2026-11-01. Banco Supabase local; todas as fixtures são fictícias e revertidas com `ROLLBACK`.
 

@@ -1,7 +1,7 @@
-# Pacote de Decisão do Proprietário — Políticas AutoClip
+# Pacote de Decisão do Proprietário — Políticas AutoClipe
 
 **Status:** material para revisão humana; nenhuma decisão foi registrada.
-**Operador informado:** 56.151.919 DIOGO NASCIMENTO DOS SANTOS, titular do MEI; CNPJ 56.151.919/0001-30; nome comercial AutoClip; Rio de Janeiro/RJ, Brasil.
+**Operador informado:** 56.151.919 DIOGO NASCIMENTO DOS SANTOS, titular do MEI; CNPJ 56.151.919/0001-30; nome comercial AutoClipe; Rio de Janeiro/RJ, Brasil.
 **Contato indicado:** diogos.nascimento@outlook.com. O proprietário confirmou acompanhamento regular para o contato de segurança; isso não é monitoramento 24/7, SLA, suplência nem verificação independente.
 
 Este pacote resume obrigações propostas nos rascunhos. Seis PDFs candidatos existem para revisão, incluindo a Security Policy Draft 1.2 atual e o PDF Draft 1.1 anterior preservado; os caminhos estão em `OWNER_POLICY_APPROVAL_RECORD.md`. Todos permanecem rascunhos. A cópia sanitizada Q4 ainda não foi gerada. A aprovação significa adoção organizacional do conteúdo, não prova automática de implantação técnica, publicação, conformidade legal, certificação ou aprovação TikTok. Para cada documento, selecione uma opção, justifique e date. Não preencha por inferência.
@@ -10,7 +10,7 @@ Este pacote resume obrigações propostas nos rascunhos. Seis PDFs candidatos ex
 
 **Finalidade:** estabelecer regras de segurança para aplicação, dados, contas administrativas, integrações e operação.
 
-PDF de revisão: `output/pdf/DRAFT_AutoClip_Information_Security_Policy_Draft_1.2.pdf`.
+PDF de revisão: `output/pdf/DRAFT_AutoClipe_Information_Security_Policy_Draft_1.2.pdf`.
 
 **Ao aprovar, o proprietário assume:** designar responsáveis; exigir acesso mínimo, proteção de credenciais, análise de mudanças, resposta a incidentes, gestão de vulnerabilidades e revisão periódica; manter políticas coerentes com a prática.
 

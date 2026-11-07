@@ -1,4 +1,4 @@
-# Gate 3.12 — matriz de riscos AutoClip
+# Gate 3.12 — matriz de riscos AutoClipe
 
 **Escopo:** revisão estática do worktree e evidências Gate 3.11. Nenhum risco abaixo representa automaticamente uma exploração demonstrada. Estado Cloud permanece não verificado, exceto o diagnóstico da role auditora e o agregado ACL do Gate 3.3 relatados pelo proprietário.
 

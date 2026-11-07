@@ -1,4 +1,4 @@
-# AutoClip Terms of Service — Candidate for Review
+# AutoClipe Terms of Service — Candidate for Review
 
 **Status:** DRAFT — PENDING OWNER AND QUALIFIED LEGAL REVIEW
 **Version:** Candidate 1.1-draft (prepared 2026-11-02)
@@ -11,7 +11,7 @@ This candidate is a drafting aid only. Do not present it as an enforceable or ap
 
 ## 1. Provider and service
 
-AutoClip is the trade name of **56.151.919 DIOGO NASCIMENTO DOS SANTOS**, an individual micro-entrepreneur (MEI), CNPJ 56.151.919/0001-30, operating in Brazil (“Operator”). The business is based in Rio de Janeiro/RJ. AutoClip provides workspace-based tools for managing user-authorized social-account connections, media, schedules, publication requests and history, subject to features actually enabled for your account. The service does not guarantee that TikTok or TikTok Shop accepts, publishes, retains or displays content at a particular time or to a particular audience.
+AutoClipe is the trade name of **56.151.919 DIOGO NASCIMENTO DOS SANTOS**, an individual micro-entrepreneur (MEI), CNPJ 56.151.919/0001-30, operating in Brazil (“Operator”). The business is based in Rio de Janeiro/RJ. AutoClipe provides workspace-based tools for managing user-authorized social-account connections, media, schedules, publication requests and history, subject to features actually enabled for your account. The service does not guarantee that TikTok or TikTok Shop accepts, publishes, retains or displays content at a particular time or to a particular audience.
 
 ## 2. Eligibility and account security
 
@@ -19,7 +19,7 @@ You must be legally able to use the service and comply with applicable law and p
 
 ## 3. Workspaces and authorization
 
-Workspace owners and administrators may manage access within their workspace, subject to the service's actual authorization controls. You may connect only an account you own or are authorized to manage. AutoClip may use only the permissions you grant and only for the service actions you request. TikTok Login Kit and TikTok Shop authorization may have different terms and token behavior.
+Workspace owners and administrators may manage access within their workspace, subject to the service's actual authorization controls. You may connect only an account you own or are authorized to manage. AutoClipe may use only the permissions you grant and only for the service actions you request. TikTok Login Kit and TikTok Shop authorization may have different terms and token behavior.
 
 ## 4. User content
 
@@ -27,7 +27,7 @@ You retain rights in content you provide. You grant the Operator a limited, non-
 
 ## 5. Acceptable use and platform dependencies
 
-You may not use AutoClip to violate law, platform rules or third-party rights, bypass controls, interfere with service security, or access another workspace without authority. TikTok and TikTok Shop operate independent services and may change API availability, scopes, eligibility or decisions. You remain responsible for reviewing the destination account and platform requirements.
+You may not use AutoClipe to violate law, platform rules or third-party rights, bypass controls, interfere with service security, or access another workspace without authority. TikTok and TikTok Shop operate independent services and may change API availability, scopes, eligibility or decisions. You remain responsible for reviewing the destination account and platform requirements.
 
 ## 6. Scheduling, publication and service limits
 
@@ -35,7 +35,7 @@ Scheduling records an intended operation; it is not a guarantee of publication. 
 
 ## 7. Privacy, retention and deletion
 
-Once approved and published, processing will be described in the Operator's Privacy Policy at **[VERIFIED PUBLIC PRIVACY URL]**. Requests and deletion will be handled under the approved process at **[VERIFIED REQUEST/DELETION CHANNEL]**. Disconnecting an external account, deleting AutoClip records, deleting stored media and removing content already sent to a platform are distinct operations. Retention periods and legal exceptions must match the approved schedule and actual system behavior.
+Once approved and published, processing will be described in the Operator's Privacy Policy at **[VERIFIED PUBLIC PRIVACY URL]**. Requests and deletion will be handled under the approved process at **[VERIFIED REQUEST/DELETION CHANNEL]**. Disconnecting an external account, deleting AutoClipe records, deleting stored media and removing content already sent to a platform are distinct operations. Retention periods and legal exceptions must match the approved schedule and actual system behavior.
 
 ## 8. Suspension and termination
 

@@ -101,7 +101,7 @@ export default function LandingPage() {
             <Clapperboard className="size-5" />
           </span>
           <span className="font-heading text-lg font-semibold tracking-tight">
-            AutoClip
+            AutoClipe
           </span>
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-[#c7c2d7] md:flex">
@@ -243,7 +243,7 @@ export default function LandingPage() {
               soltas.
             </h2>
             <p className="mt-5 text-[#aaa5b8]">
-              Dê contexto para cada publicação e deixe que o AutoClip cuide do
+              Dê contexto para cada publicação e deixe que o AutoClipe cuide do
               caminho operacional.
             </p>
             <Button className="mt-7" variant="outline" asChild>
@@ -362,7 +362,7 @@ export default function LandingPage() {
             Conteúdo é criatividade. A operação pode ser simples.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-[#c0bbd0]">
-            Crie seu workspace e veja como o AutoClip pode dar previsibilidade
+            Crie seu workspace e veja como o AutoClipe pode dar previsibilidade
             para a sua rotina de publicação.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

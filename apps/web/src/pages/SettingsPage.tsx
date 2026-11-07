@@ -181,7 +181,7 @@ export default function SettingsPage() {
           <CardContent className="grid gap-4">
             <Notice tone={mediaAutoDelete ? (mediaDryRun ? "info" : "warning") : "neutral"}>
               {!mediaAutoDelete
-                ? "Limpeza automática desativada: nenhum arquivo será removido pelo AutoClip."
+                ? "Limpeza automática desativada: nenhum arquivo será removido pelo AutoClipe."
                 : mediaDryRun
                   ? "Simulação ativa: o sistema registra os candidatos, mas não remove objetos do Storage."
                   : "Exclusão automática ativa. Use somente após homologar a simulação."}

@@ -32,7 +32,7 @@ The local build is not evidence of the artifact Vercel would produce: remote env
 The following local sources agree on version, approval date, business identity, security contact, and documented limitations:
 
 - `docs/compliance/tiktok-shop/AUTOCLIP_SECURITY_POLICY_v1.2.md` — SHA-256 `a7dd38ebed4d39907fe75a1991ed4d29955d673f20341122ede6c6196c68eaf0`.
-- `output/pdf/AutoClip_Information_Security_Policy_v1.2_APPROVED.pdf` — SHA-256 `250dc7e766286b439f2b2ce33011e3148fcd3645731f3ee900a4e3ec87ff29d6`.
+- `output/pdf/AutoClipe_Information_Security_Policy_v1.2_APPROVED.pdf` — SHA-256 `250dc7e766286b439f2b2ce33011e3148fcd3645731f3ee900a4e3ec87ff29d6`.
 - `apps/web/public/security-policy.html` — SHA-256 `fb5a039a0b9234bf81329bbad714595af2acbdbaaaacbb55ce4aa5c233a4609b`.
 - `docs/compliance/tiktok-shop/OWNER_POLICY_APPROVAL_RECORD.md`.
 - `docs/compliance/tiktok-shop/SECURITY_CONTROL_EVIDENCE_MATRIX.md`.

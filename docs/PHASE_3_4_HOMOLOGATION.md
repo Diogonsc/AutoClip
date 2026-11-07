@@ -1,4 +1,4 @@
-# AutoClip — Fase 3.4: homologação local
+# AutoClipe — Fase 3.4: homologação local
 
 **Data:** 2026-11-01
 **Escopo:** validação e estabilização local; sem deploy, commit, push, banco remoto, OAuth TikTok real, publicação real ou remoção física de mídia.

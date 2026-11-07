@@ -1,4 +1,4 @@
-# Prontidão para homologação integrada — AutoClip
+# Prontidão para homologação integrada — AutoClipe
 
 ## Estado executivo
 

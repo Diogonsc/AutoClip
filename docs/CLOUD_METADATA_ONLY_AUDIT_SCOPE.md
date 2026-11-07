@@ -1,4 +1,4 @@
-# AutoClip — escopo de auditoria PostgreSQL metadata-only
+# AutoClipe — escopo de auditoria PostgreSQL metadata-only
 
 **Atualização Gate 3.1: correção fail-closed local; nenhuma conexão ou operação Cloud ocorreu.**
 
@@ -76,7 +76,7 @@ Guard e scripts 00–02 são operações separadas de criação e verificação.
 \gset
   \if :approved_ref_matches
   \else
-    \echo 'ABORT: project ref does not match the approved AutoClip project.'
+    \echo 'ABORT: project ref does not match the approved AutoClipe project.'
     DO $$ BEGIN RAISE EXCEPTION 'metadata_audit_guard_blocked'; END $$;
   \endif
   \if :{?audit_database}

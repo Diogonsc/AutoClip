@@ -111,7 +111,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
           <Clapperboard className="size-5" aria-hidden="true" />
         </span>
         <span className="grid leading-tight">
-          <strong className="font-heading text-base">AutoClip</strong>
+          <strong className="font-heading text-base">AutoClipe</strong>
           <small className="text-xs text-muted-foreground">workspace</small>
         </span>
       </div>
@@ -251,7 +251,7 @@ function TestModeBanner() {
   if (!flags.data || flags.data.tiktok_audited) return null;
   return (
     <Notice tone="warning">
-      <strong>Modo de teste do TikTok.</strong> Enquanto o AutoClip aguarda a
+      <strong>Modo de teste do TikTok.</strong> Enquanto o AutoClipe aguarda a
       aprovação do TikTok, as publicações diretas ficam visíveis apenas para
       você (privadas). Quando a aprovação sair, este aviso desaparece.
     </Notice>
@@ -275,7 +275,7 @@ export default function Layout() {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left">
           <SheetTitle>Menu</SheetTitle>
-          <SheetDescription>Navegação principal do AutoClip</SheetDescription>
+          <SheetDescription>Navegação principal do AutoClipe</SheetDescription>
           <SidebarBody onNavigate={() => setMenuOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -294,7 +294,7 @@ export default function Layout() {
             <Menu />
           </Button>
           <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-            <span>AutoClip</span>
+            <span>AutoClipe</span>
             <span aria-hidden="true">/</span>
             <strong className="truncate font-medium text-foreground">
               {current?.name}

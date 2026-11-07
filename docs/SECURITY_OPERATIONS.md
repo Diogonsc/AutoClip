@@ -1,6 +1,6 @@
-# AutoClip - Security Operations and Evidence Plan
+# AutoClipe - Security Operations and Evidence Plan
 
-**Owner:** AutoClip operator
+**Owner:** AutoClipe operator
 **Review cadence:** monthly for Q3 and Q8; quarterly for Q2 and Q6; annually and after material changes for Q1 and Q7.
 **Evidence location:** access-controlled repository or ticket system. Never store passwords, recovery codes, API keys, private keys, OAuth tokens, session tokens, or production database exports in this repository.
 
@@ -8,9 +8,9 @@ This document operationalizes the six open items in the security review. A check
 
 ## Q1 - Security policy approval and publication
 
-Source policy: `artifacts/AutoClip_Information_Security_and_Privacy_Policy.pdf` (version 1.0, 30 October 2026).
+Source policy: `artifacts/AutoClipe_Information_Security_and_Privacy_Policy.pdf` (version 1.0, 30 October 2026).
 
-Before representing the policy as effective, the authorized AutoClip operator must complete the approval record below, retain the signed copy in the controlled evidence location, and publish the approved version where affected personnel can access it.
+Before representing the policy as effective, the authorized AutoClipe operator must complete the approval record below, retain the signed copy in the controlled evidence location, and publish the approved version where affected personnel can access it.
 
 | Required action | Owner | Evidence |
 | --- | --- | --- |

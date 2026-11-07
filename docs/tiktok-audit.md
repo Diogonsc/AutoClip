@@ -6,7 +6,7 @@ posts feitos antes da aprovação continuam privados depois dela. Por isso o app
 
 ## Roteiro do vídeo de demonstração
 Grave a tela narrando (legendas na tela ajudam) e mostre, nesta ordem:
-1. Login no AutoClip e **Conectar canal** → tela de autorização do TikTok → retorno ao app.
+1. Login no AutoClipe e **Conectar canal** → tela de autorização do TikTok → retorno ao app.
 2. **Nova publicação**: nome/apelido do criador, lista de privacidade **sem valor padrão**,
    comentário/dueto/stitch **desmarcados** (e desabilitados quando a conta os bloqueia).
 3. Divulgação de conteúdo comercial: ligar o toggle sem escolher opção (botão bloqueado), escolher
