@@ -50,12 +50,12 @@ function setup(over: Record<string, unknown> = {}) {
     getFlags: async () => ({ tiktok_audited: false }),
     ...over,
   };
-  const call = (method: string, auth: string | null, opts: { body?: unknown; query?: string } = {}) =>
+  const call = (method: string, auth: string | null, opts: { body?: unknown; query?: string; origin?: string } = {}) =>
     handleAdminUsers(
       new Request(`https://x.supabase.co/functions/v1/admin-users${opts.query ?? ''}`, {
         method,
         headers: {
-          origin: ORIGIN,
+          origin: opts.origin ?? ORIGIN,
           ...(auth ? { authorization: auth } : {}),
           ...(opts.body ? { 'content-type': 'application/json' } : {}),
         },
@@ -75,10 +75,18 @@ test('admin: preflight libera GET/PATCH/DELETE', async () => {
   assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
 });
 
-test('admin: sem token → 401; cliente comum (owner de workspace) → 403', async () => {
+test('admin: origem fora da allowlist não recebe CORS', async () => {
+  const { call } = setup();
+  const res = await call('OPTIONS', null, { origin: 'https://untrusted.example.com' });
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get('access-control-allow-origin'), null);
+});
+
+test('admin: sem token ou token expirado → 401; cliente comum (owner de workspace) → 403', async () => {
   const { call, calls } = setup();
   assert.equal((await call('GET', null)).status, 401);
   assert.equal((await call('GET', 'Bearer lixo')).status, 401);
+  assert.equal((await call('GET', 'Bearer expired')).status, 401);
   assert.equal((await call('GET', 'Bearer client')).status, 403);
   assert.equal((await call('DELETE', 'Bearer client', { body: { user_id: OWNER } })).status, 403);
   assert.deepEqual(calls, []);
@@ -157,6 +165,13 @@ test('admin: falha na limpeza do Storage não desfaz a exclusão; erro 23514 vir
   assert.equal((await a.call('DELETE', 'Bearer owner', { body: { user_id: CLIENT } })).status, 200);
   const b = setup({ deleteUser: async () => { throw Object.assign(new Error('x'), { code: '23514' }); } });
   assert.equal((await b.call('DELETE', 'Bearer owner', { body: { user_id: CLIENT } })).status, 409);
+});
+
+test('admin: falha interna controlada retorna 500 sem detalhes do provedor', async () => {
+  const { call } = setup({ listUsers: async () => { throw new Error('provider detail'); } });
+  const res = await call('GET', 'Bearer owner');
+  assert.equal(res.status, 500);
+  assert.deepEqual(await res.json(), { error: 'internal', message: 'Não foi possível concluir a operação.' });
 });
 
 test('admin: flags da plataforma — só owner, só chaves conhecidas, só booleanos', async () => {
