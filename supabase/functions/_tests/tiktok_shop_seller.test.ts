@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { ShopApiError, TikTokShopSellerClient, normalizeSellerShop, signSellerRequest, validPageSize, validatedApiHost } from '../_shared/tiktok-shop-seller.ts';
+import { ShopApiError, TikTokShopSellerClient, normalizeSellerShop, sellerAuthorizeUrl, signSellerRequest, validPageSize, validatedApiHost } from '../_shared/tiktok-shop-seller.ts';
 
 const client = (fetchImpl: typeof fetch) => new TikTokShopSellerClient({ appKey: 'app', appSecret: 'secret', accessToken: 'synthetic', fetchImpl });
 
 test('normalizes observed Partner Center id/cipher shape and rejects incomplete shops', () => {
+  const auth = new URL(sellerAuthorizeUrl('https://services.br.tiktokshop.com/open/authorize', 'service', 'state'));
+  assert.equal(auth.searchParams.get('service_id'), 'service');
   assert.deepEqual(normalizeSellerShop({ id: '7495028847767946451', cipher: 'SANITIZED_SHOP_CIPHER', name: 'SANDBOX_BR7703293130270885633', region: 'BR', seller_type: 'LOCAL' }), { shop_id: '7495028847767946451', shop_cipher: 'SANITIZED_SHOP_CIPHER', name: 'SANDBOX_BR7703293130270885633', region: 'BR', seller_type: 'LOCAL' });
   assert.equal(normalizeSellerShop({ id: '7495028847767946451' }), null);
   assert.throws(() => validatedApiHost('https://attacker.invalid'));
