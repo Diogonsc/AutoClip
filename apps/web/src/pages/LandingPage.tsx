@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowUpRight,
+  BarChart3,
   CircleAlert,
   CalendarDays,
   Check,
@@ -174,6 +175,11 @@ export default function LandingPage() {
               Gerencie múltiplas contas TikTok, organize vídeos e carrosséis e
               planeje publicações em lote em um só lugar.
             </p>
+            <ul aria-label="Principais benefícios" className="lp-hero-benefits">
+              <li><CalendarDays aria-hidden="true" /> Agendamento em lote</li>
+              <li><Layers3 aria-hidden="true" /> Múltiplas contas</li>
+              <li><BarChart3 aria-hidden="true" /> Gestão e relatórios</li>
+            </ul>
             <div className="lp-hero-actions">
               <Link className="lp-button lp-button-primary" to="/cadastro">
                 Criar conta <ArrowRight aria-hidden="true" />
