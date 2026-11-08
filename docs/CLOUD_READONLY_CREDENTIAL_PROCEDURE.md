@@ -1,10 +1,10 @@
-# Procedimento da credencial PostgreSQL de auditoria AutoClipe
+# Procedimento da credencial PostgreSQL de auditoria AutoClip
 
 **Procedimento vigente: metadata-only, preparação local sem autorização para conectar.** Este documento substitui a proposta anterior de agregação operacional por `inventory_summary()`.
 
 ## Alvo e finalidade
 
-- Project Ref: `djrwfvcxgpyknmizqumn`, projeto Cloud principal do AutoClipe.
+- Project Ref: `djrwfvcxgpyknmizqumn`, projeto Cloud principal do AutoClip.
 - Database PostgreSQL: `postgres`.
 - Role proposta: `autoclip_cloud_auditor`.
 - Local: `tiktok-saas`, usado somente em teste isolado.

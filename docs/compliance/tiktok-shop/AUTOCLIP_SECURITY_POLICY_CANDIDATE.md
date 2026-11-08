@@ -1,20 +1,20 @@
-# AutoClipe Information Security Policy — Candidate
+# AutoClip Information Security Policy — Candidate
 
 - **Document ID:** AUTOCLIP-SEC-POL-CANDIDATE
 - **Version:** Draft 1.2
 - **Status:** DRAFT — PENDING OWNER APPROVAL
 - **Prepared:** 2026-11-02
 - **Accountable business operator:** 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder; CNPJ 56.151.919/0001-30
-- **Business name:** AutoClipe
+- **Business name:** AutoClip
 - **Location:** Rio de Janeiro/RJ, Brazil
 - **Security contact:** diogos.nascimento@outlook.com
 - **Approver / approval date / effective date:** PENDING OWNER DECISION
 
-AutoClipe is the trade name used by the MEI holder identified above. This candidate does not replace, approve, publish, or amend `apps/web/public/security-policy.html` or historical PDFs. Local policy sources contain conflicting version and approval statements; see `FINAL_OWNER_DECISIONS_AND_BLOCKERS.md`. The owner confirms regular review of the security contact mailbox, but this does not mean continuous or 24/7 monitoring, a response-time guarantee, or delegated coverage. This policy is not effective until formally approved. Its requirements do not prove technical deployment or operational verification.
+AutoClip is the trade name used by the MEI holder identified above. This candidate does not replace, approve, publish, or amend `apps/web/public/security-policy.html` or historical PDFs. Local policy sources contain conflicting version and approval statements; see `FINAL_OWNER_DECISIONS_AND_BLOCKERS.md`. The owner confirms regular review of the security contact mailbox, but this does not mean continuous or 24/7 monitoring, a response-time guarantee, or delegated coverage. This policy is not effective until formally approved. Its requirements do not prove technical deployment or operational verification.
 
 ## 1. Purpose and scope
 
-This policy sets security requirements for AutoClipe application code, identities and access, databases, object storage, backend functions, workers, operational accounts, information, and service providers. It applies to development, test, staging, and production. Production and provider controls must be verified in their actual environments; local code or policy text alone is not proof of deployment.
+This policy sets security requirements for AutoClip application code, identities and access, databases, object storage, backend functions, workers, operational accounts, information, and service providers. It applies to development, test, staging, and production. Production and provider controls must be verified in their actual environments; local code or policy text alone is not proof of deployment.
 
 ## 2. Governance and responsibilities
 
@@ -34,7 +34,7 @@ TikTok Login Kit and TikTok Shop are separate products and authorization contrac
 
 ## 5. Data and media protection
 
-AutoClipe shall collect and retain only data needed for user-requested account connection, workspace operation, media handling, scheduling, publication, security, and support. Access to media and publication metadata shall be workspace-scoped. Shop product/order fields and provider raw JSON require field-level minimization before the related processing is enabled or represented as complete.
+AutoClip shall collect and retain only data needed for user-requested account connection, workspace operation, media handling, scheduling, publication, security, and support. Access to media and publication metadata shall be workspace-scoped. Shop product/order fields and provider raw JSON require field-level minimization before the related processing is enabled or represented as complete.
 
 Media may be considered eligible for automatic deletion only after all of these conditions are met: publication is confirmed; at least 24 hours have elapsed as a safety window; no shared reference prevents deletion; no related operation is pending or in an unknown state; and the applicable safe-deletion checks pass. Eligibility is not the same as deletion. Automatic cleanup is not confirmed active or executed in production. Other data categories do not receive a retention period from this policy; their schedules remain pending approval and evidence.
 

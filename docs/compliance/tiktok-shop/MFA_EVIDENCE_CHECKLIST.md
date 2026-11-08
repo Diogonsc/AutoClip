@@ -1,6 +1,6 @@
 # Administrative MFA Evidence Checklist
 
-**Status:** no administrative account settings were accessed directly. The owner-provided `output/pdf/AutoClipe_Q4_Revised_Evidence.pdf` was found and its screenshot pages were visually reviewed locally. It reports account-level MFA/2FA for GitHub, Supabase and Vercel. This is user-provided evidence, not an independent account audit, and does not prove coverage of all privileged users.
+**Status:** no administrative account settings were accessed directly. The owner-provided `output/pdf/AutoClip_Q4_Revised_Evidence.pdf` was found and its screenshot pages were visually reviewed locally. It reports account-level MFA/2FA for GitHub, Supabase and Vercel. This is user-provided evidence, not an independent account audit, and does not prove coverage of all privileged users.
 
 | Service/account class | Evidence it is used | Verification owner | MFA status | Real evidence required | Redact | Current status |
 |---|---|---|---|---|---|---|

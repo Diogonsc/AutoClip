@@ -33,13 +33,13 @@
 
 ## Documents and attachments reviewed
 
-- `output/pdf/AutoClipe_Q1_Policy_v3_Approval_Pending.pdf` — explicitly says draft and approval/publication pending.
-- `output/pdf/AutoClipe_Q2_Revised_Evidence.pdf`, `Q3_Revised_Evidence.pdf`, `Q4_Revised_Evidence.pdf`, `Q6_Revised_Evidence.pdf`, `Q7_Revised_Evidence.pdf`, `Q8_Revised_Evidence.pdf` — revised evidence reports; approval fields remain pending and each distinguishes evidence from open operational checks.
-- `output/pdf/AutoClipe_Submission_Checklist.pdf` — says package contains corrected documents but does not establish controls operational.
+- `output/pdf/AutoClip_Q1_Policy_v3_Approval_Pending.pdf` — explicitly says draft and approval/publication pending.
+- `output/pdf/AutoClip_Q2_Revised_Evidence.pdf`, `Q3_Revised_Evidence.pdf`, `Q4_Revised_Evidence.pdf`, `Q6_Revised_Evidence.pdf`, `Q7_Revised_Evidence.pdf`, `Q8_Revised_Evidence.pdf` — revised evidence reports; approval fields remain pending and each distinguishes evidence from open operational checks.
+- `output/pdf/AutoClip_Submission_Checklist.pdf` — says package contains corrected documents but does not establish controls operational.
 - Existing policy HTML/PDF and `docs/SECURITY_OPERATIONS.md`, `docs/INCIDENT_RESPONSE_RUNBOOK.md`, existing compliance package and Gate 3.19.3 records.
 
 The transcription states what was selected and what evidence appeared visible. It is not proof of exact question wording, final upload, reviewer-visible attachment integrity or successful publication. Preserve the original Partner Center capture privately and map exact wording before changing any answer.
 
 ## Business identity and approval update — 2026-11-02
 
-The owner supplied CCMEI-derived business identity for candidate documents: AutoClipe is a trade name of 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil; contact diogos.nascimento@outlook.com. This resolves the legal-operator field in candidates but does not establish formal approval, publication, mailbox monitoring, exact Partner Center wording, data residency, or operational controls. Q1 remains YES NOT SUPPORTED; Q4 YES PARTIALLY SUPPORTED; Q5 YES NOT SUPPORTED; Q8 YES PARTIALLY SUPPORTED. Internal personal-information standard remains NO CONSISTENT until approved and adopted. No questionnaire answer is changed by this local update.
+The owner supplied CCMEI-derived business identity for candidate documents: AutoClip is a trade name of 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil; contact diogos.nascimento@outlook.com. This resolves the legal-operator field in candidates but does not establish formal approval, publication, mailbox monitoring, exact Partner Center wording, data residency, or operational controls. Q1 remains YES NOT SUPPORTED; Q4 YES PARTIALLY SUPPORTED; Q5 YES NOT SUPPORTED; Q8 YES PARTIALLY SUPPORTED. Internal personal-information standard remains NO CONSISTENT until approved and adopted. No questionnaire answer is changed by this local update.

@@ -28,7 +28,7 @@ export default function ReportsPage() {
   const mediaName = (id: string) => media.data?.find((m) => m.id === id)?.original_filename ?? 'Mídia removida';
   const printReport = () => window.print();
   return <div className="grid gap-5 report-page">
-    <PageHeader title="Relatório semanal" subtitle="Indicadores de operação dos últimos 7 dias, baseados no histórico registrado no AutoClip." actions={<Button onClick={printReport}><Download className="mr-2 size-4" />Exportar PDF / Imprimir</Button>} />
+    <PageHeader title="Relatório semanal" subtitle="Indicadores de operação dos últimos 7 dias, baseados no histórico registrado no AutoClipe." actions={<Button onClick={printReport}><Download className="mr-2 size-4" />Exportar PDF / Imprimir</Button>} />
     <ErrorBox error={jobs.error ?? channels.error ?? media.error} />
     {jobs.isLoading ? <Loading /> : <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

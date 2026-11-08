@@ -34,4 +34,4 @@ Because identity, effective date and legal terms are unresolved, the existing pu
 
 ## Owner-provided business identity update (2026-11-02)
 
-The candidate now identifies AutoClipe as a trade name operated by 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil, with contact diogos.nascimento@outlook.com. No public source or effective date was changed. Consumer-law review, website URL, operational contact coverage, product scope and contractual terms remain pending. MEI/CNAE suitability for all SaaS activities requires separate accounting review.
+The candidate now identifies AutoClip as a trade name operated by 56.151.919 DIOGO NASCIMENTO DOS SANTOS, MEI holder, CNPJ 56.151.919/0001-30, based in Rio de Janeiro/RJ, Brazil, with contact diogos.nascimento@outlook.com. No public source or effective date was changed. Consumer-law review, website URL, operational contact coverage, product scope and contractual terms remain pending. MEI/CNAE suitability for all SaaS activities requires separate accounting review.

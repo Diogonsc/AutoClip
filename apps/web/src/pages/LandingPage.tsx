@@ -2,435 +2,526 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowUpRight,
-  BadgeCheck,
-  BarChart3,
-  CalendarClock,
+  CircleAlert,
   CalendarDays,
+  Check,
+  ChevronDown,
   Clapperboard,
-  FileVideo,
-  Layers,
+  Clock3,
+  FileImage,
   Layers3,
   Menu,
-  ShieldCheck,
-  Sparkles,
   UsersRound,
+  Video,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "../components/ui/button";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import "./LandingPage.css";
 
-const features = [
+const faqs = [
   {
-    icon: CalendarClock,
-    title: "Publique no momento certo",
-    text: "Organize vídeos, carrosséis e aprovações em um calendário claro para o seu time.",
+    question: "O que é o AutoClipe?",
+    answer:
+      "É uma plataforma para organizar canais TikTok, preparar conteúdos, planejar publicações e acompanhar seus estados em um workspace.",
   },
   {
-    icon: FileVideo,
-    title: "Biblioteca que acompanha o ritmo",
-    text: "Centralize mídia, legendas e versões para encontrar o conteúdo certo sem perder tempo.",
+    question: "Posso conectar várias contas TikTok?",
+    answer:
+      "O AutoClipe permite conectar canais ao workspace. A quantidade permitida depende dos limites aplicáveis ao plano e ao workspace; consulte a área Plano e consumo após entrar.",
   },
   {
-    icon: Layers3,
-    title: "Fluxo de revisão simples",
-    text: "Envie links de aprovação e mantenha clientes, criadores e equipe alinhados antes de publicar.",
+    question: "É possível agendar publicações em lote?",
+    answer:
+      "Sim. Você pode montar um lote para canais e mídias, revisar as linhas e confirmar o agendamento. A confirmação depende da elegibilidade dos canais, das mídias e da quota disponível.",
   },
   {
-    icon: UsersRound,
-    title: "Um espaço por operação",
-    text: "Separe canais, membros e permissões por workspace, sem abrir mão da visibilidade.",
+    question: "O AutoClipe aceita vídeos e carrosséis?",
+    answer:
+      "O fluxo suporta vídeos e publicações de fotos. Fotos ou carrosséis exigem o modo Direct Post e as permissões necessárias do TikTok; no fluxo Inbox, o AutoClipe aceita apenas vídeos.",
   },
   {
-    icon: ShieldCheck,
-    title: "Feito para publicar com segurança",
-    text: "Estados de aprovação, registros de eventos e revalidações protegem cada agendamento.",
-  },
-];
-
-const plans = [
-  {
-    name: "Essencial",
-    description: "Para quem está organizando a primeira operação de conteúdo.",
-    price: "Em breve",
-    items: [
-      "1 workspace",
-      "Biblioteca de mídia",
-      "Calendário de publicações",
-      "1 canal TikTok",
-    ],
-    featured: false,
+    question: "Qual é a diferença entre Direct Post e Inbox?",
+    answer:
+      "No Direct Post, o AutoClipe solicita a publicação pela integração do TikTok, sujeita às permissões, capacidades da conta, opções de visibilidade disponíveis e regras da plataforma. No Inbox, o conteúdo é enviado como rascunho para você concluir no TikTok.",
   },
   {
-    name: "Pro",
-    description: "Para criadores e times que publicam com consistência.",
-    price: "Em breve",
-    items: [
-      "Tudo do Essencial",
-      "Aprovação de cliente",
-      "Múltiplos canais",
-      "Relatórios operacionais",
-    ],
-    featured: true,
+    question: "Preciso autorizar minhas contas TikTok?",
+    answer:
+      "Sim. Para conectar um canal, você precisa autorizar a conta pelo fluxo de autorização do TikTok e conceder as permissões solicitadas para os recursos que pretende usar.",
   },
   {
-    name: "Scale",
-    description: "Para operações, agências e equipes que precisam de controle.",
-    price: "Sob consulta",
-    items: [
-      "Tudo do Pro",
-      "Workspaces e membros",
-      "Papéis e permissões",
-      "Onboarding dedicado",
-      "Suporte prioritário",
-    ],
-    featured: false,
+    question: "Como acompanho minhas publicações?",
+    answer:
+      "A área de histórico mostra estados como agendada, em processamento, publicada, enviada ao Inbox, com falha ou aguardando alguma ação. O resultado também depende das respostas e capacidades do TikTok.",
+  },
+  {
+    question: "Como funcionam os planos e limites?",
+    answer:
+      "Os limites de contas e publicações são aplicados por workspace e podem variar conforme o plano. Preços e condições comerciais ainda não estão confirmados para divulgação nesta página; não há promessa de teste grátis.",
+  },
+  {
+    question: "O AutoClipe publica automaticamente em todos os casos?",
+    answer:
+      "Não. Uma publicação pode depender de autorização, permissões, capacidades da conta, configurações do workspace, validação da mídia e regras do TikTok. No Inbox, você finaliza a publicação no aplicativo TikTok.",
+  },
+  {
+    question: "Como posso começar?",
+    answer:
+      "Use o botão Criar conta para abrir o cadastro. Depois de criar a conta, talvez seja necessário confirmar seu e-mail antes de entrar, conforme a configuração de autenticação.",
   },
 ];
 
 export default function LandingPage() {
-  const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMenu();
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
+
   return (
-    <main className="landing-cinematic min-h-screen overflow-x-hidden bg-[#090711] text-[#f8f7fc]">
-      <div className="cinematic-atmosphere" aria-hidden="true" />
-      <header className="cinematic-header relative z-20 mx-auto flex h-24 max-w-[1440px] items-center justify-between px-6 xl:px-10">
-        <Link
-          to="/"
-          className="flex items-center gap-2.5 text-inherit no-underline"
-          onClick={close}
-        >
-          <span className="cinematic-logo-mark grid size-11 place-items-center rounded-2xl text-[#160d29]">
-            <Clapperboard className="size-6" />
-          </span>
-          <span className="font-heading text-xl font-semibold tracking-[-.04em] text-white sm:text-2xl">
-            AutoClip
-          </span>
-        </Link>
-        <nav className="hidden items-center gap-7 text-sm text-[#c7c2d4] lg:flex">
-          <a href="#recursos">Recursos</a>
-          <a href="#como-funciona">Como funciona</a>
-          <a href="#planos">Planos</a>
-          <a href="#faq">FAQ</a>
-        </nav>
-        <div className="hidden items-center gap-4 lg:flex">
-          <Button variant="ghost" className="text-[#e7e2f0] hover:bg-white/8 hover:text-white" asChild>
-            <Link to="/login">Entrar</Link>
-          </Button>
-          <Button className="cinematic-header-cta" asChild>
-            <Link to="/cadastro">
-              Criar conta <ArrowRight className="ml-1.5 size-4" />
-            </Link>
-          </Button>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white lg:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Abrir menu"
-        >
-          {open ? <X /> : <Menu />}
-        </Button>
-        {open && (
-          <nav className="absolute top-20 right-5 left-5 grid gap-2 rounded-2xl border border-white/10 bg-[#17101f]/95 p-4 shadow-2xl backdrop-blur-xl lg:hidden">
-            <a href="#recursos" onClick={close}>
-              Recursos
-            </a>
-            <a href="#como-funciona" onClick={close}>
-              Como funciona
-            </a>
-            <a href="#planos" onClick={close}>
-              Planos
-            </a>
-            <a href="#faq" onClick={close}>
-              FAQ
-            </a>
-            <Button asChild className="mt-2">
-              <Link to="/cadastro">Começar agora</Link>
-            </Button>
+    <div className="landing-v2">
+      <a className="lp-skip-link" href="#landing-main">
+        Pular para o conteúdo
+      </a>
+      <div aria-hidden="true" className="lp-atmosphere" />
+
+      <header className="lp-header">
+        <div className="lp-container lp-header-inner">
+          <Link
+            aria-label="AutoClipe, página inicial"
+            className="lp-brand"
+            onClick={closeMenu}
+            to="/"
+          >
+            <span aria-hidden="true" className="lp-brand-mark">
+              <Clapperboard />
+            </span>
+            <span>AutoClipe</span>
+          </Link>
+
+          <nav aria-label="Navegação principal" className="lp-desktop-nav">
+            <a href="#recursos">Recursos</a>
+            <a href="#como-funciona">Como funciona</a>
+            <a href="#planos">Planos</a>
+            <a href="#faq">FAQ</a>
           </nav>
-        )}
+
+          <div className="lp-header-actions">
+            <Link className="lp-login-link" to="/login">
+              Entrar
+            </Link>
+            <Link className="lp-button lp-button-primary lp-header-cta" to="/cadastro">
+              Criar conta <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+
+          <button
+            ref={menuButtonRef}
+            aria-controls="landing-v2-mobile-menu"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            className="lp-menu-trigger"
+            onClick={() => setMenuOpen((open) => !open)}
+            type="button"
+          >
+            {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+          </button>
+
+          <nav
+            aria-label="Navegação móvel"
+            className="lp-mobile-menu"
+            hidden={!menuOpen}
+            id="landing-v2-mobile-menu"
+          >
+            <a href="#recursos" onClick={closeMenu}>Recursos</a>
+            <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
+            <a href="#planos" onClick={closeMenu}>Planos</a>
+            <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
+            <div className="lp-mobile-actions">
+              <Link className="lp-button lp-button-secondary" onClick={closeMenu} to="/login">
+                Entrar
+              </Link>
+              <Link className="lp-button lp-button-primary" onClick={closeMenu} to="/cadastro">
+                Criar conta <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
+          </nav>
+        </div>
       </header>
 
-      <section className="cinematic-hero relative mx-auto grid max-w-[1440px] items-center px-6 pb-24 pt-12 xl:grid-cols-[.98fr_1.02fr] xl:px-10 xl:pb-28 xl:pt-20">
-        <div className="cinematic-copy relative z-10 max-w-[680px]">
-          <div className="cinematic-eyebrow">
-            <span /> UMA PLATAFORMA. TODAS AS SUAS CONTAS.
-          </div>
-          <h1 className="cinematic-title font-heading">
-            Seu TikTok organizado.
-            <br />
-            <span>Seu tempo de volta.</span>
-          </h1>
-          <p className="cinematic-description">
-            Gerencie múltiplas contas TikTok, organize vídeos e carrosséis e
-            planeje publicações em lote em um só lugar.
-          </p>
-          <div className="cinematic-benefits" aria-label="Principais benefícios">
-            <span><CalendarDays /> Agendamento em lote</span>
-            <span><Layers /> Múltiplas contas</span>
-            <span><BarChart3 /> Gestão e relatórios</span>
-          </div>
-          <div className="cinematic-actions">
-            <Button size="lg" className="cinematic-primary" asChild>
-              <Link to="/cadastro">
-                Criar conta <ArrowRight className="ml-2 size-5" />
+      <main id="landing-main" tabIndex={-1}>
+        <section aria-labelledby="lp-hero-title" className="lp-hero lp-container">
+          <div className="lp-hero-copy">
+            <p className="lp-eyebrow">
+              <span aria-hidden="true" className="lp-eyebrow-rule" />
+              Uma plataforma. Todas as suas contas.
+            </p>
+            <h1 id="lp-hero-title">
+              Seu TikTok organizado.
+              <span>Seu tempo de volta.</span>
+            </h1>
+            <p className="lp-hero-description">
+              Gerencie múltiplas contas TikTok, organize vídeos e carrosséis e
+              planeje publicações em lote em um só lugar.
+            </p>
+            <div className="lp-hero-actions">
+              <Link className="lp-button lp-button-primary" to="/cadastro">
+                Criar conta <ArrowRight aria-hidden="true" />
               </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="cinematic-secondary"
-              asChild
-            >
-              <a href="#recursos">
-                Explorar recursos <ArrowUpRight className="ml-2 size-4" />
+              <a className="lp-button lp-button-secondary" href="#recursos">
+                Explorar recursos <ArrowUpRight aria-hidden="true" />
               </a>
-            </Button>
+            </div>
           </div>
-        </div>
-        <HeroPanel />
-      </section>
 
-      <section
-        id="recursos"
-        className="relative border-y border-white/7 bg-white/[.025]"
-      >
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-[#b4a0ff]">
-              UMA OPERAÇÃO, UM LUGAR
-            </p>
-            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Da ideia à publicação, sem perder o fio.
-            </h2>
-            <p className="mt-4 text-[#aaa5b8]">
-              Cada recurso existe para reduzir o atrito entre produzir, revisar,
-              aprovar e colocar conteúdo no ar.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, text }) => (
-              <article
-                key={title}
-                className="rounded-2xl border border-white/8 bg-[#15151e]/80 p-6 transition hover:-translate-y-1 hover:border-[#8f78d0]/35"
-              >
-                <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0]/14 text-[#b4a0ff]">
-                  <Icon className="size-5" />
-                </span>
-                <h3 className="mt-5 font-heading text-lg font-medium text-white">
-                  {title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-[#aaa5b8]">{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+          <ProductPreview />
+        </section>
 
-      <section
-        id="como-funciona"
-        className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8"
-      >
-        <div className="grid gap-12 lg:grid-cols-[.85fr_1.15fr]">
-          <div>
-            <p className="text-sm font-medium text-[#b4a0ff]">COMO FUNCIONA</p>
-            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Seu próximo post não deveria depender de planilhas e mensagens
-              soltas.
-            </h2>
-            <p className="mt-5 text-[#aaa5b8]">
-              Dê contexto para cada publicação e deixe que o AutoClipe cuide do
-              caminho operacional.
+        <section aria-labelledby="lp-accounts-title" className="lp-editorial-section lp-container" id="recursos">
+          <EditorialFeature
+            description="Reúna seus canais TikTok no mesmo workspace e organize aqueles que fazem parte do mesmo fluxo de trabalho."
+            eyebrow="01 / ORGANIZAÇÃO"
+            title="Todas as suas contas. Uma operação mais simples."
+            visual={<AccountsVisual />}
+          />
+
+          <EditorialFeature
+            description="Prepare conteúdos para diferentes canais e horários. Revise cada linha antes de confirmar o agendamento em lote."
+            eyebrow="02 / PLANEJAMENTO"
+            reverse
+            title="Agende em lote. Revise com clareza."
+            visual={<BatchVisual />}
+          />
+        </section>
+
+        <section aria-labelledby="lp-formats-title" className="lp-format-section">
+          <div className="lp-container lp-format-layout">
+            <div className="lp-format-intro">
+              <p className="lp-eyebrow">03 / PUBLICAÇÃO E ACOMPANHAMENTO</p>
+              <h2 id="lp-formats-title">Conteúdo preparado. Próxima etapa sempre clara.</h2>
+              <p>
+                Organize formatos compatíveis e acompanhe o estado de cada item
+                no histórico de publicações.
+              </p>
+            </div>
+            <div className="lp-format-showcase">
+              <FormatsVisual />
+              <StatusVisual />
+            </div>
+            <p className="lp-format-note">
+              Fotos e carrosséis exigem Direct Post e permissões do TikTok. No
+              fluxo Inbox, o AutoClipe aceita vídeos e você conclui a publicação
+              no aplicativo TikTok.
             </p>
-            <Button className="mt-7" variant="outline" asChild>
-              <Link to="/cadastro">
-                Criar meu workspace <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
           </div>
-          <ol className="grid gap-4">
-            {[
-              [
-                "01",
-                "Centralize",
-                "Envie mídia, organize legendas e mantenha o material disponível para quem precisa criar.",
-              ],
-              [
-                "02",
-                "Planeje",
-                "Defina canal, data, formato e responsável com uma visão única do calendário.",
-              ],
-              [
-                "03",
-                "Revise",
-                "Peça aprovação antes do agendamento e mantenha o histórico da decisão registrado.",
-              ],
-              [
-                "04",
-                "Publique",
-                "Envie vídeos e carrosséis ao TikTok e acompanhe o status da publicação.",
-              ],
-            ].map(([number, title, text]) => (
-              <li
-                key={number}
-                className="grid grid-cols-[3.5rem_1fr] gap-4 rounded-2xl border border-white/8 bg-[#12121a] p-5"
-              >
-                <span className="font-heading text-lg text-[#8f78d0]">
-                  {number}
-                </span>
-                <div>
-                  <h3 className="font-medium text-white">{title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-[#aaa5b8]">
-                    {text}
-                  </p>
-                </div>
-              </li>
-            ))}
+        </section>
+
+        <section aria-labelledby="lp-process-title" className="lp-process-section lp-container" id="como-funciona">
+          <div className="lp-section-heading">
+            <p className="lp-eyebrow">UM FLUXO, TRÊS ETAPAS</p>
+            <h2 id="lp-process-title">Da conexão ao acompanhamento.</h2>
+          </div>
+          <ol className="lp-process-rail">
+            <li>
+              <span className="lp-step-number">01</span>
+              <div>
+                <h3>Conecte suas contas</h3>
+                <p>Autorize os canais TikTok que farão parte do seu workspace.</p>
+              </div>
+            </li>
+            <li>
+              <span className="lp-step-number">02</span>
+              <div>
+                <h3>Prepare seus conteúdos</h3>
+                <p>Escolha formatos, canais e horários para cada publicação.</p>
+              </div>
+            </li>
+            <li>
+              <span className="lp-step-number">03</span>
+              <div>
+                <h3>Agende e acompanhe</h3>
+                <p>Revise o planejamento e acompanhe cada etapa no histórico.</p>
+              </div>
+            </li>
           </ol>
-        </div>
-      </section>
+        </section>
 
-      <section
-        id="planos"
-        className="relative border-y border-white/7 bg-[#13131c]"
-      >
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm font-medium text-[#b4a0ff]">PLANOS</p>
-            <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Cresça no seu ritmo.
-            </h2>
-            <p className="mt-4 text-[#aaa5b8]">
-              Escolha uma base para sua operação. Os valores finais serão
-              divulgados no lançamento comercial.
+        <section aria-labelledby="lp-plan-title" className="lp-availability-section" id="planos">
+          <div className="lp-container lp-availability-layout">
+            <div>
+              <p className="lp-eyebrow">PLANOS E DISPONIBILIDADE</p>
+              <h2 id="lp-plan-title">Organização que acompanha o seu workspace.</h2>
+            </div>
+            <div className="lp-availability-copy">
+              <p>
+                Os limites de contas e publicações variam conforme o plano e
+                podem ser consultados na área Plano e consumo após entrar.
+              </p>
+              <p>
+                Preços e condições comerciais ainda não estão aprovados para
+                divulgação pública. Criar uma conta não promete período gratuito
+                nem assinatura.
+              </p>
+              <Link className="lp-text-link" to="/cadastro">
+                Conhecer o AutoClipe <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="lp-faq-title" className="lp-faq-section lp-container" id="faq">
+          <div className="lp-faq-intro">
+            <p className="lp-eyebrow">PERGUNTAS FREQUENTES</p>
+            <h2 id="lp-faq-title">Antes de começar.</h2>
+            <p>
+              Respostas diretas sobre contas, formatos, agendamento e o que
+              depende das permissões do TikTok.
             </p>
           </div>
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <article
-                key={plan.name}
-                className={`rounded-2xl border p-7 ${plan.featured ? "border-[#8f78d0] bg-[#211b34] shadow-[0_18px_50px_rgba(0,0,0,.25)]" : "border-white/8 bg-[#171620]"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading text-xl font-semibold text-white">
-                    {plan.name}
-                  </h3>
-                  {plan.featured && (
-                    <span className="rounded-full bg-[#8f78d0] px-2.5 py-1 text-xs font-medium text-[#160f2a]">
-                      Mais completo
-                    </span>
-                  )}
-                </div>
-                <p className="mt-3 min-h-12 text-sm leading-6 text-[#aaa5b8]">
-                  {plan.description}
-                </p>
-                <p className="mt-7 font-heading text-3xl font-semibold text-white">
-                  {plan.price}
-                </p>
-                <ul className="mt-7 grid gap-3 text-sm text-[#d0cbdc]">
-                  {plan.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <BadgeCheck className="mt-0.5 size-4 shrink-0 text-[#b4a0ff]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="mt-8 w-full"
-                  variant={plan.featured ? "default" : "outline"}
-                  asChild
-                >
-                  <Link to="/cadastro">Quero conhecer</Link>
-                </Button>
-              </article>
+          <div className="lp-faq-list">
+            {faqs.map(({ question, answer }) => (
+              <details key={question} className="lp-faq-item">
+                <summary>
+                  <span>{question}</span>
+                  <ChevronDown aria-hidden="true" />
+                </summary>
+                <p>{answer}</p>
+              </details>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="faq" className="relative mx-auto max-w-5xl px-5 py-24 lg:px-8">
-        <div className="text-center">
-          <p className="text-sm font-medium text-[#b4a0ff]">FAQ</p>
-          <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-            Perguntas frequentes, respostas diretas.
-          </h2>
-        </div>
-        <div className="mt-10 grid gap-3">
-          {[
-            ["Posso organizar mais de uma conta?", "Sim. O AutoClip foi pensado para centralizar a operação de múltiplas contas e canais em um só workspace."],
-            ["O painel mostrado na hero é uma conta real?", "Não. O painel da hero é uma ilustração visual do produto e não exibe dados de clientes."],
-            ["Como começo a usar?", "Crie sua conta para acessar o workspace e conhecer as opções disponíveis para a sua operação."],
-          ].map(([question, answer]) => (
-            <details key={question} className="group rounded-2xl border border-white/10 bg-white/[.025] px-6 py-5">
-              <summary className="cursor-pointer list-none font-medium text-white marker:hidden">{question}<span className="float-right text-xl text-[#b979ff] transition-transform group-open:rotate-45">+</span></summary>
-              <p className="mb-0 mt-4 max-w-3xl text-sm leading-6 text-[#b9b4c8]">{answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+        <section aria-labelledby="lp-close-title" className="lp-close-section lp-container" id="contato">
+          <div className="lp-close-band">
+            <div>
+              <p className="lp-eyebrow">MENOS REPETIÇÃO. MAIS CLAREZA.</p>
+              <h2 id="lp-close-title">Seu conteúdo merece uma operação mais simples.</h2>
+            </div>
+            <Link className="lp-button lp-button-primary" to="/cadastro">
+              Criar conta <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+      </main>
 
-      <section
-        id="contato"
-        className="relative mx-auto max-w-5xl px-5 py-24 text-center lg:px-8"
-      >
-        <div className="rounded-3xl border border-[#8f78d0]/25 bg-[linear-gradient(135deg,rgba(143,120,208,.2),rgba(31,25,48,.9))] px-6 py-14 sm:px-12">
-          <Sparkles className="mx-auto size-6 text-[#b4a0ff]" />
-          <h2 className="mt-5 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-            Conteúdo é criatividade. A operação pode ser simples.
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[#c0bbd0]">
-            Crie seu workspace e veja como o AutoClipe pode dar previsibilidade
-            para a sua rotina de publicação.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="lg" asChild>
-              <Link to="/cadastro">
-                Começar agora <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/15 bg-transparent text-white hover:bg-white/10"
-              asChild
-            >
-              <a href="mailto:contato@AutoClipe.app">Falar com a equipe</a>
-            </Button>
-          </div>
-        </div>
-      </section>
-      <footer className="relative border-t border-white/8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-[#9691a5] sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <span>
-            © {new Date().getFullYear()} AutoClipe. Todos os direitos
-            reservados.
-          </span>
-          <div className="flex flex-wrap gap-5">
-            <a href="/privacy-policy.html">Privacidade</a>
-            <a href="/terms-of-service.html">Termos de uso</a>
-            <a href="/data-deletion.html">Exclusão de dados</a>
-            <a href="/security-policy.html">Security Policy / Segurança</a>
-            <Link to="/login">Entrar</Link>
-          </div>
-        </div>
-      </footer>
-    </main>
+      <LandingFooter />
+    </div>
   );
 }
 
-function HeroPanel() {
+function ProductPreview() {
   return (
-    <div className="device-image-stage">
-      <img
-        src="/autoclip-devices.png"
-        width={1536}
-        height={1024}
-        alt="Ilustração do painel AutoClip em um notebook e smartphone"
-        className="device-image"
-        decoding="async"
-      />
+    <figure aria-labelledby="lp-preview-caption" className="lp-product-figure">
+      <figcaption className="lp-preview-caption" id="lp-preview-caption">
+        <span aria-hidden="true" className="lp-preview-indicator" />
+        Prévia ilustrativa <span>·</span> dados demonstrativos
+      </figcaption>
+      <div className="device-image-stage">
+        <img
+          alt="Ilustração do painel AutoClip em um notebook e smartphone"
+          className="device-image"
+          decoding="async"
+          height={1024}
+          src="/autoclip-devices.png"
+          width={1536}
+        />
+      </div>
+    </figure>
+  );
+}
+
+function EditorialFeature({
+  description,
+  eyebrow,
+  reverse = false,
+  title,
+  visual,
+}: {
+  description: string;
+  eyebrow: string;
+  reverse?: boolean;
+  title: string;
+  visual: ReactNode;
+}) {
+  return (
+    <article className={`lp-feature-row${reverse ? " lp-feature-reverse" : ""}`}>
+      <div className="lp-feature-copy">
+        <p className="lp-eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div className="lp-feature-visual">{visual}</div>
+    </article>
+  );
+}
+
+function AccountsVisual() {
+  return (
+    <div aria-label="Demonstração ilustrativa de canais e grupos" className="lp-accounts-visual">
+      <div className="lp-visual-header">
+        <span>Canais do workspace</span>
+        <span>Exemplo</span>
+      </div>
+      <div aria-label="Canais de exemplo" className="lp-accounts-list" role="list">
+        {[
+          ["Conta de exemplo A", "Grupo de exemplo"],
+          ["Conta de exemplo B", "Grupo de exemplo"],
+          ["Conta de exemplo C", "Sem grupo"],
+        ].map(([name, group], index) => (
+          <div className="lp-account-line" key={name} role="listitem">
+            <span className="lp-account-avatar">{String.fromCharCode(65 + index)}</span>
+            <span className="lp-account-name">{name}</span>
+            <span className="lp-account-group">{group}</span>
+          </div>
+        ))}
+      </div>
+      <div className="lp-account-group-summary">
+        <span aria-hidden="true"><Layers3 /></span>
+        <div>
+          <strong>Grupo demonstrativo</strong>
+          <p>Contas organizadas para um fluxo de trabalho.</p>
+        </div>
+        <ArrowUpRight aria-hidden="true" />
+      </div>
     </div>
+  );
+}
+
+function BatchVisual() {
+  const items = [
+    ["Vídeo", "Conta de exemplo A", "Revisar conteúdo"],
+    ["Fotos", "Conta de exemplo B", "Conferir permissões"],
+    ["Vídeo", "Conta de exemplo C", "Definir horário"],
+  ];
+
+  return (
+    <div aria-label="Demonstração ilustrativa de planejamento em lote" className="lp-batch-visual">
+      <div className="lp-batch-toolbar">
+        <div>
+          <p className="lp-micro-label">LOTE DEMONSTRATIVO</p>
+          <strong>Revise o lote antes de agendar</strong>
+        </div>
+        <span className="lp-batch-toolbar-icon"><CalendarDays aria-hidden="true" /></span>
+      </div>
+      <div aria-label="Etapas do lote demonstrativo" className="lp-batch-list" role="list">
+        {items.map(([format, channel, action], index) => (
+          <div className="lp-batch-line" key={channel} role="listitem">
+            <span aria-hidden="true" className="lp-batch-number">0{index + 1}</span>
+            <span className="lp-batch-format">
+              {format === "Vídeo" ? <Video aria-hidden="true" /> : <FileImage aria-hidden="true" />}
+              {format}
+            </span>
+            <span className="lp-batch-channel">{channel}</span>
+            <span className="lp-batch-action"><span aria-hidden="true" />{action}</span>
+          </div>
+        ))}
+      </div>
+      <div className="lp-batch-footer">
+        <span><Check aria-hidden="true" /> Linhas revisadas antes de confirmar</span>
+        <span>Exemplo visual</span>
+      </div>
+    </div>
+  );
+}
+
+function FormatsVisual() {
+  return (
+    <div className="lp-format-media">
+      <div className="lp-media-heading">
+        <p className="lp-micro-label">FORMATOS</p>
+        <span>Representação ilustrativa</span>
+      </div>
+      <div className="lp-media-options">
+        <div className="lp-media-option lp-video-option">
+          <span aria-hidden="true" className="lp-media-art lp-media-art-video"><Video /></span>
+          <div><strong>Vídeos</strong><small>Prepare e organize cada publicação.</small></div>
+          <span aria-hidden="true" className="lp-format-indicator">01</span>
+        </div>
+        <div className="lp-media-option lp-photo-option">
+          <span aria-hidden="true" className="lp-media-art lp-media-art-photos"><FileImage /></span>
+          <div><strong>Fotos e carrosséis</strong><small>Quando Direct Post e permissões permitem.</small></div>
+          <span aria-hidden="true" className="lp-format-indicator">02</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusVisual() {
+  const steps = [
+    ["Planejada", "Item adicionado ao fluxo"],
+    ["Em processamento", "Aguardando resultado da plataforma"],
+    ["Precisa de atenção", "Pode exigir uma ação adicional"],
+  ];
+  return (
+    <div className="lp-status-visual">
+      <div className="lp-status-heading">
+        <p className="lp-micro-label">HISTÓRICO</p>
+        <span>Exemplos de estados</span>
+      </div>
+      <ol>
+        {steps.map(([title, note], index) => (
+          <li key={title}>
+            <span aria-hidden="true" className={`lp-status-icon lp-status-icon-${index}`}>
+              {index === 0 ? <CalendarDays /> : index === 1 ? <Clock3 /> : <CircleAlert />}
+            </span>
+            <span><strong>{title}</strong><small>{note}</small></span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function LandingFooter() {
+  return (
+    <footer className="lp-footer">
+      <div className="lp-container lp-footer-main">
+        <div className="lp-footer-brand-block">
+          <Link aria-label="AutoClipe, página inicial" className="lp-brand" to="/">
+            <span aria-hidden="true" className="lp-brand-mark"><Clapperboard /></span>
+            <span>AutoClipe</span>
+          </Link>
+          <p>Organize canais e publicações TikTok em um só lugar.</p>
+        </div>
+        <nav aria-label="Navegação do rodapé" className="lp-footer-column">
+          <h2>Plataforma</h2>
+          <a href="#recursos">Recursos</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#planos">Planos</a>
+          <a href="#faq">Perguntas frequentes</a>
+        </nav>
+        <nav aria-label="Documentos legais" className="lp-footer-column">
+          <h2>Documentos</h2>
+          <a href="/terms-of-service.html">Termos de uso</a>
+          <a href="/privacy-policy.html">Privacidade</a>
+          <a href="/security-policy.html">Segurança</a>
+          <a href="/data-deletion.html">Exclusão de dados</a>
+        </nav>
+        <div className="lp-footer-column lp-footer-contact">
+          <h2>Privacidade</h2>
+          <a href="mailto:diogos.nascimento@outlook.com?subject=Contato%20de%20privacidade%20%E2%80%94%20AutoClipe">
+            Contato de privacidade <ArrowUpRight aria-hidden="true" />
+          </a>
+          <Link to="/login">Entrar</Link>
+        </div>
+      </div>
+      <div className="lp-footer-bottom">
+        <div className="lp-container">
+          <span>© {new Date().getFullYear()} AutoClipe. Todos os direitos reservados.</span>
+          <span>Feito para uma operação TikTok mais organizada.</span>
+        </div>
+      </div>
+    </footer>
   );
 }

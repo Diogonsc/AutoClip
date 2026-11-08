@@ -1,4 +1,4 @@
-# AutoClipe — Gate 3.19.4: preparação operacional para Staging e Production
+# AutoClip — Gate 3.19.4: preparação operacional para Staging e Production
 
 **Data:** 2026-11-04
 **Escopo:** preparação local, auditoria do código e validações locais. Nenhuma conexão, escrita, migration ou implantação remota foi executada.

@@ -1,4 +1,4 @@
-# AutoClipe Access Control Policy — Candidate
+# AutoClip Access Control Policy — Candidate
 
 **Document ID:** AUTOCLIP-ACP-CANDIDATE
 **Version:** Draft 1.1
@@ -10,9 +10,9 @@
 
 ## 1. Purpose
 
-AutoClipe is the trade name of the MEI business identified above. The legal operator is accountable for this candidate; controller/processor roles are determined per processing activity.
+AutoClip is the trade name of the MEI business identified above. The legal operator is accountable for this candidate; controller/processor roles are determined per processing activity.
 
-Define requirements for granting, using, reviewing and revoking access to AutoClipe information and systems, including personal information, workspace content, OAuth credentials, production environments and administrative consoles.
+Define requirements for granting, using, reviewing and revoking access to AutoClip information and systems, including personal information, workspace content, OAuth credentials, production environments and administrative consoles.
 
 ## 2. Scope
 

@@ -20,7 +20,7 @@
 ### Q1 — política de segurança publicada
 
 - **HTML público local:** `apps/web/public/security-policy.html` declara versão 3.0, aprovação pelo titular em 30/10/2026, vigência e publicação. É uma afirmação contida na fonte local, não prova independente de aprovação ou disponibilidade pública.
-- **PDF Q1:** `output/pdf/AutoClipe_Q1_Policy_v3_Approval_Pending.pdf` diz que a Policy v3.0 é rascunho, ainda não aprovada/publicada, e exige aprovação formal antes do envio.
+- **PDF Q1:** `output/pdf/AutoClip_Q1_Policy_v3_Approval_Pending.pdf` diz que a Policy v3.0 é rascunho, ainda não aprovada/publicada, e exige aprovação formal antes do envio.
 - **PDF histórico:** Policy v1.0 possui campos de aprovação incompletos.
 - **Candidata:** Security Policy Draft 1.2 está marcada DRAFT — PENDING OWNER APPROVAL e não substitui HTML/PDF históricos.
 - **Comprovado:** o conflito documental existe nos artefatos locais. Não está comprovado qual alegação formal é verdadeira nem se a URL serviu o documento informado.
@@ -37,7 +37,7 @@ Para sustentar YES, confirmar o texto exato da pergunta e, se ela exige polític
 
 ### A. Dados fornecidos e preenchidos nos candidatos
 
-Nome comercial AutoClipe; razão social 56.151.919 DIOGO NASCIMENTO DOS SANTOS; CNPJ 56.151.919/0001-30; município/UF Rio de Janeiro/RJ; país Brasil; contato diogos.nascimento@outlook.com. Nenhum CPF, endereço residencial completo ou cópia do CCMEI foi inserido.
+Nome comercial AutoClip; razão social 56.151.919 DIOGO NASCIMENTO DOS SANTOS; CNPJ 56.151.919/0001-30; município/UF Rio de Janeiro/RJ; país Brasil; contato diogos.nascimento@outlook.com. Nenhum CPF, endereço residencial completo ou cópia do CCMEI foi inserido.
 
 ### B. Confirmação do proprietário
 

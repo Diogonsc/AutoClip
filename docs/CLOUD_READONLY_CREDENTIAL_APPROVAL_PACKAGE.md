@@ -1,4 +1,4 @@
-# AutoClipe — pacote de aprovação Cloud metadata-only
+# AutoClip — pacote de aprovação Cloud metadata-only
 
 **Estado: preparação local; aguardando autorização administrativa Cloud.** Nenhuma conexão, SQL remoto, role, grant ou deploy Cloud foi executado.
 

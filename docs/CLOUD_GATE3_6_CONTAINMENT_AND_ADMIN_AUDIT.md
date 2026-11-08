@@ -53,7 +53,7 @@ As consultas read-only abrangem catálogos, não conteúdo de tabelas operaciona
 
 O único dado não-catalogado permitido é `version` no ledger `supabase_migrations.schema_migrations`, após verificar forma da relação, tipo text e RLS/FORCE RLS desligados. Se falhar qualquer condição, a seção é `NOT VERIFIED` e nenhuma linha do ledger é lida.
 
-Não são consultadas linhas de `cron.job`, `cron.job_run_details`, `net.http_request_queue`, `net._http_response`, `storage.buckets`, `storage.objects`, tabelas do AutoClipe, jobs, quotas, reservas, Auth, tokens ou agendas individuais. Metadados de bucket/filas por linha são dados operacionais e requerem autorização/especificação separada. Não há acesso a arquivos Storage nem URLs assinadas.
+Não são consultadas linhas de `cron.job`, `cron.job_run_details`, `net.http_request_queue`, `net._http_response`, `storage.buckets`, `storage.objects`, tabelas do AutoClip, jobs, quotas, reservas, Auth, tokens ou agendas individuais. Metadados de bucket/filas por linha são dados operacionais e requerem autorização/especificação separada. Não há acesso a arquivos Storage nem URLs assinadas.
 
 Expressões de policies, definições de constraints/índices/triggers e nomes internos podem ser sensíveis como informação de implementação. As saídas devem permanecer em arquivo local mode 0600, ser revisadas e minimizadas antes de compartilhamento.
 
