@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  ArrowUpRight,
   BadgeCheck,
+  BarChart3,
   CalendarClock,
-  Check,
+  CalendarDays,
   Clapperboard,
   FileVideo,
+  Layers,
   Layers3,
   Menu,
-  PlayCircle,
   ShieldCheck,
   Sparkles,
   UsersRound,
@@ -16,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
+import "./LandingPage.css";
 
 const features = [
   {
@@ -89,48 +92,48 @@ export default function LandingPage() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#0c0c12] text-[#f4f4fb]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(143,120,208,.23),transparent_26%),radial-gradient(circle_at_88%_14%,rgba(89,65,140,.22),transparent_28%),linear-gradient(180deg,#0c0c12_0%,#101019_100%)]" />
-      <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
+    <main className="landing-cinematic min-h-screen overflow-x-hidden bg-[#090711] text-[#f8f7fc]">
+      <div className="cinematic-atmosphere" aria-hidden="true" />
+      <header className="cinematic-header relative z-20 mx-auto flex h-24 max-w-[1440px] items-center justify-between px-6 xl:px-10">
         <Link
           to="/"
           className="flex items-center gap-2.5 text-inherit no-underline"
           onClick={close}
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-[#8f78d0] text-[#130f20] shadow-[0_0_28px_rgba(143,120,208,.38)]">
-            <Clapperboard className="size-5" />
+          <span className="cinematic-logo-mark grid size-11 place-items-center rounded-2xl text-[#160d29]">
+            <Clapperboard className="size-6" />
           </span>
-          <span className="font-heading text-lg font-semibold tracking-tight">
-            AutoClipe
+          <span className="font-heading text-xl font-semibold tracking-[-.04em] text-white sm:text-2xl">
+            AutoClip
           </span>
         </Link>
-        <nav className="hidden items-center gap-7 text-sm text-[#c7c2d7] md:flex">
+        <nav className="hidden items-center gap-7 text-sm text-[#c7c2d4] lg:flex">
           <a href="#recursos">Recursos</a>
           <a href="#como-funciona">Como funciona</a>
           <a href="#planos">Planos</a>
-          <a href="#contato">Contato</a>
+          <a href="#faq">FAQ</a>
         </nav>
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" asChild>
+        <div className="hidden items-center gap-4 lg:flex">
+          <Button variant="ghost" className="text-[#e7e2f0] hover:bg-white/8 hover:text-white" asChild>
             <Link to="/login">Entrar</Link>
           </Button>
-          <Button asChild>
+          <Button className="cinematic-header-cta" asChild>
             <Link to="/cadastro">
-              Começar agora <ArrowRight className="ml-2 size-4" />
+              Criar conta <ArrowRight className="ml-1.5 size-4" />
             </Link>
           </Button>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="text-white lg:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Abrir menu"
         >
           {open ? <X /> : <Menu />}
         </Button>
         {open && (
-          <nav className="absolute top-16 right-5 left-5 grid gap-2 rounded-2xl border border-white/10 bg-[#171620] p-4 shadow-2xl md:hidden">
+          <nav className="absolute top-20 right-5 left-5 grid gap-2 rounded-2xl border border-white/10 bg-[#17101f]/95 p-4 shadow-2xl backdrop-blur-xl lg:hidden">
             <a href="#recursos" onClick={close}>
               Recursos
             </a>
@@ -140,8 +143,8 @@ export default function LandingPage() {
             <a href="#planos" onClick={close}>
               Planos
             </a>
-            <a href="#contato" onClick={close}>
-              Contato
+            <a href="#faq" onClick={close}>
+              FAQ
             </a>
             <Button asChild className="mt-2">
               <Link to="/cadastro">Começar agora</Link>
@@ -150,46 +153,41 @@ export default function LandingPage() {
         )}
       </header>
 
-      <section className="relative mx-auto grid max-w-7xl gap-14 px-5 pt-16 pb-24 lg:grid-cols-[1.04fr_.96fr] lg:px-8 lg:pt-28 lg:pb-36">
-        <div className="max-w-2xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#8f78d0]/30 bg-[#8f78d0]/10 px-3 py-1.5 text-sm text-[#d8ceff]">
-            <Sparkles className="size-3.5" /> Conteúdo em movimento, operação
-            sob controle
+      <section className="cinematic-hero relative mx-auto grid max-w-[1440px] items-center px-6 pb-24 pt-12 xl:grid-cols-[.98fr_1.02fr] xl:px-10 xl:pb-28 xl:pt-20">
+        <div className="cinematic-copy relative z-10 max-w-[680px]">
+          <div className="cinematic-eyebrow">
+            <span /> UMA PLATAFORMA. TODAS AS SUAS CONTAS.
           </div>
-          <h1 className="font-heading text-5xl font-semibold leading-[1.03] tracking-[-.055em] text-white sm:text-6xl lg:text-7xl">
-            Publique melhor.
+          <h1 className="cinematic-title font-heading">
+            Seu TikTok organizado.
             <br />
-            <span className="text-[#b4a0ff]">Cresça com método.</span>
+            <span>Seu tempo de volta.</span>
           </h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-[#b9b5c9]">
-            AutoClip reúne planejamento, mídia e publicação em uma
-            operação de conteúdo que seu time realmente consegue acompanhar.
+          <p className="cinematic-description">
+            Gerencie múltiplas contas TikTok, organize vídeos e carrosséis e
+            planeje publicações em lote em um só lugar.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Button size="lg" asChild>
+          <div className="cinematic-benefits" aria-label="Principais benefícios">
+            <span><CalendarDays /> Agendamento em lote</span>
+            <span><Layers /> Múltiplas contas</span>
+            <span><BarChart3 /> Gestão e relatórios</span>
+          </div>
+          <div className="cinematic-actions">
+            <Button size="lg" className="cinematic-primary" asChild>
               <Link to="/cadastro">
-                Experimentar a plataforma <ArrowRight className="ml-2 size-4" />
+                Criar conta <ArrowRight className="ml-2 size-5" />
               </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+              className="cinematic-secondary"
               asChild
             >
-              <a href="#como-funciona">
-                <PlayCircle className="mr-2 size-4" /> Ver como funciona
+              <a href="#recursos">
+                Explorar recursos <ArrowUpRight className="ml-2 size-4" />
               </a>
             </Button>
-          </div>
-          <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#a9a4b7]">
-            <span className="flex items-center gap-2">
-              <Check className="size-4 text-[#8f78d0]" /> Organize antes de
-              publicar
-            </span>
-            <span className="flex items-center gap-2">
-              <Check className="size-4 text-[#8f78d0]" /> Trabalhe em equipe
-            </span>
           </div>
         </div>
         <HeroPanel />
@@ -352,6 +350,27 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section id="faq" className="relative mx-auto max-w-5xl px-5 py-24 lg:px-8">
+        <div className="text-center">
+          <p className="text-sm font-medium text-[#b4a0ff]">FAQ</p>
+          <h2 className="mt-3 font-heading text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
+            Perguntas frequentes, respostas diretas.
+          </h2>
+        </div>
+        <div className="mt-10 grid gap-3">
+          {[
+            ["Posso organizar mais de uma conta?", "Sim. O AutoClip foi pensado para centralizar a operação de múltiplas contas e canais em um só workspace."],
+            ["O painel mostrado na hero é uma conta real?", "Não. O painel da hero é uma ilustração visual do produto e não exibe dados de clientes."],
+            ["Como começo a usar?", "Crie sua conta para acessar o workspace e conhecer as opções disponíveis para a sua operação."],
+          ].map(([question, answer]) => (
+            <details key={question} className="group rounded-2xl border border-white/10 bg-white/[.025] px-6 py-5">
+              <summary className="cursor-pointer list-none font-medium text-white marker:hidden">{question}<span className="float-right text-xl text-[#b979ff] transition-transform group-open:rotate-45">+</span></summary>
+              <p className="mb-0 mt-4 max-w-3xl text-sm leading-6 text-[#b9b4c8]">{answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section
         id="contato"
         className="relative mx-auto max-w-5xl px-5 py-24 text-center lg:px-8"
@@ -377,7 +396,7 @@ export default function LandingPage() {
               className="border-white/15 bg-transparent text-white hover:bg-white/10"
               asChild
             >
-              <a href="mailto:contato@autoclip.app">Falar com a equipe</a>
+              <a href="mailto:contato@AutoClipe.app">Falar com a equipe</a>
             </Button>
           </div>
         </div>
@@ -385,7 +404,8 @@ export default function LandingPage() {
       <footer className="relative border-t border-white/8">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-[#9691a5] sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <span>
-            © {new Date().getFullYear()} AutoClip. Todos os direitos reservados.
+            © {new Date().getFullYear()} AutoClipe. Todos os direitos
+            reservados.
           </span>
           <div className="flex flex-wrap gap-5">
             <a href="/privacy-policy.html">Privacidade</a>
@@ -402,63 +422,15 @@ export default function LandingPage() {
 
 function HeroPanel() {
   return (
-    <div className="relative mx-auto w-full max-w-xl self-center">
-      <div className="absolute -inset-8 rounded-full bg-[#8f78d0]/15 blur-3xl" />
-      <div className="relative overflow-hidden rounded-[1.6rem] border border-white/12 bg-[#15151e] p-4 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/8 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-[#ef647d]" />
-            <span className="size-2.5 rounded-full bg-[#f0d2a3]" />
-            <span className="size-2.5 rounded-full bg-[#67cba0]" />
-          </div>
-          <span className="rounded-md bg-white/5 px-2 py-1 text-[10px] text-[#aaa5b8]">
-            AUTCLIP / CALENDÁRIO
-          </span>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4">
-          <div className="grid gap-3">
-            <div className="rounded-xl border border-white/8 bg-[#1d1b28] p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#a9a4b7]">
-                  Publicação agendada
-                </span>
-                <span className="rounded-full bg-[#67cba0]/15 px-2 py-0.5 text-[10px] text-[#67cba0]">
-                  Pronta
-                </span>
-              </div>
-              <div className="mt-3 flex gap-3">
-                <div className="grid size-10 place-items-center rounded-lg bg-[#8f78d0]/20">
-                  <Clapperboard className="size-5 text-[#b4a0ff]" />
-                </div>
-                <div>
-                  <p className="m-0 text-sm font-medium text-white">
-                    Rotina que escala
-                  </p>
-                  <p className="m-0 text-xs text-[#8f78d0]">Hoje, 18:30</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-white/8 bg-[#11111a] p-3">
-            <p className="text-xs text-[#9691a5]">Esta semana</p>
-            <p className="mt-1 font-heading text-2xl font-semibold text-white">
-              12{" "}
-              <span className="text-sm font-normal text-[#9691a5]">
-                publicações
-              </span>
-            </p>
-            <div className="mt-4 flex h-16 items-end gap-1.5">
-              {[35, 55, 42, 76, 60, 88, 70].map((h, i) => (
-                <span
-                  key={i}
-                  className="w-full rounded-t bg-[#8f78d0]"
-                  style={{ height: `${h}%`, opacity: 0.35 + i * 0.08 }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="device-image-stage">
+      <img
+        src="/autoclip-devices.png"
+        width={1536}
+        height={1024}
+        alt="Ilustração do painel AutoClip em um notebook e smartphone"
+        className="device-image"
+        decoding="async"
+      />
     </div>
   );
 }
