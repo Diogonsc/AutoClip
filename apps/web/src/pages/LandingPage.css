@@ -1,0 +1,46 @@
+/* Asset da Hero: preserva notebook e smartphone completos em todos os breakpoints. */
+.device-image-stage {
+  position: relative;
+  width: min(112%, 900px);
+  margin: 12px 0 0 -6%;
+}
+
+.device-image-stage::before {
+  position: absolute;
+  z-index: -1;
+  inset: 18% 8% 10%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #a240ff75 0%, transparent 67%);
+  filter: blur(24px);
+  content: "";
+  pointer-events: none;
+}
+
+.device-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 720px;
+  margin: 0 auto;
+  object-fit: contain;
+  filter: drop-shadow(0 30px 34px rgba(0, 0, 0, 0.38));
+}
+
+@media (max-width: 1023px) {
+  .device-image-stage {
+    width: min(106%, 800px);
+    margin: 38px auto 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .device-image-stage {
+    width: 100%;
+    max-width: 620px;
+    margin-top: 28px;
+  }
+
+  .device-image {
+    max-height: none;
+  }
+}

@@ -5,7 +5,6 @@ import {
   CircleAlert,
   CalendarDays,
   Check,
-  CheckCircle2,
   ChevronDown,
   Clapperboard,
   Clock3,
@@ -17,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import "./LandingPage.css";
 
 const faqs = [
   {
@@ -320,79 +320,21 @@ export default function LandingPage() {
 }
 
 function ProductPreview() {
-  const rows = [
-    { format: "Vídeo", channel: "Conta de exemplo A", time: "Horário definido", status: "Preparado" },
-    { format: "Fotos", channel: "Conta de exemplo B", time: "Revisão necessária", status: "Em revisão" },
-    { format: "Vídeo", channel: "Conta de exemplo C", time: "Data a definir", status: "Planejada" },
-  ];
-
   return (
     <figure aria-labelledby="lp-preview-caption" className="lp-product-figure">
       <figcaption className="lp-preview-caption" id="lp-preview-caption">
         <span aria-hidden="true" className="lp-preview-indicator" />
         Prévia ilustrativa <span>·</span> dados demonstrativos
       </figcaption>
-      <div className="lp-product-window">
-        <div className="lp-product-topbar">
-          <div className="lp-product-title">
-            <span aria-hidden="true" className="lp-product-icon"><Clapperboard /></span>
-            <div>
-              <strong>Visão de publicações</strong>
-              <span>Workspace demonstrativo</span>
-            </div>
-          </div>
-          <span className="lp-product-context"><CalendarDays aria-hidden="true" /> Planejamento</span>
-        </div>
-        <div className="lp-product-layout">
-          <aside aria-label="Canais demonstrativos" className="lp-product-sidebar">
-            <p className="lp-micro-label">CANAIS</p>
-            {["Conta de exemplo A", "Conta de exemplo B", "Conta de exemplo C"].map((channel, index) => (
-              <div className="lp-channel-row" key={channel}>
-                <span aria-hidden="true" className="lp-channel-avatar">{String.fromCharCode(65 + index)}</span>
-                <span>{channel}</span>
-              </div>
-            ))}
-            <div className="lp-group-row">
-              <Layers3 aria-hidden="true" />
-              <span>Grupo demonstrativo</span>
-            </div>
-          </aside>
-          <div className="lp-product-main">
-            <div className="lp-agenda-heading">
-              <div>
-                <p className="lp-micro-label">AGENDA</p>
-                <h3>Conteúdos em preparação</h3>
-              </div>
-              <span>Visão demonstrativa</span>
-            </div>
-            <div aria-label="Itens demonstrativos de publicação" className="lp-agenda-table" role="list">
-              {rows.map((row, index) => (
-                <div className="lp-agenda-row" key={row.channel} role="listitem">
-                  <span aria-hidden="true" className="lp-agenda-order">0{index + 1}</span>
-                  <div className="lp-agenda-content">
-                    <strong>{row.format === "Fotos" ? "Fotos e carrossel" : "Vídeo"}</strong>
-                    <span>{row.channel}</span>
-                  </div>
-                  <span className="lp-agenda-time"><Clock3 aria-hidden="true" /> {row.time}</span>
-                  <span className={`lp-agenda-state lp-agenda-state-${index}`}>
-                    {index === 0 ? (
-                      <CheckCircle2 aria-hidden="true" />
-                    ) : index === 1 ? (
-                      <Clock3 aria-hidden="true" />
-                    ) : (
-                      <ArrowRight aria-hidden="true" />
-                    )}
-                    {row.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="lp-agenda-footnote">
-              Os exemplos representam etapas possíveis; disponibilidade depende
-              das permissões e regras do TikTok.
-            </p>
-          </div>
-        </div>
+      <div className="device-image-stage">
+        <img
+          alt="Ilustração do painel AutoClip em um notebook e smartphone"
+          className="device-image"
+          decoding="async"
+          height={1024}
+          src="/autoclip-devices.png"
+          width={1536}
+        />
       </div>
     </figure>
   );
