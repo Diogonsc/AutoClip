@@ -16,7 +16,7 @@ import { Input } from "../components/ui/input";
 import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
 import { useConfirm } from "../components/confirm-provider";
-import { errorMessage } from "../lib/api";
+import { errorMessage, toFunctionError } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { supabase } from "../lib/supabase";
 import {
@@ -57,11 +57,7 @@ async function callAdmin<T>(
     { method, ...(body ? { body } : {}) },
   );
   if (error) {
-    const response = (error as { context?: Response }).context;
-    const payload = (await response?.json().catch(() => null)) as {
-      message?: string;
-    } | null;
-    throw new Error(payload?.message ?? error.message);
+    throw await toFunctionError(error);
   }
   return data as T;
 }

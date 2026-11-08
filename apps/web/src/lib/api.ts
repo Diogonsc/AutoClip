@@ -11,6 +11,15 @@ interface RawError {
   code?: string;
 }
 
+type EdgeErrorPayload = {
+  error?: string;
+  message?: string;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function friendly(e: RawError): string {
   const m = e.message.toLowerCase();
   if (m.includes("music_rights_consent_required"))
@@ -58,6 +67,60 @@ export function unwrap<T>(res: { data: T | null; error: RawError | null }): T {
   return res.data as T;
 }
 
+/**
+ * Converte erros de Edge Functions em mensagens seguras para a interface.
+ * Nem todo erro do SDK possui `context` como um `Response`: relay e rede, por
+ * exemplo, podem trazer outro objeto (ou nenhum). Por isso a leitura do corpo
+ * é opcional e feita uma única vez.
+ */
+export async function toFunctionError(error: unknown): Promise<ApiError> {
+  const record = isRecord(error) ? error : undefined;
+  const context = record?.context;
+  let payload: EdgeErrorPayload | null = null;
+
+  if (isRecord(context) && typeof context.json === "function") {
+    try {
+      const body: unknown = await context.json();
+      if (isRecord(body)) {
+        payload = {
+          error: typeof body.error === "string" ? body.error : undefined,
+          message: typeof body.message === "string" ? body.message : undefined,
+        };
+      }
+    } catch {
+      // Respostas vazias, HTML de proxy e JSON inválido usam a mensagem segura abaixo.
+    }
+  }
+
+  if (payload?.message) {
+    return new ApiError(
+      friendly({ message: payload.message, code: payload.error }),
+      payload.error,
+    );
+  }
+  if (payload?.error === "forbidden") {
+    return new ApiError("Você não tem permissão para esta ação.", "forbidden");
+  }
+  if (payload?.error === "unauthorized") {
+    return new ApiError("Sessão expirada. Entre novamente.", "unauthorized");
+  }
+
+  const name = typeof record?.name === "string" ? record.name : "";
+  if (name === "FunctionsFetchError") {
+    return new ApiError("Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.");
+  }
+  if (name === "FunctionsRelayError") {
+    return new ApiError("O serviço não conseguiu encaminhar a solicitação. Tente novamente em instantes.");
+  }
+  if (name === "FunctionsHttpError") {
+    return new ApiError("Não foi possível concluir a operação. Tente novamente.");
+  }
+
+  // Erros sem formato conhecido não são exibidos literalmente: podem conter
+  // detalhes internos e não são úteis para quem usa a tela.
+  return new ApiError("Não foi possível concluir a operação. Tente novamente.");
+}
+
 /** Chama uma Edge Function com o JWT do usuário e devolve o JSON; erros viram mensagem amigável. */
 export async function invokeFunction<T>(
   client: {
@@ -73,24 +136,7 @@ export async function invokeFunction<T>(
 ): Promise<T> {
   const { data, error } = await client.functions.invoke(name, { body });
   if (error) {
-    const ctx = (error as { context?: Response }).context;
-    if (ctx && typeof ctx.json === "function") {
-      const j = (await ctx.json().catch(() => null)) as {
-        error?: string;
-        message?: string;
-      } | null;
-      if (j?.message) throw new ApiError(j.message, j.error);
-      if (j?.error === "forbidden")
-        throw new ApiError(
-          "Você não tem permissão para esta ação.",
-          "forbidden",
-        );
-      if (j?.error === "unauthorized")
-        throw new ApiError("Sessão expirada. Entre novamente.", "unauthorized");
-    }
-    throw new ApiError(
-      "Não foi possível concluir a operação. Tente novamente.",
-    );
+    throw await toFunctionError(error);
   }
   return data as T;
 }
