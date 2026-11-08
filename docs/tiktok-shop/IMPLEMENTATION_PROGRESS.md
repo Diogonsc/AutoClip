@@ -43,3 +43,16 @@
 4. Migration de reativação/RLS revisada em Supabase local/disposable.
 5. Callback e catálogo homologados pelo backend contra Sandbox.
 
+## Fase 1A.1 — correção de contratos Seller
+
+**Status:** GO LOCAL / NO-GO SANDBOX
+
+- Normalizado o contrato observado do Partner Center: `id`/`cipher` para
+  `shop_id`/`shop_cipher`, sem descartar lojas válidas.
+- Host fixado por allowlist HTTPS; nenhum host de configuração arbitrário é aceito.
+- Paginação possui page size válido, limite de páginas, token repetido e AbortSignal.
+- Get Product valida ID mas permanece bloqueado até confirmação de rota/versionamento.
+- A assinatura HMAC ordena parâmetros e exclui `sign`/`access_token`; a regra do
+  header para 202309+ foi confirmada na documentação, mas falta vetor oficial e
+  validação Sandbox.
+

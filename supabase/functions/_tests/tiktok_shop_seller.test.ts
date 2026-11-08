@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { ShopApiError, TikTokShopSellerClient, sellerAuthorizeUrl, signSellerRequest, validPageSize } from '../_shared/tiktok-shop-seller.ts';
+import { ShopApiError, TikTokShopSellerClient, normalizeSellerShop, signSellerRequest, validPageSize, validatedApiHost } from '../_shared/tiktok-shop-seller.ts';
 
 const client = (fetchImpl: typeof fetch) => new TikTokShopSellerClient({ appKey: 'app', appSecret: 'secret', accessToken: 'synthetic', fetchImpl });
 
-test('Seller authorization uses explicit configured service and state', () => {
-  const url = new URL(sellerAuthorizeUrl('https://services.br.tiktokshop.com/open/authorize', 'service', 'state', 'https://callback.example'));
-  assert.equal(url.searchParams.get('service_id'), 'service');
-  assert.equal(url.searchParams.get('state'), 'state');
-  assert.throws(() => sellerAuthorizeUrl('http://invalid.example', 'service', 'state'));
+test('normalizes observed Partner Center id/cipher shape and rejects incomplete shops', () => {
+  assert.deepEqual(normalizeSellerShop({ id: '7495028847767946451', cipher: 'SANITIZED_SHOP_CIPHER', name: 'SANDBOX_BR7703293130270885633', region: 'BR', seller_type: 'LOCAL' }), { shop_id: '7495028847767946451', shop_cipher: 'SANITIZED_SHOP_CIPHER', name: 'SANDBOX_BR7703293130270885633', region: 'BR', seller_type: 'LOCAL' });
+  assert.equal(normalizeSellerShop({ id: '7495028847767946451' }), null);
+  assert.throws(() => validatedApiHost('https://attacker.invalid'));
 });
 
 test('Seller request signing is stable and excludes sign itself', async () => {
@@ -23,12 +22,12 @@ test('Search Products defaults page_size to 20 and rejects zero', async () => {
 });
 
 test('Seller client handles authorized shops, repeated page tokens and API failures safely', async () => {
-  const shops = await client(async () => new Response(JSON.stringify({ code: 0, data: { shops: [{ shop_id: '7495028847767946451', shop_cipher: 'cipher', region: 'BR' }] } }))).authorizedShops();
+  const shops = await client(async () => new Response(JSON.stringify({ code: 0, data: { shops: [{ id: '7495028847767946451', cipher: 'cipher', region: 'BR' }, { id: 'bad' }] } }))).authorizedShops();
   assert.equal(shops[0]?.shop_id, '7495028847767946451');
   await assert.rejects(client(async () => new Response('', { status: 429 })).authorizedShops(), (error: unknown) => error instanceof ShopApiError && error.code === 'rate_limited');
   await assert.rejects(client(async () => new Response(JSON.stringify({ code: 0, data: { products: null } }))).searchProducts({ shopCipher: 'cipher' }), /TikTok Shop request failed/);
 });
 
 test('Get Product remains adapter-gated until account-specific endpoint confirmation', async () => {
-  await assert.rejects(client(async () => new Response('{}')).getProduct('/unconfirmed', 'cipher'), /not confirmed/);
+  await assert.rejects(client(async () => new Response('{}')).getProduct('1738448341508261075', 'cipher'), /not confirmed/);
 });
