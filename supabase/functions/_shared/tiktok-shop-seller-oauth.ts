@@ -1,7 +1,10 @@
 const TOKEN_ORIGIN = "https://auth.tiktok-shops.com";
 const TOKEN_PATHS = new Set(["/api/v2/token/get", "/api/v2/token/refresh"]);
+const SELLER_AUTHORIZE_ORIGIN = "https://services.tiktokshop.com";
+const REGISTERED_REDIRECT_URI = "https://autoclipe.vercel.app/tiktok/callback";
 export type SellerTokens = { accessToken:string; refreshToken:string; accessExpiresAt:string; refreshExpiresAt:string; openId:string; sellerName?:string; region?:string; scopes:string[] };
 export class SellerOAuthError extends Error { constructor(public readonly code:"cancelled"|"network"|"rejected"|"invalid_response"|"insufficient_scope") { super("TikTok Shop Seller OAuth failed"); } }
+export function sellerRowAuthorizeUrl(serviceId:string,state:string,redirectUri=REGISTERED_REDIRECT_URI):string { if(!serviceId||!state||redirectUri!==REGISTERED_REDIRECT_URI)throw new SellerOAuthError("invalid_response");const url=new URL("/open/authorize",SELLER_AUTHORIZE_ORIGIN);url.searchParams.set("service_id",serviceId);url.searchParams.set("state",state);return url.toString(); }
 export function createSellerState():string { return crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", ""); }
 export function hashSellerState(state:string):Promise<string> { return crypto.subtle.digest("SHA-256",new TextEncoder().encode(state)).then(b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("")); }
 export function redactSellerSecrets(value:string):string { return value.replace(/(app_secret|access_token|refresh_token)=([^&\s]+)/gi,"$1=[REDACTED]"); }
