@@ -23,6 +23,16 @@ test('Search Products defaults page_size to 20 and rejects zero', async () => {
   assert.throws(() => validPageSize(0));
 });
 
+test('pagination preserves total_count, stops repeated tokens and forwards cancellation', async () => {
+  const calls: string[] = [];
+  const paged = client(async (url) => { calls.push(String(url)); const second = String(url).includes('page_token=next'); return new Response(JSON.stringify({ code: 0, data: { products: [{ id: second ? '2' : '1' }], next_page_token: second ? 'next' : 'next', total_count: 1 } })); });
+  const pages: unknown[] = []; for await (const page of paged.searchProductPages({ shopCipher: 'cipher', maxPages: 5 })) pages.push(page);
+  assert.equal(calls.length, 2); assert.equal((pages[0] as { total_count:number }).total_count, 1);
+  await assert.rejects(paged.searchProductPages({ shopCipher: 'cipher', maxPages: 0 }).next(), /maxPages/);
+  const controller = new AbortController(); controller.abort();
+  await assert.rejects(client(async () => new Response('{}')).searchProducts({ shopCipher: 'cipher', signal: controller.signal }), (e: unknown) => e instanceof ShopApiError && e.code === 'cancelled');
+});
+
 test('Seller client handles authorized shops, repeated page tokens and API failures safely', async () => {
   const shops = await client(async () => new Response(JSON.stringify({ code: 0, data: { shops: [{ id: '7495028847767946451', cipher: 'cipher', region: 'BR' }, { id: 'bad' }] } }))).authorizedShops();
   assert.equal(shops[0]?.shop_id, '7495028847767946451');
