@@ -44,7 +44,16 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if old.status in ('COMPLETED', 'FAILED', 'EXPIRED') then
+  if old.status in ('COMPLETED', 'FAILED', 'EXPIRED') and (
+    new.status <> old.status
+    or new.workspace_id is distinct from old.workspace_id
+    or new.initiated_by is distinct from old.initiated_by
+    or new.state_hash is distinct from old.state_hash
+    or new.expires_at is distinct from old.expires_at
+    or new.claimed_at is distinct from old.claimed_at
+    or new.completed_at is distinct from old.completed_at
+    or new.created_at is distinct from old.created_at
+  ) then
     raise exception 'seller oauth state is terminal' using errcode = '42501';
   end if;
 
@@ -88,6 +97,8 @@ begin
       loop
         if not private.seller_audit_metadata_safe(v_child) then return false; end if;
       end loop;
+    else
+      null;
   end case;
   return true;
 end;

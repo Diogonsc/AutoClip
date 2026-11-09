@@ -2,7 +2,7 @@
 -- Executar somente contra Supabase local descartável: supabase test db.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(36);
+select plan(47);
 
 insert into auth.users (id, instance_id, aud, role, email) values
   ('19000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seller-owner-a@test.invalid'),
@@ -135,6 +135,41 @@ select throws_ok(
     values (%L::uuid, %L::uuid, 'OAUTH_STARTED', '{"access_token":"forbidden"}'::jsonb)$q$,
     (select workspace_a from seller_ctx), (select connection_a from seller_ctx)),
   '23514', null, 'constraint impede segredo em evento de auditoria');
+select throws_ok(
+  format($q$insert into public.seller_audit_events(workspace_id,event_type,metadata)
+    values (%L::uuid, 'OAUTH_FAILED', '{"nested":{"refresh_token":"redacted"}}'::jsonb)$q$,
+    (select workspace_a from seller_ctx)), '23514', null, 'metadata aninhada não aceita refresh token');
+select throws_ok(
+  format($q$insert into public.seller_audit_events(workspace_id,event_type,metadata)
+    values (%L::uuid, 'OAUTH_FAILED', '[{"app_secret":"redacted"}]'::jsonb)$q$,
+    (select workspace_a from seller_ctx)), '23514', null, 'metadata em array não aceita app secret');
+select throws_ok(
+  format($q$insert into public.seller_audit_events(workspace_id,event_type,metadata)
+    values (%L::uuid, 'OAUTH_FAILED', '{"a":{"b":{"auth_code":"redacted"}}}'::jsonb)$q$,
+    (select workspace_a from seller_ctx)), '23514', null, 'metadata multinível não aceita auth code');
+select lives_ok(
+  format($q$insert into public.seller_audit_events(workspace_id,event_type,metadata)
+    values (%L::uuid, 'OAUTH_FAILED', '{"reason":"network","attempt":1}'::jsonb)$q$,
+    (select workspace_a from seller_ctx)), 'metadata operacional legítima é aceita');
+select throws_ok(
+  format($q$update public.seller_audit_events set metadata='{"nested":{"access_token":"redacted"}}'::jsonb
+    where workspace_id=%L::uuid and metadata->>'reason'='network'$q$, (select workspace_a from seller_ctx)),
+  '23514', null, 'update não introduz segredo em metadata');
+select lives_ok(
+  format($q$delete from public.seller_connections where id=%L::uuid$q$, (select connection_a from seller_ctx)),
+  'conexão Seller pode ser excluída sem FK inválida');
+select is((select workspace_id::text from public.seller_oauth_states where id=(select state_a from seller_ctx)),
+  (select workspace_a::text from seller_ctx), 'state preserva workspace após exclusão de conexão');
+select is((select connection_id from public.seller_oauth_states where id=(select state_a from seller_ctx)), null::uuid,
+  'state preservado recebe connection_id nulo');
+select throws_ok(
+  format($q$update public.seller_oauth_states set workspace_id=%L::uuid where id=%L::uuid$q$,
+    (select workspace_b from seller_ctx), (select state_a from seller_ctx)),
+  '42501', null, 'state terminal não aceita alteração de workspace');
+select is((select count(*) from public.seller_shops where connection_id=(select connection_a from seller_ctx)), 0::bigint,
+  'lojas da conexão excluída sofrem cascade');
+select is((select connection_id from public.seller_audit_events where event_type='OAUTH_COMPLETED' and workspace_id=(select workspace_a from seller_ctx) limit 1), null::uuid,
+  'auditoria preserva workspace e anula connection_id');
 select is((public.acquire_seller_credential_refresh(
   '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002'
 ) ->> 'state'), 'ACQUIRED', 'primeiro worker adquire lease Seller');
