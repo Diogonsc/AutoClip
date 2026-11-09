@@ -1,0 +1,18 @@
+const TOKEN_ORIGIN = "https://auth.tiktok-shops.com";
+const AUTHORIZE_ORIGIN = "https://services.tiktokshop.com";
+const REDIRECT_URI = "https://autoclipe.vercel.app/tiktok/callback";
+export type SellerTokens = { accessToken:string; refreshToken:string; accessExpiresAt:string; refreshExpiresAt:string; openId:string; sellerName?:string; region?:string; scopes:string[] };
+export class SellerOAuthError extends Error { constructor(public readonly code:"cancelled"|"network"|"rejected"|"invalid_response"|"insufficient_scope") { super("TikTok Shop Seller OAuth failed"); } }
+export function sellerRowAuthorizeUrl(serviceId:string,state:string,redirectUri=REDIRECT_URI):string { if(!serviceId||!state||redirectUri!==REDIRECT_URI)throw new SellerOAuthError("invalid_response");const u=new URL("/open/authorize",AUTHORIZE_ORIGIN);u.searchParams.set("service_id",serviceId);u.searchParams.set("state",state);return u.toString(); }
+export function createSellerState():string{return crypto.randomUUID().replaceAll("-","")+crypto.randomUUID().replaceAll("-","");}
+export async function hashSellerState(v:string):Promise<string>{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("");}
+export function redactSellerSecrets(v:string):string{return v.replace(/(app_secret|access_token|refresh_token|auth_code)=([^&\s,"}]+)/gi,"$1=[REDACTED]");}
+export async function sellerTokenRequest(kind:"exchange"|"refresh",input:{appKey:string;appSecret:string;value:string;requiredScopes?:string[];signal?:AbortSignal},fetchImpl:typeof fetch=fetch,now:()=>number=Date.now):Promise<SellerTokens>{
+ if((kind!=="exchange"&&kind!=="refresh")||!input.appKey||!input.appSecret||!input.value)throw new SellerOAuthError("invalid_response");if(input.signal?.aborted)throw new SellerOAuthError("cancelled");
+ const u=new URL(kind==="exchange"?"/api/v2/token/get":"/api/v2/token/refresh",TOKEN_ORIGIN);u.searchParams.set("app_key",input.appKey);u.searchParams.set("app_secret",input.appSecret);u.searchParams.set(kind==="exchange"?"auth_code":"refresh_token",input.value);u.searchParams.set("grant_type",kind==="exchange"?"authorized_code":"refresh_token");
+ let res:Response;try{res=await fetchImpl(u,{signal:input.signal,redirect:"error"});}catch(e){if(input.signal?.aborted||(e instanceof DOMException&&e.name==="AbortError"))throw new SellerOAuthError("cancelled");throw new SellerOAuthError("network");}
+ const p=await res.json().catch(()=>null)as {code?:unknown;data?:Record<string,unknown>}|null;const d=p?.data;if(!res.ok||p?.code!==0||!d)throw new SellerOAuthError("rejected");
+ const a=d.access_token,r=d.refresh_token,ae=d.access_token_expire_in,re=d.refresh_token_expire_in,scopes=Array.isArray(d.granted_scopes)?d.granted_scopes.filter((x):x is string=>typeof x==="string"):[];const valid=(x:unknown)=>typeof x==="number"&&Number.isInteger(x)&&Number.isFinite(x)&&x>0&&x*1000>now()&&x*1000<=8_640_000_000_000_000;
+ if(typeof a!=="string"||typeof r!=="string"||!a||!r||!valid(ae)||!valid(re)||re<ae||d.user_type!==0||typeof d.open_id!=="string"||!d.open_id)throw new SellerOAuthError("invalid_response");if((input.requiredScopes??[]).some(x=>!scopes.includes(x)))throw new SellerOAuthError("insufficient_scope");
+ return {accessToken:a,refreshToken:r,accessExpiresAt:new Date(ae*1000).toISOString(),refreshExpiresAt:new Date(re*1000).toISOString(),openId:d.open_id,sellerName:typeof d.seller_name==="string"?d.seller_name:undefined,region:typeof d.seller_base_region==="string"?d.seller_base_region:undefined,scopes};
+}

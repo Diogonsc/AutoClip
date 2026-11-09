@@ -1,0 +1,3 @@
+# Seller OAuth contracts
+
+Documented ROW authorization: `https://services.tiktokshop.com/open/authorize` with `service_id` and backend-created `state`. Observed Partner Center redirect: `https://autoclipe.vercel.app/tiktok/callback`; service ID must be matched to the Partner Center service before configuration. Token exchange/refresh use `GET https://auth.tiktok-shops.com/api/v2/token/get` and `/refresh`, parameters `app_key`, `app_secret`, auth code/refresh token and documented grant types. Seller local requires `user_type=0`; returned Unix expirations are authoritative. Auth code is single-use/30 minutes and Seller access token default is 7 days. `seller.authorization.info` and `seller.product.basic` are observed active; Sandbox behavior remains pending.
