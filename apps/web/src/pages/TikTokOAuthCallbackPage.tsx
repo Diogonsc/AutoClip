@@ -14,6 +14,8 @@ const CALLBACK_RESULTS = new Set([
   "error",
 ]);
 
+const SELLER_CALLBACK_RESULTS = new Set(["connected", "error"]);
+
 export function readTikTokCallbackParams(search: string) {
   const params = new URLSearchParams(search);
   return {
@@ -28,6 +30,19 @@ function safeResult(value: unknown): string {
   return typeof value === "string" && CALLBACK_RESULTS.has(value)
     ? value
     : "error";
+}
+
+function safeSellerResult(value: unknown): string {
+  return typeof value === "string" && SELLER_CALLBACK_RESULTS.has(value)
+    ? value
+    : "error";
+}
+
+export function tikTokCallbackDestination(result: unknown, provider: unknown): string {
+  if (provider === "seller") {
+    return `/canais?tiktok_shop=${encodeURIComponent(safeSellerResult(result))}`;
+  }
+  return `/canais?tiktok=${encodeURIComponent(safeResult(result))}`;
 }
 
 export default function TikTokOAuthCallbackPage() {
@@ -56,13 +71,13 @@ export default function TikTokOAuthCallbackPage() {
       return;
     }
 
-    void invokeFunction<{ result?: unknown }>(
+    void invokeFunction<{ result?: unknown; provider?: unknown }>(
       supabase,
       "tiktok-oauth-callback",
       callback,
     )
-      .then(({ result }) => {
-        navigate(`/canais?tiktok=${encodeURIComponent(safeResult(result))}`, {
+      .then(({ result, provider }) => {
+        navigate(tikTokCallbackDestination(result, provider), {
           replace: true,
         });
       })
