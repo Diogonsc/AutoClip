@@ -2,7 +2,7 @@
 -- Executar somente contra Supabase local descartável: supabase test db.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(32);
 
 insert into auth.users (id, instance_id, aud, role, email) values
   ('19000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seller-owner-a@test.invalid'),
@@ -70,6 +70,36 @@ select throws_ok(
   format('select public.complete_seller_oauth_state(%L::uuid, %L, %L, %L, array[%L])',
     (select state_a from seller_ctx), 'seller-open-a', 'Seller A', 'BR', 'seller.product.basic'),
   '42501', null, 'state concluído não pode ser reutilizado');
+
+insert into public.seller_oauth_states(workspace_id, initiated_by, state_hash, expires_at)
+select workspace_a, '19000000-0000-0000-0000-000000000001', repeat('f', 64), now() + interval '10 minutes'
+from seller_ctx;
+select lives_ok(format('select public.claim_seller_oauth_state(%L)', repeat('f', 64)),
+  'claim antecede conclusão atômica com credenciais cifradas');
+select lives_ok(format($q$select public.complete_seller_oauth_authorization(
+  (select id from public.seller_oauth_states where state_hash=%L),
+  '20000000-0000-0000-0000-000000000002'::uuid, 'seller-open-atomic', 'Atomic', 'BR',
+  array['seller.product.basic'], 'v1:iv:cipher-access', 'v1:iv:cipher-refresh',
+  now()+interval '1 day', now()+interval '2 days', 1::smallint)$q$, repeat('f', 64)),
+  'metadados, credenciais e state são concluídos pela RPC atômica');
+select is((select status::text from public.seller_oauth_states where state_hash = repeat('f', 64)), 'COMPLETED',
+  'conclusão atômica fecha o state');
+select is((select count(*) from public.seller_credentials where connection_id = '20000000-0000-0000-0000-000000000002'), 1::bigint,
+  'conclusão atômica persiste uma credencial ciphertext');
+
+insert into public.seller_oauth_states(workspace_id, initiated_by, state_hash, expires_at)
+select workspace_a, '19000000-0000-0000-0000-000000000001', repeat('g', 64), now() + interval '10 minutes'
+from seller_ctx;
+select lives_ok(format('select public.claim_seller_oauth_state(%L)', repeat('g', 64)),
+  'state de falha é claimed antes da validação de payload');
+select throws_ok(format($q$select public.complete_seller_oauth_authorization(
+  (select id from public.seller_oauth_states where state_hash=%L),
+  '20000000-0000-0000-0000-000000000003'::uuid, 'seller-open-invalid', 'Invalid', 'BR',
+  array['seller.product.basic'], '', 'v1:iv:cipher-refresh',
+  now()+interval '1 day', now()+interval '2 days', 1::smallint)$q$, repeat('g', 64)),
+  '22023', null, 'payload de credencial inválido não cria conexão parcial');
+select is((select count(*) from public.seller_connections where seller_open_id = 'seller-open-invalid'), 0::bigint,
+  'falha de conclusão não persiste conexão parcial');
 
 insert into public.seller_oauth_states(workspace_id, initiated_by, state_hash, expires_at, created_at)
 select workspace_a, '19000000-0000-0000-0000-000000000001', repeat('c', 64), now() - interval '1 minute', now() - interval '2 minutes'

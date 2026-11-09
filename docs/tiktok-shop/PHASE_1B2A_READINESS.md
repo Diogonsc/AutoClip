@@ -44,6 +44,28 @@ O teste `19_seller_oauth_persistence.test.sql` cobre RLS para `authenticated` e 
 - A Redirect URI registrada ainda precisa de roteamento que diferencie Seller OAuth do callback Content Posting, ou de uma URI Seller exclusiva no Partner Center.
 - A feature flag continua desabilitada.
 
+## 1B.2A.2 — criptografia e callback local
+
+Foi adicionado um módulo Seller separado que reutiliza WebCrypto AES-256-GCM, com IV aleatório por cifra e AAD formado por versão, workspace, conexão e tipo de token. A chave é recebida somente pelo adaptador de backend; ausência, chave incorreta, AAD incorreto e ciphertext adulterado falham com erro genérico, sem incluir credenciais.
+
+O fluxo de domínio `startSellerOAuth` e `completeSellerOAuthCallback` é local e injetável:
+
+- state bruto vai apenas para a URL de autorização; somente SHA-256 é persistido;
+- start usa a RPC autenticada de criação, cuja permissão continua verificada pelo banco;
+- callback faz claim antes do exchange, cifra os dois tokens e chama uma única RPC de conclusão;
+- a nova RPC `complete_seller_oauth_authorization` persiste metadados, ciphertexts, state `COMPLETED` e auditoria na mesma transação;
+- erro posterior ao claim marca o state como `FAILED`, sem permitir replay.
+
+Não foi registrado `Deno.serve` nem modificada qualquer callback existente. A URI atualmente cadastrada, `https://autoclipe.vercel.app/tiktok/callback`, é usada pelo Content Posting; portanto, o callback Seller permanece **não publicável** até que haja roteamento seguro por contrato ou uma Redirect URI Seller exclusiva cadastrada no Partner Center.
+
+## Evidência local 1B.2A.2
+
+- Teste Bun de criptografia/fluxo Seller com mocks: AES-GCM, IV único, AAD, chave ausente/incorreta, adulteração, feature flag, erro de exchange, replay e mapeamento de RPC.
+- pgTAP ampliado para a RPC atômica: completa state, salva credencial ciphertext, e não deixa conexão parcial quando o payload é inválido.
+- Não houve chamada TikTok, OAuth real, deploy, migration remota nem mudança de `TIKTOK_SHOP_ENABLED`.
+
 **Status 1B.2A.1: GO local para a camada SQL/RLS.**
+
+**Status 1B.2A.2: GO local condicional**, após os testes abaixo; ainda bloqueado para publicação pela Redirect URI compartilhada e pela ausência de homologação Sandbox.
 
 **Status da Fase 1 completa: NO-GO**, até callback, criptografia, refresh, deploy controlado e homologação Sandbox.
