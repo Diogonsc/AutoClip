@@ -74,7 +74,8 @@
   minutos; o state em claro não é persistido.
 - `SellerOAuthConnectButton` é um componente isolado e acessível, mas permanece
   invisível e não acionável enquanto `SELLER_OAUTH_UI_ENABLED` e a flag backend
-  `TIKTOK_SHOP_ENABLED` forem `false`. Ele não foi ligado a nenhuma tela ativa.
+  `TIKTOK_SHOP_ENABLED` forem `false`. Ele não foi ligado a nenhuma tela ativa e
+  valida `https://services.tiktokshop.com/open/authorize` antes de navegar.
 
 ### Evidências locais
 
