@@ -10,9 +10,11 @@ begin
  if not found then return jsonb_build_object('state','REAUTH_REQUIRED'); end if;
  if v.refresh_lease_expires_at is not null and v.refresh_lease_expires_at > clock_timestamp() then return jsonb_build_object('state','BUSY'); end if;
  if v.refresh_lease_expires_at is not null then
-   update public.seller_connections set status='REAUTH_REQUIRED',updated_at=now() where id=p_connection;
-   insert into public.seller_audit_events(workspace_id,connection_id,event_type,metadata) values(v_workspace,p_connection,'REAUTH_REQUIRED','{"reason":"LEASE_EXPIRED"}'::jsonb);
-   return jsonb_build_object('state','REAUTH_REQUIRED');
+   -- The prior worker has lost its lease. A higher fencing token prevents its
+   -- late response from persisting; a subsequent remote rejection still leads
+   -- to reauthorization through fail_seller_credential_refresh.
+   insert into public.seller_audit_events(workspace_id,connection_id,event_type,metadata)
+   values(v_workspace,p_connection,'REFRESH_FAILED','{"reason":"LEASE_EXPIRED"}'::jsonb);
  end if;
  if v.refresh_expires_at <= clock_timestamp() then
    update public.seller_connections set status='REAUTH_REQUIRED',updated_at=now() where id=p_connection;

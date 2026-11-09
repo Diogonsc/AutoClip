@@ -76,4 +76,12 @@ O serviço local usa dependências injetáveis: tokens ainda válidos não acion
 
 Evidências locais: testes Bun com refresh mockado; pgTAP de lease exclusivo, leitura service-role e fencing obsoleto. A pendência de Redirect URI Seller exclusiva permanece.
 
+### Validação final 2026-11-08
+
+Executados em Supabase local descartável: `supabase db reset --local --no-seed`, `supabase test db --local` (**310 testes**), testes Bun Seller (**22 testes**), isolamento (**5 testes**), typecheck, Vitest frontend (**51 testes**), build e `git diff --check`; todos aprovados.
+
+Duas sessões `psql` independentes comprovaram o protocolo de refresh: A adquiriu lease; B recebeu `BUSY`; a conclusão de A incrementou `credential_version` para 2; escrita de B com fencing/versionamento antigo retornou falso; depois de expirar a lease, C adquiriu fencing 2 e o proprietário antigo não conseguiu concluir. Nenhum ciphertext foi impresso. A alteração de lease expirada permite takeover cercado por fencing; qualquer erro remoto subsequente continua seguindo o caminho conservador de reautorização.
+
+**Status 1B.2A.3: GO local.** Permanece **NO-GO para deploy/Sandbox** por Redirect URI compartilhada, secrets não configurados e ausência de homologação real.
+
 **Status da Fase 1 completa: NO-GO**, até callback, criptografia, refresh, deploy controlado e homologação Sandbox.
