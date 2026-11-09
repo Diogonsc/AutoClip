@@ -68,4 +68,12 @@ Não foi registrado `Deno.serve` nem modificada qualquer callback existente. A U
 
 **Status 1B.2A.2: GO local condicional**, após os testes abaixo; ainda bloqueado para publicação pela Redirect URI compartilhada e pela ausência de homologação Sandbox.
 
+## 1B.2A.3 — refresh concorrente local
+
+`20261108000003_seller_credential_refresh_leases.sql` adiciona lease de 90 segundos, owner por worker, fencing token monotônico e comparação de `credential_version`. Apenas `service_role` pode adquirir lease, ler o ciphertext de refresh sob lease, concluir ou registrar falha. Respostas com fencing/versionamento antigo retornam falso e não sobrescrevem credenciais mais novas.
+
+O serviço local usa dependências injetáveis: tokens ainda válidos não acionam refresh; refresh remoto ambíguo, perda de lease, falha de cifra ou identidade Seller incompatível resultam em falha fechada e reautorização, sem repetição cega do refresh token. Nenhum scheduler ou I/O TikTok foi adicionado.
+
+Evidências locais: testes Bun com refresh mockado; pgTAP de lease exclusivo, leitura service-role e fencing obsoleto. A pendência de Redirect URI Seller exclusiva permanece.
+
 **Status da Fase 1 completa: NO-GO**, até callback, criptografia, refresh, deploy controlado e homologação Sandbox.

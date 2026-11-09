@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { test } from 'bun:test';
+import { importSellerCredentialKey, encryptSellerCredential } from '../_shared/tiktok-shop-seller-crypto.ts';
+import { refreshSellerCredentials, type SellerRefreshStore, SellerRefreshError } from '../_shared/tiktok-shop-seller-refresh.ts';
+
+const ws='10000000-0000-0000-0000-000000000001', conn='20000000-0000-0000-0000-000000000001';
+const key=await importSellerCredentialKey('MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=');
+const tokens={accessToken:'new-access',refreshToken:'new-refresh',accessExpiresAt:'2033-05-18T03:33:20.000Z',refreshExpiresAt:'2033-05-18T04:33:20.000Z',openId:'seller',scopes:[]};
+class Store implements SellerRefreshStore { completeResult=true; failed=0; async acquire(){return {state:'ACQUIRED' as const,workspaceId:ws,sellerOpenId:'seller',credentialVersion:1,fencingToken:2};} async read(){return {workspaceId:ws,sellerOpenId:'seller',credentialVersion:1,refreshCiphertext:await encryptSellerCredential(key,'old-refresh',{workspaceId:ws,connectionId:conn,kind:'refresh'})};} async complete(){return this.completeResult;} async fail(){this.failed++;} }
+test('Seller refresh encrypts new credentials and commits only matching lease',async()=>{const store=new Store();assert.equal(await refreshSellerCredentials({enabled:true,connectionId:conn,workspaceId:ws,accessExpiresAt:'2020-01-01T00:00:00.000Z',encryptionKey:key,store,refresh:async v=>{assert.equal(v,'old-refresh');return tokens;},workerId:()=> '30000000-0000-0000-0000-000000000001'}),'refreshed');});
+test('Seller refresh never calls remote refresh while token is fresh or disabled',async()=>{let calls=0;const store=new Store();assert.equal(await refreshSellerCredentials({enabled:true,connectionId:conn,workspaceId:ws,accessExpiresAt:'2034-01-01T00:00:00.000Z',encryptionKey:key,store,refresh:async()=>{calls++;return tokens;}}),'fresh');await assert.rejects(()=>refreshSellerCredentials({enabled:false,connectionId:conn,workspaceId:ws,accessExpiresAt:'2020-01-01T00:00:00.000Z',encryptionKey:key,store,refresh:async()=>{calls++;return tokens;}}),SellerRefreshError);assert.equal(calls,0);});
+test('Seller refresh fails closed for stale fencing and incompatible identity',async()=>{const store=new Store();store.completeResult=false;await assert.rejects(()=>refreshSellerCredentials({enabled:true,connectionId:conn,workspaceId:ws,accessExpiresAt:'2020-01-01T00:00:00.000Z',encryptionKey:key,store,refresh:async()=>tokens}),SellerRefreshError);assert.equal(store.failed,1);});

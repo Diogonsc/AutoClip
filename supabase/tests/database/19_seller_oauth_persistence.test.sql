@@ -2,7 +2,7 @@
 -- Executar somente contra Supabase local descartável: supabase test db.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(36);
 
 insert into auth.users (id, instance_id, aud, role, email) values
   ('19000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seller-owner-a@test.invalid'),
@@ -135,6 +135,19 @@ select throws_ok(
     values (%L::uuid, %L::uuid, 'OAUTH_STARTED', '{"access_token":"forbidden"}'::jsonb)$q$,
     (select workspace_a from seller_ctx), (select connection_a from seller_ctx)),
   '23514', null, 'constraint impede segredo em evento de auditoria');
+select is((public.acquire_seller_credential_refresh(
+  '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002'
+) ->> 'state'), 'ACQUIRED', 'primeiro worker adquire lease Seller');
+select is((public.acquire_seller_credential_refresh(
+  '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000003'
+) ->> 'state'), 'BUSY', 'segundo worker não adquire lease ativo');
+select ok((public.read_seller_refresh_credential(
+  '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 1
+) ->> 'refresh_ciphertext') is not null, 'somente service_role lê ciphertext sob lease válido');
+select is(public.complete_seller_credential_refresh(
+  '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 0, 1,
+  'v1:iv:new-access', 'v1:iv:new-refresh', now()+interval '1 day', now()+interval '2 days'
+), false, 'fencing token antigo não sobrescreve credencial');
 reset role;
 
 set local role authenticated;
