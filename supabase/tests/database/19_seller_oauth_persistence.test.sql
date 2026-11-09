@@ -2,7 +2,7 @@
 -- Executar somente contra Supabase local descartável: supabase test db.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(47);
+select plan(48);
 
 insert into auth.users (id, instance_id, aud, role, email) values
   ('19000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seller-owner-a@test.invalid'),
@@ -166,6 +166,10 @@ select throws_ok(
   format($q$update public.seller_oauth_states set workspace_id=%L::uuid where id=%L::uuid$q$,
     (select workspace_b from seller_ctx), (select state_a from seller_ctx)),
   '42501', null, 'state terminal não aceita alteração de workspace');
+select throws_ok(
+  format($q$update public.seller_oauth_states set connection_id='20000000-0000-0000-0000-000000000002'::uuid where id=%L::uuid$q$,
+    (select state_a from seller_ctx)),
+  '42501', null, 'state terminal não aceita reassociação arbitrária de conexão');
 select is((select count(*) from public.seller_shops where connection_id=(select connection_a from seller_ctx)), 0::bigint,
   'lojas da conexão excluída sofrem cascade');
 select is((select connection_id from public.seller_audit_events where event_type='OAUTH_COMPLETED' and workspace_id=(select workspace_a from seller_ctx) limit 1), null::uuid,
