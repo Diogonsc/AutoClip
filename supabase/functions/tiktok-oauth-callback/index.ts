@@ -5,40 +5,15 @@ import { buildContext, log } from '../_shared/runtime.ts';
 import { corsHeaders, json, parseOrigins } from '../_shared/http.ts';
 import { env, envOptional } from '../_shared/env.ts';
 import { isTikTokShopEnabled } from '../_shared/tiktok-shop-availability.ts';
-import { hashSellerState, sellerTokenRequest } from '../_shared/tiktok-shop-seller-oauth.ts';
+import { sellerTokenRequest } from '../_shared/tiktok-shop-seller-oauth.ts';
 import { importSellerCredentialKey } from '../_shared/tiktok-shop-seller-crypto.ts';
 import { completeSellerOAuthCallback, SELLER_REQUIRED_SCOPES } from '../_shared/tiktok-shop-seller-flow.ts';
 import { createSellerOAuthPersistence, type SellerOAuthRpcClient } from '../_shared/tiktok-shop-seller-persistence.ts';
 import { routeSharedTikTokOAuthCallback, type SharedTikTokOAuthParams } from '../_shared/tiktok-shared-oauth-router.ts';
+import { sellerOAuthCallbackResponse } from '../_shared/tiktok-shared-oauth-response.ts';
+import { classifySharedTikTokOAuthState, type SharedOAuthStateDatabase } from '../_shared/tiktok-shared-oauth-classifier.ts';
 
 declare const Deno: { serve(handler: (req: Request) => Response | Promise<Response>): unknown };
-
-type StateLookup = { found: boolean; failed: boolean };
-type SharedStateDatabase = {
-  contentState(state: string): Promise<StateLookup>;
-  sellerState(stateHash: string): Promise<StateLookup>;
-};
-
-/**
- * This lookup is performed only after the Seller feature is explicitly enabled
- * and its migrations are present. It is deliberately not a fallback consumer:
- * a state must prove it belongs to exactly one OAuth family before dispatch.
- */
-async function classifySharedState(
-  state: string,
-  database: SharedStateDatabase,
-): Promise<'content_posting' | 'seller' | 'unknown' | 'ambiguous'> {
-  const sellerHash = await hashSellerState(state);
-  const [content, seller] = await Promise.all([
-    database.contentState(state),
-    database.sellerState(sellerHash),
-  ]);
-  if (content.failed || seller.failed) throw new Error('oauth state lookup failed');
-  if (content.found && seller.found) return 'ambiguous';
-  if (content.found) return 'content_posting';
-  if (seller.found) return 'seller';
-  return 'unknown';
-}
 
 Deno.serve(async (req) => {
   const origins = parseOrigins(envOptional('WEB_URL'));
@@ -92,7 +67,9 @@ Deno.serve(async (req) => {
     // Seller schema/secrets while Shop remains fail-closed.
     if (!isTikTokShopEnabled()) return await handleCallback(req, contentDependencies);
 
-    const stateDatabase: SharedStateDatabase = {
+    // The service-role client is confined to this backend adapter. It checks
+    // both active state stores before either flow can consume a state.
+    const stateDatabase: SharedOAuthStateDatabase = {
       async contentState(state) {
         const result = await c.sb
           .from('oauth_states')
@@ -123,7 +100,7 @@ Deno.serve(async (req) => {
 
     const invalidState = () => json({ result: 'invalid_state' }, 200, headers);
     const unavailable = () => json({ result: 'error' }, 503, headers);
-    const sellerCallback = async (params: SharedTikTokOAuthParams, signal: AbortSignal) => {
+    const sellerCallback = async (request: Request, params: SharedTikTokOAuthParams, signal: AbortSignal) => {
       try {
         const persistence = createSellerOAuthPersistence(sellerRpc, sellerRpc);
         const encryptionKey = await importSellerCredentialKey(env('TIKTOK_SHOP_SELLER_TOKEN_ENCRYPTION_KEY'));
@@ -139,20 +116,23 @@ Deno.serve(async (req) => {
             signal: requestSignal,
           }),
         }, signal);
-        return json({ result: 'connected', provider: 'seller' }, 200, headers);
+        return sellerOAuthCallbackResponse(request, headers, c.webUrl, 'connected');
       } catch {
         // Never reflect the authorization code, token response or persistence details.
         log('seller.callback_failed');
-        return json({ result: 'error', provider: 'seller' }, 400, headers);
+        // A controlled 200 response lets the web callback distinguish Seller
+        // failure from Content Posting without exposing a provider error body.
+        return sellerOAuthCallbackResponse(request, headers, c.webUrl, 'error');
       }
     };
 
     return await routeSharedTikTokOAuthCallback(req, {
-      classifyState: (state) => classifySharedState(state, stateDatabase),
+      classifyState: (state) => classifySharedTikTokOAuthState(state, stateDatabase),
       handleContentPosting: (request) => handleCallback(request, contentDependencies),
       handleSeller: sellerCallback,
       invalidState,
       unavailable,
+      methodNotAllowed: () => json({ error: 'method_not_allowed' }, 405, headers),
     });
   } catch {
     log('callback.fatal');

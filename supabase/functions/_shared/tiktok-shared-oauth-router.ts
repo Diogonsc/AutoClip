@@ -17,9 +17,10 @@ export type SharedTikTokOAuthParams = {
 export type SharedTikTokOAuthRouterDependencies = {
   classifyState(state: string): Promise<SharedTikTokOAuthProvider | 'unknown' | 'ambiguous'>;
   handleContentPosting(request: Request): Promise<Response>;
-  handleSeller(params: SharedTikTokOAuthParams, signal: AbortSignal): Promise<Response>;
+  handleSeller(request: Request, params: SharedTikTokOAuthParams, signal: AbortSignal): Promise<Response>;
   invalidState(request: Request): Response;
   unavailable(request: Request): Response;
+  methodNotAllowed(request: Request): Response;
 };
 
 function stringParam(value: unknown): string | null {
@@ -57,7 +58,7 @@ export async function routeSharedTikTokOAuthCallback(
   dependencies: SharedTikTokOAuthRouterDependencies,
 ): Promise<Response> {
   const params = await readSharedTikTokOAuthParams(request);
-  if (!params) return dependencies.unavailable(request);
+  if (!params) return dependencies.methodNotAllowed(request);
   if (!params.state) return dependencies.invalidState(request);
 
   let provider: SharedTikTokOAuthProvider | 'unknown' | 'ambiguous';
@@ -69,6 +70,6 @@ export async function routeSharedTikTokOAuthCallback(
   }
 
   if (provider === 'content_posting') return dependencies.handleContentPosting(request);
-  if (provider === 'seller') return dependencies.handleSeller(params, request.signal);
+  if (provider === 'seller') return dependencies.handleSeller(request, params, request.signal);
   return dependencies.invalidState(request);
 }

@@ -5,6 +5,8 @@ import {
   routeSharedTikTokOAuthCallback,
   type SharedTikTokOAuthProvider,
 } from '../_shared/tiktok-shared-oauth-router.ts';
+import { sellerOAuthCallbackResponse } from '../_shared/tiktok-shared-oauth-response.ts';
+import { classifySharedTikTokOAuthState } from '../_shared/tiktok-shared-oauth-classifier.ts';
 
 function request(body: unknown, method = 'POST') {
   return new Request('https://autoclipe.vercel.app/tiktok/callback', {
@@ -24,7 +26,7 @@ function dependencies(classify: (state: string) => Promise<SharedTikTokOAuthProv
         calls.content++;
         return Response.json({ result: 'content' });
       },
-      handleSeller: async (params: { state: string | null; code: string | null }) => {
+      handleSeller: async (_request: Request, params: { state: string | null; code: string | null }) => {
         calls.seller++;
         return Response.json({ result: 'seller', state: params.state, code: params.code });
       },
@@ -36,6 +38,7 @@ function dependencies(classify: (state: string) => Promise<SharedTikTokOAuthProv
         calls.unavailable++;
         return Response.json({ result: 'error' }, { status: 503 });
       },
+      methodNotAllowed: () => Response.json({ error: 'method_not_allowed' }, { status: 405 }),
     },
   };
 }
@@ -83,4 +86,41 @@ test('shared router rejects missing state and fails closed when classification i
 test('shared router parses GET callbacks without provider parameters', async () => {
   const params = await readSharedTikTokOAuthParams(new Request('https://autoclipe.vercel.app/tiktok/callback?state=s&code=c&provider=seller'));
   assert.deepEqual(params, { state: 's', code: 'c', error: null, scopes: null });
+});
+
+test('unsupported methods do not classify or consume a state', async () => {
+  const { calls, dependencies: d } = dependencies(async () => {
+    throw new Error('must not classify unsupported method');
+  });
+  const response = await routeSharedTikTokOAuthCallback(new Request('https://autoclipe.vercel.app/tiktok/callback', {
+    method: 'PUT',
+  }), d);
+  assert.equal(response.status, 405);
+  assert.deepEqual(calls, { content: 0, seller: 0, invalid: 0, unavailable: 0 });
+});
+
+test('Seller GET result is a clean redirect and POST result is controlled JSON', async () => {
+  const get = sellerOAuthCallbackResponse(
+    new Request('https://edge.example/callback?code=secret-code&state=secret-state'),
+    {},
+    'https://autoclipe.vercel.app',
+    'error',
+  );
+  assert.equal(get.status, 302);
+  assert.equal(get.headers.get('location'), 'https://autoclipe.vercel.app/canais?tiktok_shop=error');
+  assert.equal(get.headers.get('location')?.includes('secret'), false);
+
+  const post = sellerOAuthCallbackResponse(request({ state: 'state', code: 'code' }), {}, 'https://autoclipe.vercel.app', 'connected');
+  assert.equal(post.status, 200);
+  assert.deepEqual(await post.json(), { result: 'connected', provider: 'seller' });
+});
+
+test('state classifier rejects database failure and does not choose a provider by fallback', async () => {
+  await assert.rejects(
+    () => classifySharedTikTokOAuthState('state', {
+      contentState: async () => ({ found: false, failed: true }),
+      sellerState: async () => ({ found: true, failed: false }),
+    }),
+    /oauth state lookup failed/,
+  );
 });

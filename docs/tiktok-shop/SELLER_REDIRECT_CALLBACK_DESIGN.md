@@ -52,8 +52,13 @@ Quando e somente quando a flag for revisada e habilitada depois de deploy/migrat
 - A documentação oficial descreve a Redirect URL configurada no aplicativo como o destino do callback, portanto a URL utilizada no fluxo Seller deve ser confirmada manualmente como idêntica ao valor cadastrado. A documentação consultada em 2026-11-09 não confirmou suporte a múltiplas URLs para este aplicativo/mercado.
 - O `state` Seller é enviado no link de autorização e é a única correlação aceita no callback; não contém workspace, token, segredo ou indicador de provedor.
 - A resposta pública contém apenas resultado controlado e, para Seller, o identificador não sensível `provider: "seller"`; não inclui authorization code, tokens, App Secret, SQL ou URL de token.
+- Em navegação `GET` direta para o adaptador, Seller responde com redirecionamento limpo a `/canais?tiktok_shop=connected|error` (ou texto genérico sem parâmetros se `WEB_URL` estiver ausente). Em `POST`, usado pela página web, responde JSON controlado. Métodos diferentes de `GET`/`POST` retornam `405` antes de qualquer consulta ou consumo de state.
 
 Fonte oficial consultada em 2026-11-09: [TikTok Shop Partner Center — OAuth integration guide](https://partner.tiktokshop.com/docv2/page/678e3a362dccb8030ea6f98c). Ela diferencia links Seller (`services.{region}.tiktokshop.com/open/authorize` com `service_id`) de Creator e recomenda validar o `state` no callback do servidor.
+
+## Evidência local adicional
+
+`bun scripts/test_shared_oauth_callback_local.mjs` executa somente contra o Supabase local descartável. O ensaio usa clientes local `authenticated` e `service_role`, cria estados reais pelas RPCs, confirma classificação Content/Seller, estado desconhecido/expirado/ambíguo, conclusão transacional, rejeição de replay e bloqueio RLS de states/credenciais. Não usa App Secret, token TikTok, OAuth real ou Sandbox.
 
 ## Confirmação manual no Partner Center
 
