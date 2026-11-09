@@ -51,6 +51,9 @@ export type SellerOAuthCallbackDependencies = {
   connectionId?: () => string;
 };
 
+/** Minimum scopes for the Seller connection capabilities implemented locally. */
+export const SELLER_REQUIRED_SCOPES = ['seller.authorization.info', 'seller.product.basic'] as const;
+
 export class SellerOAuthFlowError extends Error {
   constructor(public readonly code: 'feature_unavailable' | 'invalid_request' | 'authorization_denied' | 'authorization_failed') {
     super('TikTok Shop Seller authorization could not be completed');
@@ -67,6 +70,15 @@ function uuid(): string {
 
 function credentialContext(workspaceId: string, connectionId: string, kind: 'access' | 'refresh'): SellerCredentialContext {
   return { workspaceId, connectionId, kind, keyVersion: SELLER_CREDENTIAL_KEY_VERSION };
+}
+
+function validSellerTokens(tokens: SellerTokens): boolean {
+  const accessExpiry = Date.parse(tokens.accessExpiresAt);
+  const refreshExpiry = Date.parse(tokens.refreshExpiresAt);
+  return Boolean(tokens.openId && tokens.accessToken && tokens.refreshToken)
+    && Number.isFinite(accessExpiry) && Number.isFinite(refreshExpiry)
+    && accessExpiry > Date.now() && refreshExpiry >= accessExpiry
+    && SELLER_REQUIRED_SCOPES.every((scope) => tokens.scopes.includes(scope));
 }
 
 /**
@@ -104,6 +116,7 @@ export async function completeSellerOAuthCallback(
 
   try {
     const tokens = await dependencies.exchangeCode(query.code, signal);
+    if (!validSellerTokens(tokens)) throw new SellerOAuthFlowError('authorization_failed');
     const connectionId = claimed.connectionId ?? (dependencies.connectionId ?? uuid)();
     const encryptedAccessToken = await encryptSellerCredential(
       dependencies.encryptionKey,

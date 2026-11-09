@@ -4,7 +4,7 @@ import { decryptSellerCredential, encryptSellerCredential, SELLER_CREDENTIAL_KEY
 export type SellerRefreshLease = { state: 'ACQUIRED' | 'BUSY' | 'REAUTH_REQUIRED'; workspaceId?: string; sellerOpenId?: string; credentialVersion?: number; fencingToken?: number };
 export type SellerRefreshStore = {
   acquire(connectionId: string, workerId: string): Promise<SellerRefreshLease>;
-  read(connectionId: string, workerId: string, fencingToken: number): Promise<{ workspaceId: string; sellerOpenId: string; refreshCiphertext: string; credentialVersion: number }>;
+  read(connectionId: string, workerId: string, fencingToken: number): Promise<{ workspaceId: string; sellerOpenId: string; refreshCiphertext: string; credentialVersion: number; keyVersion: number }>;
   complete(input: { connectionId: string; workerId: string; fencingToken: number; credentialVersion: number; accessCiphertext: string; refreshCiphertext: string; accessExpiresAt: string; refreshExpiresAt: string }): Promise<boolean>;
   fail(input: { connectionId: string; workerId: string; fencingToken: number; credentialVersion: number; reason: string }): Promise<void>;
 };
@@ -24,8 +24,8 @@ export async function refreshSellerCredentials(input: {
   if (lease.workspaceId !== input.workspaceId) throw new SellerRefreshError('reauth_required');
   try {
     const stored = await input.store.read(input.connectionId, workerId, lease.fencingToken);
-    if (stored.workspaceId !== input.workspaceId || stored.sellerOpenId !== lease.sellerOpenId || stored.credentialVersion !== lease.credentialVersion) throw new Error('refresh context mismatch');
-    const refreshToken = await decryptSellerCredential(input.encryptionKey, stored.refreshCiphertext, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'refresh', keyVersion: SELLER_CREDENTIAL_KEY_VERSION });
+    if (stored.workspaceId !== input.workspaceId || stored.sellerOpenId !== lease.sellerOpenId || stored.credentialVersion !== lease.credentialVersion || stored.keyVersion !== SELLER_CREDENTIAL_KEY_VERSION) throw new Error('refresh context mismatch');
+    const refreshToken = await decryptSellerCredential(input.encryptionKey, stored.refreshCiphertext, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'refresh', keyVersion: stored.keyVersion });
     const tokens = await input.refresh(refreshToken, input.signal);
     if (tokens.openId !== stored.sellerOpenId) throw new Error('seller identity mismatch');
     const accessCiphertext = await encryptSellerCredential(input.encryptionKey, tokens.accessToken, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'access', keyVersion: SELLER_CREDENTIAL_KEY_VERSION });

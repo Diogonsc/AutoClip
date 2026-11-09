@@ -30,7 +30,7 @@ create policy seller_connections_select on public.seller_connections for select 
 alter table public.seller_oauth_states add column connection_id uuid;
 alter table public.seller_oauth_states add constraint seller_oauth_states_connection_workspace_fkey
   foreign key (connection_id, workspace_id)
-  references public.seller_connections(id, workspace_id) on delete set null;
+  references public.seller_connections(id, workspace_id) on delete set null (connection_id);
 alter table public.seller_oauth_states add constraint seller_state_status_check check (
   (status='PENDING' and claimed_at is null and completed_at is null) or
   (status in ('CLAIMED','FAILED','EXPIRED') and claimed_at is not null) or
@@ -64,6 +64,35 @@ create trigger seller_oauth_states_transition_guard
   before update on public.seller_oauth_states
   for each row execute function private.guard_seller_oauth_state_transition();
 
+create function private.seller_audit_metadata_safe(p_value jsonb)
+returns boolean
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  v_key text;
+  v_child jsonb;
+begin
+  case jsonb_typeof(p_value)
+    when 'object' then
+      for v_key, v_child in select key, value from jsonb_each(p_value)
+      loop
+        if lower(v_key) in ('access_token', 'refresh_token', 'app_secret', 'auth_code', 'code', 'authorization')
+           or not private.seller_audit_metadata_safe(v_child) then
+          return false;
+        end if;
+      end loop;
+    when 'array' then
+      for v_child in select value from jsonb_array_elements(p_value)
+      loop
+        if not private.seller_audit_metadata_safe(v_child) then return false; end if;
+      end loop;
+  end case;
+  return true;
+end;
+$$;
+
 create table public.seller_shops (
  id uuid primary key default gen_random_uuid(), workspace_id uuid not null references public.workspaces(id) on delete cascade,
  connection_id uuid not null,
@@ -78,11 +107,11 @@ create table public.seller_audit_events (
  connection_id uuid,
  event_type text not null check (event_type in ('OAUTH_STARTED','STATE_CLAIMED','OAUTH_COMPLETED','OAUTH_FAILED','REFRESH_STARTED','REFRESH_COMPLETED','REFRESH_FAILED','REAUTH_REQUIRED','CONNECTION_REVOKED')),
  correlation_id uuid not null default gen_random_uuid(), metadata jsonb not null default '{}'::jsonb,
- created_at timestamptz not null default now(), check (not (metadata ?| array['access_token','refresh_token','app_secret','auth_code','code']))
+ created_at timestamptz not null default now(), check (private.seller_audit_metadata_safe(metadata))
 );
 alter table public.seller_audit_events add constraint seller_audit_events_connection_workspace_fkey
   foreign key (connection_id, workspace_id)
-  references public.seller_connections(id, workspace_id) on delete set null;
+  references public.seller_connections(id, workspace_id) on delete set null (connection_id);
 create index seller_shops_workspace_idx on public.seller_shops(workspace_id);
 create index seller_audit_workspace_idx on public.seller_audit_events(workspace_id, created_at desc);
 alter table public.seller_shops enable row level security; alter table public.seller_audit_events enable row level security;
