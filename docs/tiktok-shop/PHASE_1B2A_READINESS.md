@@ -84,4 +84,22 @@ Duas sessões `psql` independentes comprovaram o protocolo de refresh: A adquiri
 
 **Status 1B.2A.3: GO local.** Permanece **NO-GO para deploy/Sandbox** por Redirect URI compartilhada, secrets não configurados e ausência de homologação real.
 
+## Auditoria integrada 1B.2A.4 — 2026-11-08
+
+### Resultado
+
+Revisão de ponta a ponta aprovada localmente: state é aleatório e persistido apenas como SHA-256; o banco valida membership no início, claim é condicional e de uso único, e falha não reabre state. A troca Seller continua isolada do Creator e Content Posting, valida `user_type = 0`, escopos e timestamps antes de cifrar tokens. AAD liga cada ciphertext a workspace, conexão, tipo e versão. A conclusão OAuth é transacional e o refresh usa lease, fencing e versão de credencial.
+
+As três famílias permanecem isoladas por tabelas e contratos: Content Posting (`oauth_*`/`tiktok-oauth-callback`), Creator Affiliate (`tiktok_shop_*`/`tiktok-shop-oauth-callback`) e Seller (`seller_*`, sem endpoint publicado). Os testes de isolamento confirmam que nenhuma rota Shop está ativa enquanto a flag permanece `false`.
+
+### Riscos e decisão de Redirect URI
+
+Não foi encontrada evidência oficial verificável nesta auditoria de que o Partner Center aceite múltiplas Redirect URIs para este aplicativo. A URI exclusiva proposta deve ser confirmada e cadastrada manualmente; até isso ocorrer, publicar Seller em `/tiktok/callback` criaria risco de colisão com Content Posting. Isso é bloqueador. Checklist: `docs/tiktok-shop/SELLER_SANDBOX_READINESS_CHECKLIST.md`.
+
+### Git
+
+`2dd4d4e` é ancestral de `HEAD`; a branch contém os cinco commits locais de persistência, callback e refresh. Ela está cinco commits à frente de `origin/feat/tiktok-shop-seller-oauth-persistence`. Plano seguro: criar uma branch remota nova de revisão a partir deste HEAD (por exemplo, `review/tiktok-shop-seller-persistence`), fazer push sem force e abrir PR; não atualizar a branch remota original sem reconciliação explícita.
+
+**Decisão 1B.2A: GO local; NO-GO para Sandbox autenticado/deploy.** Entrada em 1B.2B exige todos os itens bloqueadores do checklist, revisão de callback público, migrations aplicadas em ambiente Sandbox autorizado e evidência de OAuth/token/API reais sem regressões.
+
 **Status da Fase 1 completa: NO-GO**, até callback, criptografia, refresh, deploy controlado e homologação Sandbox.
