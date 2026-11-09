@@ -56,3 +56,43 @@
   header para 202309+ foi confirmada na documentação, mas falta vetor oficial e
   validação Sandbox.
 
+## Fase 1B.2B.3 — início autenticado do Seller OAuth
+
+**Status:** GO LOCAL / NO-GO PARA SANDBOX E PRODUÇÃO
+
+### Implementado localmente
+
+- Edge Function `tiktok-shop-seller-start`, ainda não publicada, registrada em
+  `supabase/config.toml`. Ela aceita exclusivamente `POST`, faz validação
+  explícita do JWT e executa a RPC de criação de state no contexto do usuário.
+- O navegador só envia `workspace_id` UUID. `service_id`, host de autorização e
+  Redirect URI são derivados exclusivamente da configuração backend e do builder
+  Seller ROW já aprovado; segredos nunca entram no bundle ou na resposta.
+- A migration local `20261109000001_harden_seller_oauth_start.sql` exige
+  membership com permissão de edição, estado SHA-256 válido e, por usuário e
+  workspace, no máximo um state `PENDING` não expirado. O TTL continua sendo dez
+  minutos; o state em claro não é persistido.
+- `SellerOAuthConnectButton` é um componente isolado e acessível, mas permanece
+  invisível e não acionável enquanto `SELLER_OAUTH_UI_ENABLED` e a flag backend
+  `TIKTOK_SHOP_ENABLED` forem `false`. Ele não foi ligado a nenhuma tela ativa.
+
+### Evidências locais
+
+- Novo teste da Edge Function cobre JWT ausente/inválido, método inválido,
+  workspace inválido ou não autorizado, hash/state únicos, serviço confiável e
+  fail-closed da feature flag.
+- O teste de callback compartilhado agora reutiliza um state persistido pelo
+  fluxo real e confirma conclusão atômica e rejeição de replay.
+- pgTAP inclui autorização por workspace, unicidade de tentativa pendente, hash
+  inválido e negação de `anon` para a RPC de criação.
+
+### Bloqueadores para qualquer ativação
+
+1. Aplicar as migrations somente após aprovação, em ambiente remoto controlado.
+2. Publicar a Edge Function e configurar, exclusivamente no backend,
+   `TIKTOK_SHOP_SELLER_SERVICE_ID` e os demais secrets Seller já documentados.
+3. Confirmar no Partner Center a Redirect URI compartilhada e executar
+   homologação OAuth/Sandbox autorizada, inclusive callback e refresh.
+4. Revisar a integração da ação em uma tela Seller autorizada antes de ligar a
+   flag; a UI deliberadamente não expõe o botão hoje.
+

@@ -15,9 +15,12 @@ export async function handleSellerOAuthStartRequest(
   }
   try {
     const result = await startSellerOAuth(workspaceId, dependencies);
-    return Response.json({ authorization_url: result.authorizationUrl });
+    return Response.json({ authorization_url: result.authorizationUrl }, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   } catch {
-    return Response.json({ error: 'seller_oauth_unavailable' }, { status: 404 });
+    // The database/RPC error can reveal authorization or schema details.
+    return Response.json({ error: 'seller_oauth_start_failed' }, { status: 403 });
   }
 }
 
