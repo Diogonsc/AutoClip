@@ -47,5 +47,5 @@ Se o Partner Center não permitir URI exclusiva, a função publicada em `/tikto
 
 ## GO/NO-GO
 
-**NO-GO:** sem confirmação/cadastro da URI exclusiva, secrets backend, revisão do callback publicado e autorização para Sandbox.  
+**NO-GO:** sem confirmação/cadastro da URI exclusiva, secrets backend, revisão do callback publicado e autorização para Sandbox.
 **GO para 1B.2B:** URI exclusiva confirmada, contrato de callback revisado, migrations aprovadas para ambiente Sandbox e plano de rollback definido.
