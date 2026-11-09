@@ -53,6 +53,8 @@ begin
     or new.claimed_at is distinct from old.claimed_at
     or new.completed_at is distinct from old.completed_at
     or new.created_at is distinct from old.created_at
+    -- A terminal state may only lose its connection through FK SET NULL.
+    or new.connection_id is not null
   ) then
     raise exception 'seller oauth state is terminal' using errcode = '42501';
   end if;
