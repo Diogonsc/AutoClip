@@ -111,3 +111,17 @@
   em `SELLER_OAUTH_START_HARDENING.md`, incluindo runbook, secrets por nome e
   critérios GO/NO-GO.
 
+## Fase 1B.2B.5 — preparação de homologação OAuth Seller
+
+**Status:** CONCLUÍDA LOCALMENTE / NO-GO PARA SANDBOX E PRODUÇÃO
+
+- Contratos Seller foram confrontados com a documentação oficial consultada em
+  2026-11-10; não foi identificada divergência confirmada no cliente local.
+- Criado `verify_seller_oauth_configuration.mjs`: verificador read-only que
+  informa apenas o estado de nomes de secrets e da origem/callback, sem imprimir
+  valores. Ele não habilita a feature nem é executado com secrets reais nesta fase.
+- Removidas do exemplo de ambiente as variáveis Seller de host/Redirect URI que
+  o builder não consome, evitando falsa configuração dinâmica.
+- `SELLER_OAUTH_SANDBOX_EXECUTION_CHECKLIST.md` reúne fontes, roteiro E2E,
+  regressão Content Posting, sequência de deploy/rollback e bloqueadores.
+
