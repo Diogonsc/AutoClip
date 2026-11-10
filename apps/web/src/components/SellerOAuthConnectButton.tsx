@@ -21,17 +21,19 @@ export function isAllowedSellerAuthorizationUrl(value: unknown): value is string
 
 type SellerOAuthConnectButtonProps = {
   workspaceId: string;
-  enabled?: boolean;
+  canManageWorkspace?: boolean;
 };
 
 export function SellerOAuthConnectButton({
   workspaceId,
-  enabled = SELLER_OAUTH_UI_ENABLED,
+  canManageWorkspace = false,
 }: SellerOAuthConnectButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!enabled) return null;
+  // A caller cannot turn on the UI with a prop while the compiled feature is
+  // disabled. Backend enforcement remains authoritative in all cases.
+  if (!SELLER_OAUTH_UI_ENABLED || !canManageWorkspace) return null;
 
   async function connect() {
     setLoading(true);

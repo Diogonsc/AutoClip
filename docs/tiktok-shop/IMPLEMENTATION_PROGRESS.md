@@ -97,3 +97,17 @@
 4. Revisar a integração da ação em uma tela Seller autorizada antes de ligar a
    flag; a UI deliberadamente não expõe o botão hoje.
 
+## Fase 1B.2B.4 — hardening e preparação para homologação
+
+**Status:** GO LOCAL PARA REVISÃO / NO-GO PARA SANDBOX E PRODUÇÃO
+
+- Corrigida a corrida na criação de state: a RPC usa advisory transaction lock
+  por usuário e workspace antes de verificar ou inserir state `PENDING`.
+- Um ensaio PostgreSQL com duas sessões independentes comprova que apenas uma
+  transação cria state ativo; a concorrente é serializada e recebe `23505`.
+- O botão Seller agora requer a constante fail-closed **e** a permissão do
+  workspace; nenhuma prop do consumidor pode habilitá-lo com a flag desligada.
+- A revisão de callback, criptografia, RLS, replay e isolamento está registrada
+  em `SELLER_OAUTH_START_HARDENING.md`, incluindo runbook, secrets por nome e
+  critérios GO/NO-GO.
+

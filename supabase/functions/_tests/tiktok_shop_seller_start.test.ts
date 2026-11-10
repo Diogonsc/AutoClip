@@ -53,9 +53,14 @@ test('Seller start requires POST and a valid, non-expired JWT before any state w
   assert.deepEqual(invalid.validated, ['expired-token']);
   assert.equal(store.created.length, 0);
 
-  const method = dependencies(store);
-  assert.equal((await handleSellerOAuthStart(request({}, 'valid-token', 'GET'), method.dependencies)).status, 405);
-  assert.equal(method.validated.length, 0);
+  for (const unsupportedMethod of ['GET', 'PUT', 'DELETE']) {
+    const { dependencies: methodDependencies, validated } = dependencies(store);
+    assert.equal(
+      (await handleSellerOAuthStart(request({}, 'valid-token', unsupportedMethod), methodDependencies)).status,
+      405,
+    );
+    assert.equal(validated.length, 0);
+  }
 });
 
 test('Seller start accepts only workspace UUID and uses trusted backend service id', async () => {
