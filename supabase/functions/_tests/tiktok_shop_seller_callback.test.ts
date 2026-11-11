@@ -172,16 +172,18 @@ describe('local Seller OAuth flow', () => {
   });
 
   it('rejects a Seller token with missing required scopes before persistence', async () => {
-    const store = new Store();
-    await assert.rejects(
-      () => completeSellerOAuthCallback({ state: 's', code: 'code' }, {
-        enabled: true, persistence: store, encryptionKey: key,
-        exchangeCode: async () => ({ ...tokens, scopes: ['seller.product.basic'] }),
-      }),
-      SellerOAuthFlowError,
-    );
-    assert.equal(store.completed.length, 0);
-    assert.deepEqual(store.failed, [store.claimed.id]);
+    for (const scopes of [['seller.product.basic'], ['seller.authorization.info']]) {
+      const store = new Store();
+      await assert.rejects(
+        () => completeSellerOAuthCallback({ state: 's', code: 'code' }, {
+          enabled: true, persistence: store, encryptionKey: key,
+          exchangeCode: async () => ({ ...tokens, scopes }),
+        }),
+        SellerOAuthFlowError,
+      );
+      assert.equal(store.completed.length, 0);
+      assert.deepEqual(store.failed, [store.claimed.id]);
+    }
   });
 
   it('does not start external work when the feature remains disabled', async () => {

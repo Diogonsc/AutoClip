@@ -25,6 +25,14 @@ Não há divergência confirmada entre a documentação consultada e o cliente O
 local. A documentação não é prova de que o Partner Center aceitou a URI, o
 `service_id`, os escopos ou o contrato de uma conta Sandbox específica.
 
+### Escopos ativos versus concedidos
+
+Os dois escopos estão relatados como ativos no Partner Center. Isso habilita a
+possibilidade de concessão, mas o callback continua exigindo que ambos estejam
+presentes no `granted_scopes` do token emitido. Um token com só um dos dois é
+rejeitado antes de qualquer persistência. Essa diferença está coberta pelos
+testes Seller e não deve ser removida sem evidência de contrato oficial.
+
 ## Verificador de configuração local
 
 Executar apenas no ambiente controlado que recebeu secrets por operador

@@ -125,3 +125,18 @@
 - `SELLER_OAUTH_SANDBOX_EXECUTION_CHECKLIST.md` reúne fontes, roteiro E2E,
   regressão Content Posting, sequência de deploy/rollback e bloqueadores.
 
+## Fase 1B.2B.7 — preparação final de homologação Seller Sandbox
+
+**Status:** GO PARA REVISÃO LOCAL / NO-GO PARA DEPLOY E SANDBOX
+
+- Confirmada nos requisitos desta fase a ativação de `seller.authorization.info`
+  e `seller.product.basic` no Partner Center. A cobertura agora diferencia esses
+  escopos habilitados dos escopos efetivamente devolvidos em `granted_scopes`.
+- Tokens com apenas um dos dois escopos são rejeitados antes de cifragem ou
+  persistência; nenhum requisito de escopo foi relaxado.
+- Criado preflight read-only baseado em evidência sanitizada e diagnóstico
+  operacional para o cenário de renovação/acesso negado no Partner Center.
+- Persistem bloqueadores externos: estado do serviço, conta principal, Redirect
+  URI, `service_id`, secrets, migrations/Functions remotas e autorização para
+  OAuth Sandbox.
+
