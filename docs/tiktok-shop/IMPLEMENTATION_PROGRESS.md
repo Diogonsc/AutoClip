@@ -168,3 +168,13 @@
 - A avaliação futura permanece bloqueada: não há conta demonstrativa criada,
   rota Seller ativa, OAuth Sandbox concluído ou evidências para revisor.
 
+- Reexecução local em 2026-11-11: pgTAP 20 arquivos/327 testes, Bun Seller
+  37 testes, integração de callback compartilhado, concorrência PostgreSQL,
+  isolamento/configuração/preflight (12), frontend typecheck/Vitest 54/build e
+  `deno check` dos módulos de produção passaram. `deno test` não é o runner
+  desses testes porque os arquivos usam `bun:test`; a incompatibilidade foi
+  registrada no plano B.9, sem classificá-la como falha OAuth.
+- Corrigido somente o estreitamento estático da lease Seller Refresh e os
+  doubles tipados dos testes. Não houve mudança em migrations, Edge Function
+  publicada, flag, segredo, callback remoto ou Content Posting.
+

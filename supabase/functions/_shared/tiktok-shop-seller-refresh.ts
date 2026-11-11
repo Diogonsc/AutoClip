@@ -20,21 +20,26 @@ export async function refreshSellerCredentials(input: {
   const workerId = (input.workerId ?? (() => crypto.randomUUID()))();
   const lease = await input.store.acquire(input.connectionId, workerId);
   if (lease.state === 'BUSY') throw new SellerRefreshError('busy');
-  if (lease.state !== 'ACQUIRED' || !lease.workspaceId || !lease.sellerOpenId || !Number.isInteger(lease.credentialVersion) || !Number.isInteger(lease.fencingToken)) throw new SellerRefreshError('reauth_required');
-  if (lease.workspaceId !== input.workspaceId) throw new SellerRefreshError('reauth_required');
+  const { workspaceId, sellerOpenId, credentialVersion, fencingToken } = lease;
+  if (
+    lease.state !== 'ACQUIRED' || !workspaceId || !sellerOpenId
+    || typeof credentialVersion !== 'number' || !Number.isInteger(credentialVersion)
+    || typeof fencingToken !== 'number' || !Number.isInteger(fencingToken)
+  ) throw new SellerRefreshError('reauth_required');
+  if (workspaceId !== input.workspaceId) throw new SellerRefreshError('reauth_required');
   try {
-    const stored = await input.store.read(input.connectionId, workerId, lease.fencingToken);
-    if (stored.workspaceId !== input.workspaceId || stored.sellerOpenId !== lease.sellerOpenId || stored.credentialVersion !== lease.credentialVersion || stored.keyVersion !== SELLER_CREDENTIAL_KEY_VERSION) throw new Error('refresh context mismatch');
+    const stored = await input.store.read(input.connectionId, workerId, fencingToken);
+    if (stored.workspaceId !== input.workspaceId || stored.sellerOpenId !== sellerOpenId || stored.credentialVersion !== credentialVersion || stored.keyVersion !== SELLER_CREDENTIAL_KEY_VERSION) throw new Error('refresh context mismatch');
     const refreshToken = await decryptSellerCredential(input.encryptionKey, stored.refreshCiphertext, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'refresh', keyVersion: stored.keyVersion });
     const tokens = await input.refresh(refreshToken, input.signal);
     if (tokens.openId !== stored.sellerOpenId) throw new Error('seller identity mismatch');
     const accessCiphertext = await encryptSellerCredential(input.encryptionKey, tokens.accessToken, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'access', keyVersion: SELLER_CREDENTIAL_KEY_VERSION });
     const refreshCiphertext = await encryptSellerCredential(input.encryptionKey, tokens.refreshToken, { workspaceId: stored.workspaceId, connectionId: input.connectionId, kind: 'refresh', keyVersion: SELLER_CREDENTIAL_KEY_VERSION });
-    const saved = await input.store.complete({ connectionId: input.connectionId, workerId, fencingToken: lease.fencingToken, credentialVersion: lease.credentialVersion, accessCiphertext, refreshCiphertext, accessExpiresAt: tokens.accessExpiresAt, refreshExpiresAt: tokens.refreshExpiresAt });
+    const saved = await input.store.complete({ connectionId: input.connectionId, workerId, fencingToken, credentialVersion, accessCiphertext, refreshCiphertext, accessExpiresAt: tokens.accessExpiresAt, refreshExpiresAt: tokens.refreshExpiresAt });
     if (!saved) throw new Error('fencing lost');
     return 'refreshed';
   } catch {
-    await input.store.fail({ connectionId: input.connectionId, workerId, fencingToken: lease.fencingToken, credentialVersion: lease.credentialVersion, reason: 'REFRESH_OUTCOME_UNKNOWN' }).catch(() => undefined);
+    await input.store.fail({ connectionId: input.connectionId, workerId, fencingToken, credentialVersion, reason: 'REFRESH_OUTCOME_UNKNOWN' }).catch(() => undefined);
     throw new SellerRefreshError('failed');
   }
 }

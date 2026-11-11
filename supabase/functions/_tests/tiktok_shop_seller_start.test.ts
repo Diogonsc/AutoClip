@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { handleSellerOAuthStart } from '../_shared/tiktok-shop-seller-start-handler.ts';
-import type { SellerOAuthPersistence } from '../_shared/tiktok-shop-seller-flow.ts';
+import type { SellerOAuthClaim, SellerOAuthPersistence } from '../_shared/tiktok-shop-seller-flow.ts';
 
 const workspaceA = '10000000-0000-0000-0000-000000000001';
 const workspaceB = '10000000-0000-0000-0000-000000000002';
@@ -13,9 +13,9 @@ class Store implements SellerOAuthPersistence {
     if (this.deny) throw new Error('forbidden');
     this.created.push({ workspaceId, stateHash });
   }
-  async claimState() { throw new Error('not used'); }
-  async failState() { throw new Error('not used'); }
-  async completeAuthorization() { throw new Error('not used'); }
+  async claimState(_stateHash: string): Promise<SellerOAuthClaim> { throw new Error('not used'); }
+  async failState(_stateId: string): Promise<void> { throw new Error('not used'); }
+  async completeAuthorization(_input: Parameters<SellerOAuthPersistence['completeAuthorization']>[0]): Promise<void> { throw new Error('not used'); }
 }
 
 function request(body: unknown, token = 'valid-token', method = 'POST') {
@@ -74,6 +74,7 @@ test('Seller start accepts only workspace UUID and uses trusted backend service 
   }), d);
   assert.equal(response.status, 200);
   const body = await response.json() as { authorization_url?: string };
+  assert.ok(body.authorization_url);
   const url = new URL(body.authorization_url);
   assert.equal(url.searchParams.get('service_id'), 'trusted-service-id');
   assert.equal(url.searchParams.has('redirect_uri'), false);

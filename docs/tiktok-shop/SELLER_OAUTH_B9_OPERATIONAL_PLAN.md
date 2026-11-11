@@ -142,3 +142,28 @@ Seller revisada que só exponha dados reais autorizados.
 | Deploy, migration remota e secrets | **NO-GO** |
 | Primeira autorização OAuth Sandbox | **NO-GO** |
 | Produção e avaliação TikTok Shop | **NO-GO** |
+
+## Registro de validação local — 2026-11-11
+
+Executado somente contra o ambiente local descartável, sem credenciais TikTok,
+secrets remotos, deploy ou OAuth real:
+
+| Verificação | Resultado |
+|---|---|
+| pgTAP | PASS — 20 arquivos, 327 testes; inclui persistence, start, RLS e isolamento Seller. |
+| Testes Seller, callback compartilhado e refresh | PASS — Bun: 37 testes em 6 arquivos. |
+| Integração callback compartilhado | PASS — state Content/Seller, expiração, ambiguidade, conclusão atômica, replay e RLS. |
+| Concorrência de start | PASS — duas sessões PostgreSQL; uma criação e uma rejeição `23505`. |
+| Isolamento/configuração/preflight | PASS — Node: 12 testes. |
+| Frontend | PASS — typecheck, Vitest 54/54 e build de produção. |
+| Deno | PASS — `deno check` dos módulos de produção Seller/callback/start/refresh/router. |
+
+Os arquivos de teste unitário de Edge Functions usam deliberadamente
+`bun:test`; portanto `deno test` sobre esses arquivos não é um teste aplicável
+e falha antes de executar por não suportar o esquema `bun:`. Isso não substitui
+o `deno check` acima.
+
+Foi corrigido o estreitamento de tipos da lease de refresh antes de usar
+`fencingToken` e `credentialVersion`, e os doubles de teste foram alinhados à
+interface atual de persistência. A alteração não muda protocolo, flag, schema
+ou comportamento de OAuth; ela torna a validação estática Deno reproduzível.

@@ -76,14 +76,14 @@ describe('local Seller OAuth flow', () => {
     const userCalls: string[] = [];
     const backendCalls: string[] = [];
     const persistence = createSellerOAuthPersistence(
-      { rpc: async (name) => { userCalls.push(name); return { data: 'state-id', error: null }; } },
+      { rpc: async <T>(name: string, _arguments: Record<string, unknown>) => { userCalls.push(name); return { data: 'state-id' as T, error: null }; } },
       {
-        rpc: async (name) => {
+        rpc: async <T>(name: string, _arguments: Record<string, unknown>) => {
           backendCalls.push(name);
           if (name === 'claim_seller_oauth_state') {
-            return { data: { id: 'state-id', workspace_id: workspaceA, connection_id: null }, error: null };
+            return { data: { id: 'state-id', workspace_id: workspaceA, connection_id: null } as T, error: null };
           }
-          return { data: connectionA, error: null };
+          return { data: connectionA as T, error: null };
         },
       },
     );
