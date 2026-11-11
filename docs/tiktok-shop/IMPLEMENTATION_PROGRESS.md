@@ -140,3 +140,19 @@
   URI, `service_id`, secrets, migrations/Functions remotas e autorização para
   OAuth Sandbox.
 
+## Fase 1B.2B.8 — prontidão operacional antes da primeira autorização
+
+**Status:** GO PARA REVISÃO LOCAL / NO-GO PARA DEPLOY E SANDBOX
+
+- Foi registrada a evidência manual de serviço público BR em Rascunho,
+  Development Shop disponível, URI compartilhada e ambos os escopos ativos,
+  sem confundir esses fatos com `granted_scopes` ou uma concessão OAuth.
+- O preflight sanitizado passou a expor contexto operacional e `oauth_grant`
+  como pendente até o callback real; `ready` significa somente pré-requisitos
+  estáticos para uma primeira tentativa.
+- A matriz E2E define aceite/recusa/replay/expiração/escopos/refresh/isolamento
+  e smoke de Content Posting. O procedimento exige workspace e conta de
+  avaliação dedicados, confirmação da conta principal e aprovação explícita.
+- A hipótese de que o status Rascunho, a avaliação pendente ou a tela de
+  renovação sejam a causa permanece não comprovada.
+

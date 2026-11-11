@@ -33,6 +33,11 @@ presentes no `granted_scopes` do token emitido. Um token com só um dos dois é
 rejeitado antes de qualquer persistência. Essa diferença está coberta pelos
 testes Seller e não deve ser removida sem evidência de contrato oficial.
 
+O estado **Rascunho** do serviço e a disponibilidade de uma Development Shop
+também não equivalem a uma concessão OAuth. Para a análise atual de primeira
+autorização, matriz E2E, requisitos de workspace e critérios de decisão,
+consultar [SELLER_OAUTH_B8_HOMOLOGATION_READINESS.md](SELLER_OAUTH_B8_HOMOLOGATION_READINESS.md).
+
 ## Verificador de configuração local
 
 Executar apenas no ambiente controlado que recebeu secrets por operador

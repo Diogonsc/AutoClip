@@ -29,3 +29,20 @@ test('Seller preflight distinguishes missing Partner Center scope and incomplete
   assert.match(formatSellerOAuthPreflight(report), /BLOCKED seller_service/);
   assert.match(formatSellerOAuthPreflight(report), /BLOCKED scope:seller.product.basic/);
 });
+
+test('Seller preflight records Partner Center context without mistaking it for an OAuth grant', () => {
+  const report = validateSellerOAuthPreflightEvidence({
+    ...evidence,
+    service_public: true,
+    market: 'BR',
+    app_status: 'DRAFT',
+    development_shop_available: true,
+    oauth_grant_proven: false,
+  });
+
+  assert.equal(report.ready, true, 'static readiness permits a first authorization attempt');
+  const output = formatSellerOAuthPreflight(report);
+  assert.match(output, /CONFIRMED partner_context:service_public/);
+  assert.match(output, /OBSERVED partner_context:app_status/);
+  assert.match(output, /PENDING oauth_grant/);
+});
