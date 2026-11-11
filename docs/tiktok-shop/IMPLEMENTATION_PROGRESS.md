@@ -156,3 +156,15 @@
 - A hipótese de que o status Rascunho, a avaliação pendente ou a tela de
   renovação sejam a causa permanece não comprovada.
 
+## Fase 1B.2B.9 — preparação operacional controlada
+
+**Status:** GO PARA REVISÃO LOCAL / NO-GO PARA SANDBOX E PRODUÇÃO
+
+- Registrada a ordem de migrations/Functions, secrets backend por nome,
+  checklist de conta/workspace isolados e matriz E2E com dependências remotas.
+- A documentação oficial indica que Development Shop suporta contas de teste
+  para apps não publicados; isso reduz a hipótese de Rascunho a contexto, sem
+  provar elegibilidade do serviço BR específico.
+- A avaliação futura permanece bloqueada: não há conta demonstrativa criada,
+  rota Seller ativa, OAuth Sandbox concluído ou evidências para revisor.
+

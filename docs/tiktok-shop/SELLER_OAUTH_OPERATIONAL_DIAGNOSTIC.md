@@ -20,6 +20,9 @@ leitura de secret foi executada.
 - O endpoint/function, migrations e feature flag ainda não estão ativos no
   ambiente remoto. Uma URL manual do Partner Center não testa o state/callback
   emitido pelo AutoClip.
+- A documentação atual do Partner Center informa que apps não publicados usam
+  contas de teste criadas em Development Shop. Isso torna o status Rascunho uma
+  hipótese operacional, não uma causa comprovada para esta loja/serviço BR.
 
 ## Relatos e hipóteses
 
@@ -49,6 +52,9 @@ somente porque ambos usam telas de autorização.
    callback autorizado.
 6. O tipo do app e o mercado BR permitem autorização de Development Shop com o
    app em rascunho? Se não, qual pré-requisito de revisão/publicação é exigido?
+7. A tela de renovação corresponde ao OAuth Open API de primeira autorização
+   ou a um serviço TSP/registro anterior? Qual o motivo detalhado e a ação de
+   reset/cancelamento suportada pelo Partner Center?
 
 ## Procedimento futuro, condicionado a autorização explícita
 

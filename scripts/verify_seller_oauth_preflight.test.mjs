@@ -46,3 +46,22 @@ test('Seller preflight records Partner Center context without mistaking it for a
   assert.match(output, /OBSERVED partner_context:app_status/);
   assert.match(output, /PENDING oauth_grant/);
 });
+
+test('Seller preflight blocks a renewal-only service even when both Seller scopes are active', () => {
+  const report = validateSellerOAuthPreflightEvidence({
+    ...evidence,
+    service_authorization_status: 'RENEWAL_ONLY',
+    service_public: true,
+    market: 'BR',
+    app_status: 'DRAFT',
+    development_shop_available: true,
+    oauth_grant_proven: false,
+  });
+
+  assert.equal(report.ready, false);
+  const output = formatSellerOAuthPreflight(report);
+  assert.match(output, /BLOCKED seller_service/);
+  assert.match(output, /READY scope:seller.authorization.info/);
+  assert.match(output, /READY scope:seller.product.basic/);
+  assert.match(output, /PENDING oauth_grant/);
+});

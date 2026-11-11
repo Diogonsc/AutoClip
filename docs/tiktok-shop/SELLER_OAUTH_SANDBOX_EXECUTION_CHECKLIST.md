@@ -99,3 +99,13 @@ automaticamente e usar migration corretiva/versão compatível após análise.
 
 **Conclusão: NO-GO para Sandbox e produção.** A próxima etapa só pode começar
 após autorização explícita e confirmação de todas as pré-condições manuais.
+
+## Atualização operacional 1B.2B.9
+
+O preflight distingue agora o contexto informado pelo Partner Center (serviço
+público BR, Rascunho e Development Shop) da concessão real. Uma resposta
+`oauth_grant=PENDING` é esperada antes do callback; não a transformar em GO.
+O cenário atual que informa somente renovação deve continuar bloqueado até o
+owner confirmar que o serviço pode iniciar uma primeira autorização. Ver
+`SELLER_OAUTH_B9_OPERATIONAL_PLAN.md` para a matriz E2E, dependências remotas,
+conta de avaliação e ordem de publicação.
