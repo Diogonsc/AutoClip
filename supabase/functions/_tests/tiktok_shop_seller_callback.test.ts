@@ -76,14 +76,14 @@ describe('local Seller OAuth flow', () => {
     const userCalls: string[] = [];
     const backendCalls: string[] = [];
     const persistence = createSellerOAuthPersistence(
-      { rpc: async (name) => { userCalls.push(name); return { data: 'state-id', error: null }; } },
+      { rpc: async <T>(name: string, _arguments: Record<string, unknown>) => { userCalls.push(name); return { data: 'state-id' as T, error: null }; } },
       {
-        rpc: async (name) => {
+        rpc: async <T>(name: string, _arguments: Record<string, unknown>) => {
           backendCalls.push(name);
           if (name === 'claim_seller_oauth_state') {
-            return { data: { id: 'state-id', workspace_id: workspaceA, connection_id: null }, error: null };
+            return { data: { id: 'state-id', workspace_id: workspaceA, connection_id: null } as T, error: null };
           }
-          return { data: connectionA, error: null };
+          return { data: connectionA as T, error: null };
         },
       },
     );
@@ -172,16 +172,18 @@ describe('local Seller OAuth flow', () => {
   });
 
   it('rejects a Seller token with missing required scopes before persistence', async () => {
-    const store = new Store();
-    await assert.rejects(
-      () => completeSellerOAuthCallback({ state: 's', code: 'code' }, {
-        enabled: true, persistence: store, encryptionKey: key,
-        exchangeCode: async () => ({ ...tokens, scopes: ['seller.product.basic'] }),
-      }),
-      SellerOAuthFlowError,
-    );
-    assert.equal(store.completed.length, 0);
-    assert.deepEqual(store.failed, [store.claimed.id]);
+    for (const scopes of [['seller.product.basic'], ['seller.authorization.info']]) {
+      const store = new Store();
+      await assert.rejects(
+        () => completeSellerOAuthCallback({ state: 's', code: 'code' }, {
+          enabled: true, persistence: store, encryptionKey: key,
+          exchangeCode: async () => ({ ...tokens, scopes }),
+        }),
+        SellerOAuthFlowError,
+      );
+      assert.equal(store.completed.length, 0);
+      assert.deepEqual(store.failed, [store.claimed.id]);
+    }
   });
 
   it('does not start external work when the feature remains disabled', async () => {

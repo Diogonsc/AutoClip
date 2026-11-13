@@ -110,14 +110,9 @@ try {
   assert.equal(ambiguousSeller.error, null, 'fixture Seller ambígua não criada');
   assert.equal(await classifySharedTikTokOAuthState(ambiguousState, database), 'ambiguous', 'colisão não foi bloqueada');
 
-  const completionState = `complete-${randomUUID()}`;
-  const completionCreated = await user.rpc('create_seller_oauth_state', {
-    p_workspace: workspaceId,
-    p_state_hash: sha256(completionState),
-    p_connection: null,
-  });
-  assert.equal(completionCreated.error, null, 'state para conclusão não criado');
-  const claimed = await admin.rpc('claim_seller_oauth_state', { p_state_hash: sha256(completionState) });
+  // Reuse the state created through the authenticated start path. The local
+  // start hardening permits only one active attempt per user/workspace.
+  const claimed = await admin.rpc('claim_seller_oauth_state', { p_state_hash: sha256(sellerState) });
   assert.equal(claimed.error, null, 'service_role não fez claim Seller');
   const completed = await admin.rpc('complete_seller_oauth_authorization', {
     p_state: claimed.data.id,
@@ -133,7 +128,7 @@ try {
     p_key_version: 1,
   });
   assert.equal(completed.error, null, 'conclusão transacional Seller falhou');
-  const replay = await admin.rpc('claim_seller_oauth_state', { p_state_hash: sha256(completionState) });
+  const replay = await admin.rpc('claim_seller_oauth_state', { p_state_hash: sha256(sellerState) });
   assert.notEqual(replay.error, null, 'replay Seller foi aceito');
 
   const userStates = await user.from('seller_oauth_states').select('id').limit(1);

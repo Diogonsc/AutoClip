@@ -43,6 +43,9 @@ verify_jwt = false # o JWT do usuário é repassado às RPCs; o banco aplica o p
 [functions.tiktok-shop]
 verify_jwt = false # valida o JWT com RPCs do banco; OAuth do Shop é iniciado pelo usuário autenticado
 
+[functions.tiktok-shop-seller-start]
+verify_jwt = false # valida JWT explicitamente e usa RPC com contexto do usuário; feature permanece fail-closed
+
 [functions.tiktok-shop-oauth-callback]
 verify_jwt = false # callback público, protegido por state de uso único
 
